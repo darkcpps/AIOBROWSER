@@ -2,6 +2,7 @@
 # PyQt6 Graphical User Interface
 import io
 import json
+import math
 import os
 import sys
 import threading
@@ -27,8 +28,128 @@ from ui.styles import COLORS, STYLESHEET
 
 
 # =========================================================================
-# ANIMATED LOADING WIDGET
+# ANIMATED LOADING WIDGET WITH COOL EFFECTS
 # =========================================================================
+class SpinnerWidget(QWidget):
+    """Custom rotating spinner with smooth animation"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.angle = 0
+        self.setFixedSize(80, 80)
+
+        # Animation timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.rotate)
+        self.timer.start(16)  # ~60 FPS
+
+    def rotate(self):
+        self.angle = (self.angle + 6) % 360
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        # Center point
+        center_x, center_y = self.width() // 2, self.height() // 2
+
+        # Draw rotating arc with solid color
+        pen = QPen(
+            QColor(COLORS["accent_primary"]),
+            4,
+            Qt.PenStyle.SolidLine,
+            Qt.PenCapStyle.RoundCap,
+        )
+        painter.setPen(pen)
+        # Rotate the arc itself by changing the start angle
+        start_angle = self.angle * 16  # Qt uses 1/16th degree units
+        span_angle = 270 * 16  # 270 degrees arc
+        painter.drawArc(10, 10, 60, 60, start_angle, span_angle)
+
+        # Draw a second arc with secondary color for gradient effect
+        pen2 = QPen(
+            QColor(COLORS["accent_secondary"]),
+            4,
+            Qt.PenStyle.SolidLine,
+            Qt.PenCapStyle.RoundCap,
+        )
+        painter.setPen(pen2)
+        painter.drawArc(10, 10, 60, 60, start_angle + 200 * 16, 70 * 16)
+
+    def stop(self):
+        self.timer.stop()
+
+
+def cos(angle):
+    return math.cos(angle)
+
+
+def sin(angle):
+    return math.sin(angle)
+
+
+class ParticleWidget(QWidget):
+    """Animated particles floating around"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.particles = []
+        self.init_particles()
+
+        # Animation timer
+        self.timer = QTimer()
+        self.timer.timeout.connect(self.update_particles)
+        self.timer.start(30)  # ~33 FPS
+
+    def init_particles(self):
+        import random
+
+        for _ in range(15):
+            self.particles.append(
+                {
+                    "x": random.randint(0, 400),
+                    "y": random.randint(0, 300),
+                    "vx": random.uniform(-0.5, 0.5),
+                    "vy": random.uniform(-0.8, -0.3),
+                    "size": random.randint(2, 5),
+                    "opacity": random.randint(100, 200),
+                }
+            )
+
+    def update_particles(self):
+        import random
+
+        for p in self.particles:
+            p["x"] += p["vx"]
+            p["y"] += p["vy"]
+            p["opacity"] -= 1
+
+            # Reset particle if it fades out or goes off screen
+            if p["opacity"] <= 0 or p["y"] < -10:
+                p["x"] = random.randint(0, self.width())
+                p["y"] = self.height() + 10
+                p["vx"] = random.uniform(-0.5, 0.5)
+                p["vy"] = random.uniform(-0.8, -0.3)
+                p["opacity"] = random.randint(150, 255)
+
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+
+        for p in self.particles:
+            color = QColor(COLORS["accent_primary"])
+            color.setAlpha(max(0, min(255, int(p["opacity"]))))
+            painter.setBrush(QBrush(color))
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(int(p["x"]), int(p["y"]), p["size"], p["size"])
+
+    def stop(self):
+        self.timer.stop()
+
+
 class LoadingWidget(QWidget):
     def __init__(self, text="Searching"):
         super().__init__()
@@ -36,49 +157,86 @@ class LoadingWidget(QWidget):
         self.dot_count = 0
         self.initUI()
 
-        # Animations
-        self.timer = QTimer()
-        self.timer.timeout.connect(self.animate_dots)
-        self.timer.start(400)
-
-        self.opacity_effect = QGraphicsOpacityEffect(self.spinner_label)
-        self.spinner_label.setGraphicsEffect(self.opacity_effect)
-
-        self.pulse_timer = QPropertyAnimation(self.opacity_effect, b"opacity")
-        self.pulse_timer.setDuration(1000)
-        self.pulse_timer.setStartValue(0.4)
-        self.pulse_timer.setEndValue(1.0)
-        self.pulse_timer.setLoopCount(-1)
-        self.pulse_timer.start()
+        # Dot animation timer
+        self.dot_timer = QTimer()
+        self.dot_timer.timeout.connect(self.animate_dots)
+        self.dot_timer.start(400)
 
     def initUI(self):
-        layout = QVBoxLayout()
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.setSpacing(15)
+        # Use a grid layout to overlay particles and container
+        # This keeps the loading animation compact and at the top
+        layout = QGridLayout()
+        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
+        # Align content to the top so it's directly under the search bar
+        layout.setAlignment(Qt.AlignmentFlag.AlignTop | Qt.AlignmentFlag.AlignHCenter)
 
-        # Modern Spinner
-        self.spinner_label = QLabel("󱑮")
-        self.spinner_label.setStyleSheet(f"""
-            font-size: 40px;
-            color: {COLORS["accent_primary"]};
+        # Glass morphism container
+        container = QFrame()
+        container.setStyleSheet(f"""
+            QFrame {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+                    stop:0 {COLORS["bg_secondary"]},
+                    stop:1 {COLORS["bg_primary"]});
+                border: 2px solid {COLORS["border"]};
+                border-radius: 20px;
+                padding: 40px;
+            }}
         """)
-        self.spinner_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        container_layout = QVBoxLayout(container)
+        container_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        container_layout.setSpacing(25)
 
-        # Text
+        # Particle background
+        self.particles = ParticleWidget()
+        self.particles.setFixedSize(400, 300)
+
+        # Spinner
+        self.spinner = SpinnerWidget()
+
+        # Subtext with pulsing effect
+        self.subtext = QLabel("Please wait while we fetch results...")
+        self.subtext.setStyleSheet(f"""
+            font-size: 13px;
+            color: {COLORS["text_secondary"]};
+            font-weight: 500;
+        """)
+        self.subtext.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Pulsing animation for subtext
+        self.subtext_opacity = QGraphicsOpacityEffect(self.subtext)
+        self.subtext.setGraphicsEffect(self.subtext_opacity)
+        self.pulse_anim = QPropertyAnimation(self.subtext_opacity, b"opacity")
+        self.pulse_anim.setDuration(1500)
+        self.pulse_anim.setStartValue(0.5)
+        self.pulse_anim.setEndValue(1.0)
+        self.pulse_anim.setEasingCurve(QEasingCurve.Type.InOutSine)
+        self.pulse_anim.setLoopCount(-1)
+        self.pulse_anim.start()
+
+        # Main text with dots
         self.text_label = QLabel(self.text)
         self.text_label.setStyleSheet(f"""
-            font-size: 15px;
-            color: {COLORS["text_secondary"]};
+            font-size: 18px;
+            color: {COLORS["text_primary"]};
             letter-spacing: 1px;
-            text-transform: uppercase;
             font-weight: bold;
         """)
         self.text_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
-        layout.addStretch()
-        layout.addWidget(self.spinner_label)
-        layout.addWidget(self.text_label)
-        layout.addStretch()
+        # Add widgets to container
+        container_layout.addWidget(self.spinner, alignment=Qt.AlignmentFlag.AlignCenter)
+        container_layout.addWidget(self.text_label)
+        container_layout.addWidget(self.subtext)
+
+        # Add both to the same grid cell to overlay them
+        # Particles first (bottom layer), then container (top layer)
+        layout.addWidget(self.particles, 0, 0, Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(container, 0, 0, Qt.AlignmentFlag.AlignCenter)
+
+        # Ensure container stays on top of particles
+        container.raise_()
+
         self.setLayout(layout)
 
     def animate_dots(self):
@@ -86,12 +244,11 @@ class LoadingWidget(QWidget):
         dots = "." * self.dot_count
         self.text_label.setText(f"{self.text}{dots}")
 
-        frames = ["󱑮", "󱑯", "󱑰", "󱑱", "󱑲", "󱑳", "󱑴", "󱑵"]
-        self.spinner_label.setText(frames[self.dot_count % len(frames)])
-
     def stop(self):
-        self.timer.stop()
-        self.pulse_timer.stop()
+        self.dot_timer.stop()
+        self.pulse_anim.stop()
+        self.spinner.stop()
+        self.particles.stop()
 
 
 # =========================================================================
@@ -804,6 +961,7 @@ class GameSearchApp(QMainWindow):
 
         self.torrent_scroll = QScrollArea()
         self.torrent_scroll.setWidgetResizable(True)
+        # Create a torrent results widget
         self.torrent_results_widget = QWidget()
         self.torrent_results_layout = QVBoxLayout(self.torrent_results_widget)
         self.torrent_results_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
@@ -1705,9 +1863,11 @@ class GameSearchApp(QMainWindow):
             self.direct_loading_widget.deleteLater()
             self.direct_loading_widget = None
 
-        # Show loading widget
+        # Show loading widget at top
         self.direct_loading_widget = LoadingWidget("Searching AnkerGames")
-        self.direct_results_layout.addWidget(self.direct_loading_widget)
+        self.direct_results_layout.addWidget(
+            self.direct_loading_widget, alignment=Qt.AlignmentFlag.AlignHCenter
+        )
 
         self.direct_search_btn.setEnabled(False)
         self.direct_search_btn.setText("Searching...")
@@ -1790,9 +1950,11 @@ class GameSearchApp(QMainWindow):
             self.torrent_loading_widget.deleteLater()
             self.torrent_loading_widget = None
 
-        # Show loading widget
+        # Show loading widget at top
         self.torrent_loading_widget = LoadingWidget("Searching FitGirl Repacks")
-        self.torrent_results_layout.addWidget(self.torrent_loading_widget)
+        self.torrent_results_layout.addWidget(
+            self.torrent_loading_widget, alignment=Qt.AlignmentFlag.AlignHCenter
+        )
 
         self.torrent_search_btn.setEnabled(False)
         self.torrent_search_btn.setText("Searching...")
