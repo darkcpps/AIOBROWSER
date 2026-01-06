@@ -70,7 +70,7 @@ class SplashScreen(QWidget):
         content_layout.addStretch()
         
         # Version
-        version_label = QLabel("v2.0 Ultra Edition")
+        version_label = QLabel("Early Access - V1")
         version_label.setStyleSheet(f"font-size: 10px; color: {COLORS['text_secondary']};")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(version_label)
@@ -93,7 +93,7 @@ class SplashScreen(QWidget):
         else:
             label.setText(text)
             if label == self.splash_title:
-                QTimer.singleShot(200, lambda: self.type_animation("The All-In-One Gaming Resource", self.splash_subtitle, 0))
+                QTimer.singleShot(200, lambda: self.type_animation("The All-In-One Browser", self.splash_subtitle, 0))
             else:
                 QTimer.singleShot(600, self.finish)
     
