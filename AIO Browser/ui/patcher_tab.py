@@ -7,6 +7,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 from ui.styles import COLORS, STYLESHEET
 from core import patcher, steam_utils, greenluma_patcher
+from core.path_utils import get_tools_dir
 from ui.components import LoadingWidget, GamePatcherCard
 
 class PatcherTab(QWidget):
@@ -33,7 +34,7 @@ class PatcherTab(QWidget):
         self.goldberg_tab = QWidget()
         self.setup_goldberg_subtab()
 
-        self.patcher_tabs.addTab(self.greenluma_tab, "GreenLuma WIP")
+        self.patcher_tabs.addTab(self.greenluma_tab, "GreenLuma (DO NOT USE)")
         self.patcher_tabs.addTab(self.goldberg_tab, "Goldberg (Emulator)")
 
         main_layout.addWidget(self.patcher_tabs)
@@ -414,7 +415,7 @@ class PatcherTab(QWidget):
             def run():
                 nick = self.main_app.settings_manager.get("goldberg_nickname", "AIOUser") if self.main_app else "AIOUser"
                 lang = self.main_app.settings_manager.get("goldberg_language", "english") if self.main_app else "english"
-                success, log_msg = patcher.patch_game(game["full_path"], game["id"], "tools", nickname=nick, language=lang)
+                success, log_msg = patcher.patch_game(game["full_path"], game["id"], get_tools_dir(), nickname=nick, language=lang)
                 QMetaObject.invokeMethod(self, "on_patch_finished", Qt.ConnectionType.QueuedConnection, Q_ARG(bool, success), Q_ARG(str, log_msg))
             threading.Thread(target=run, daemon=True).start()
 
@@ -534,7 +535,7 @@ class PatcherTab(QWidget):
             if self.main_app: self.main_app.statusBar().showMessage(f"Updating GreenLuma list for {game['name']}...")
             def run():
                 print(f"[PROCESS] Calling patch_with_greenluma for {game['id']}...")
-                success, log_msg = patcher.patch_with_greenluma(game["id"], dlc_ids, "tools", stealth_mode=use_stealth)
+                success, log_msg = patcher.patch_with_greenluma(game["id"], dlc_ids, get_tools_dir(), stealth_mode=use_stealth)
                 print(f"[RESULT] Patch succeeded: {success}")
                 # Safer thread communication
                 QMetaObject.invokeMethod(self, "on_patch_finished_gl", Qt.ConnectionType.QueuedConnection, Q_ARG(bool, success), Q_ARG(str, log_msg))
@@ -556,7 +557,7 @@ class PatcherTab(QWidget):
         # GreenLuma "reverting" is basically clearing the AppList
         msg = "GreenLuma works globally via the AppList folder. Do you want to clear your entire GreenLuma AppList?"
         if QMessageBox.question(self, "Clear AppList", msg) == QMessageBox.StandardButton.Yes:
-            app_list_dir = Path("tools/Greenluma/NormalMode/AppList")
+            app_list_dir = get_tools_dir() / "Greenluma" / "NormalMode" / "AppList"
             if app_list_dir.exists():
                 for f in app_list_dir.glob("*.txt"):
                     try: f.unlink()
