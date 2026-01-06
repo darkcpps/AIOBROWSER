@@ -1,0 +1,7 @@
+beautifulsoup4==4.*
+cloudscraper==1.2.*
+psutil==5.*
+PyInstaller==4.*
+PyQt5==5.*
+requests==2.*
+requests-toolbelt==0.*

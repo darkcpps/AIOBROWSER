@@ -222,6 +222,87 @@ class LoadingWidget(QWidget):
         self.spinner.stop()
         self.particles.stop()
 
+# =========================================================================
+# GAME PATCHER CARD (Used in Patcher Tab)
+# =========================================================================
+class GamePatcherCard(QFrame):
+    def __init__(self, game, type="CreamAPI", patch_callback=None, revert_callback=None, parent=None):
+        super().__init__(parent)
+        self.game = game
+        self.type = type
+        self.patch_callback = patch_callback
+        self.revert_callback = revert_callback
+        self.initUI()
+
+    def initUI(self):
+        self.setObjectName("SteamCard")
+        self.setFixedHeight(85)
+        self.setStyleSheet(f"""
+            QFrame#SteamCard {{
+                background-color: {COLORS["bg_card"]};
+                border-radius: 12px;
+                border: 1px solid {COLORS["border"]};
+            }}
+            QFrame#SteamCard:hover {{
+                border: 1px solid {COLORS["accent_primary"]};
+                background-color: #1E243A;
+            }}
+        """)
+        
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(15, 0, 25, 0)
+        layout.setSpacing(15)
+
+        # Game Image (if available)
+        if self.game.get("image"):
+            import requests
+            img_container = QLabel()
+            img_container.setFixedSize(50, 50)
+            img_container.setStyleSheet("border-radius: 6px; background: #222;")
+            def load_img():
+                try:
+                    res = requests.get(self.game["image"], timeout=5)
+                    pixmap = QPixmap()
+                    pixmap.loadFromData(res.content)
+                    QMetaObject.invokeMethod(img_container, "setPixmap", Qt.ConnectionType.QueuedConnection, Q_ARG(QPixmap, pixmap.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)))
+                except: pass
+            import threading
+            threading.Thread(target=load_img, daemon=True).start()
+            layout.addWidget(img_container)
+        
+        # Info
+        info = QVBoxLayout(); info.setAlignment(Qt.AlignmentFlag.AlignVCenter); info.setSpacing(2)
+        name_text = self.game["name"]
+        if len(name_text) > 40: name_text = name_text[:37] + "..."
+        name = QLabel(name_text); name.setStyleSheet(f"font-size: 15px; font-weight: 800; color: {COLORS['text_primary']}; background: transparent;")
+        info.addWidget(name)
+        
+        meta_layout = QHBoxLayout(); meta_layout.setSpacing(15)
+        id_lbl = QLabel(f"🆔 {self.game['id']}"); id_lbl.setStyleSheet("color: #6366F1; font-weight: bold; font-size: 11px; background: transparent;")
+        meta_layout.addWidget(id_lbl)
+        
+        install_path = self.game.get("install_dir", "Remote / Steam Store")
+        if len(install_path) > 40: install_path = "..." + install_path[-37:]
+        path_lbl = QLabel(f"📁 {install_path}"); path_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px; background: transparent;")
+        meta_layout.addWidget(path_lbl); meta_layout.addStretch()
+        info.addLayout(meta_layout)
+        layout.addLayout(info, 1)
+        
+        # Actions
+        btn_layout = QHBoxLayout(); btn_layout.setSpacing(10)
+        # Only show revert for installed games or Goldberg
+        if self.game.get("install_dir"):
+            revert_btn = QPushButton("Revert"); revert_btn.setFixedSize(80, 32); revert_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            revert_btn.setStyleSheet(f"QPushButton {{ background: {COLORS['bg_secondary']}; color: {COLORS['text_secondary']}; border: 1px solid {COLORS['border']}; border-radius: 6px; }} QPushButton:hover {{ background: #ff4444; color: white; }}")
+            revert_btn.clicked.connect(lambda: self.revert_callback(self.game))
+            btn_layout.addWidget(revert_btn)
+        
+        patch_btn = QPushButton("Patch"); patch_btn.setFixedSize(80, 32); patch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        patch_btn.setStyleSheet(f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: bold; border-radius: 6px; }} QPushButton:hover {{ background: {COLORS['accent_secondary']}; }}")
+        patch_btn.clicked.connect(lambda: self.patch_callback(self.game))
+        btn_layout.addWidget(patch_btn)
+        layout.addLayout(btn_layout)
+
 
 # =========================================================================
 # GAME CARD WIDGET

@@ -8,10 +8,9 @@ from core.goldberg_patcher import (
     revert_patch
 )
 
-from core.creamapi_patcher import (
-    ensure_creamapi_files,
-    patch_game_creamapi,
-    revert_creamapi_patch
+from core.greenluma_patcher import (
+    patch_with_greenluma,
+    get_current_applist
 )
 
 # Re-export all functions for backward compatibility
@@ -19,7 +18,6 @@ __all__ = [
     'ensure_goldberg_files',
     'patch_game',
     'revert_patch',
-    'ensure_creamapi_files',
-    'patch_game_creamapi',
-    'revert_creamapi_patch'
+    'patch_with_greenluma',
+    'get_current_applist'
 ]
