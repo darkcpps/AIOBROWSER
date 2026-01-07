@@ -41,6 +41,7 @@ class ThemePreviewCard(QFrame):
         self.theme_key = theme_key
         self.theme_data = theme_data
         self.is_selected = is_selected
+        self.setObjectName("MainCard")
         self.setCursor(Qt.CursorShape.PointingHandCursor)
         self.setFixedSize(180, 120)
 
@@ -53,8 +54,10 @@ class ThemePreviewCard(QFrame):
         self.initUI()
 
     def initUI(self):
+        self.update_main_style()
+
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(0, 0, 0, 0)
+        layout.setContentsMargins(2, 2, 2, 2)
         layout.setSpacing(0)
 
         # Preview area
@@ -133,6 +136,21 @@ class ThemePreviewCard(QFrame):
 
         layout.addWidget(self.label_frame)
 
+    def update_main_style(self):
+        border_color = (
+            self.theme_data["accent_primary"]
+            if self.is_selected
+            else self.theme_data["border"]
+        )
+
+        self.setStyleSheet(f"""
+            QFrame#MainCard {{
+                background: transparent;
+                border: 2px solid {border_color};
+                border-radius: 12px;
+            }}
+        """)
+
     def update_preview_style(self):
         if self.preview_frame:
             if self.theme_key == "black_gold":
@@ -154,10 +172,9 @@ class ThemePreviewCard(QFrame):
             self.preview_frame.setStyleSheet(f"""
                 QFrame {{
                     {bg_style}
-                    border-top-left-radius: 12px;
-                    border-top-right-radius: 12px;
-                    border: 2px solid {self.theme_data["accent_primary"] if self.is_selected else self.theme_data["border"]};
-                    border-bottom: none;
+                    border-top-left-radius: 10px;
+                    border-top-right-radius: 10px;
+                    border: none;
                 }}
             """)
 
@@ -175,9 +192,9 @@ class ThemePreviewCard(QFrame):
             self.label_frame.setStyleSheet(f"""
                 QFrame {{
                     {bg_style}
-                    border-bottom-left-radius: 12px;
-                    border-bottom-right-radius: 12px;
-                    border: 2px solid {self.theme_data["accent_primary"] if self.is_selected else self.theme_data["border"]};
+                    border-bottom-left-radius: 10px;
+                    border-bottom-right-radius: 10px;
+                    border: none;
                     border-top: 1px solid {self.theme_data["border"]};
                 }}
             """)
@@ -206,6 +223,7 @@ class ThemePreviewCard(QFrame):
     def set_selected(self, selected):
         self.is_selected = selected
         # Update styles without recreating widgets
+        self.update_main_style()
         self.update_preview_style()
         self.update_label_style()
         self.update_name_style()

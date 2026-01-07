@@ -26,7 +26,7 @@ THEMES = {
         "glossy_shine": "rgba(255, 255, 255, 0.15)",
     },
     "black_gold": {
-        "name": "Royal Obsidian",
+        "name": "Luxury",
         "bg_primary": "#040404",
         "bg_secondary": "#000000",
         "bg_card": "#0A0A0A",
