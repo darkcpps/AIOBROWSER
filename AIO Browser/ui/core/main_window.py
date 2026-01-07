@@ -25,6 +25,7 @@ from ui.core.styles import (
     generate_stylesheet,
     set_current_theme,
 )
+from ui.core.titlebar import CustomTitleBar
 from ui.dialogs.settings_dialog import SettingsManager
 from ui.tabs.downloads_page import DownloadsPage
 from ui.tabs.info_tab import InfoTab
@@ -76,16 +77,15 @@ class GameSearchApp(QMainWindow):
             self.show_main_interface()
 
     def initUI(self):
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowTitle("🎮 AIO Browser")
         self.setGeometry(100, 100, 1100, 750)
         self.setStyleSheet(STYLESHEET)
 
         # Initialize and style StatusBar
         status = self.statusBar()
-        status.setStyleSheet(
-            f"background-color: {COLORS['bg_secondary']}; color: {COLORS['text_secondary']}; border-top: 1px solid {COLORS['border']};"
-        )
         status.showMessage("Ready")
+        status.addPermanentWidget(QSizeGrip(self))
 
     def show_splash(self):
         self.splash = SplashScreen(on_finished_callback=self.transition_to_main)
@@ -98,14 +98,25 @@ class GameSearchApp(QMainWindow):
     def show_main_interface(self):
         central = QWidget()
         self.setCentralWidget(central)
-        layout = QHBoxLayout()
-        layout.setContentsMargins(0, 0, 0, 0)
-        layout.setSpacing(0)
+
+        # Main vertical layout
+        main_layout = QVBoxLayout()
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        # Custom Title Bar
+        self.title_bar = CustomTitleBar(self)
+        main_layout.addWidget(self.title_bar)
+
+        # Horizontal container for Sidebar + Content
+        body_layout = QHBoxLayout()
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        body_layout.setSpacing(0)
 
         # Sidebar
         self.sidebar = ModernSidebar(self)
         self.sidebar.setObjectName("Sidebar")
-        layout.addWidget(self.sidebar)
+        body_layout.addWidget(self.sidebar)
 
         # Content Area
         self.content_container = QWidget()
@@ -162,8 +173,10 @@ class GameSearchApp(QMainWindow):
 
         content_layout.addWidget(self.main_stack)
         self.content_container.setLayout(content_layout)
-        layout.addWidget(self.content_container)
-        central.setLayout(layout)
+        body_layout.addWidget(self.content_container)
+
+        main_layout.addLayout(body_layout)
+        central.setLayout(main_layout)
 
         self.sidebar.set_active("search")
 

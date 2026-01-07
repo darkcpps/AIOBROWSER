@@ -460,6 +460,18 @@ QFrame#Header {{
         stop:1 {colors["bg_secondary"]});
     border-bottom: 1px solid {colors["border"]};
 }}
+
+QStatusBar {{
+    background-color: {colors["bg_secondary"]};
+    color: {colors["text_secondary"]};
+    border-top: 1px solid {colors["border"]};
+}}
+
+QSizeGrip {{
+    background-color: transparent;
+    width: 20px;
+    height: 20px;
+}}
 """
 
 
