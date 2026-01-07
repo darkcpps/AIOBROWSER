@@ -678,11 +678,8 @@ class ModernSidebar(QFrame):
             self.parent.main_stack.setCurrentIndex(3)
             self.parent.page_title.setText("Information")
         elif key == "settings":
-            self.parent.open_settings()
-            # Reset checks to search/patcher
-            self.on_click(
-                "search" if self.parent.main_stack.currentIndex() == 0 else "patcher"
-            )
+            self.parent.main_stack.setCurrentIndex(4)
+            self.parent.page_title.setText("Settings")
 
     def set_active(self, key):
         self.on_click(key)

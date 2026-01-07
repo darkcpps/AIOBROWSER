@@ -12,13 +12,14 @@ from PyQt6.QtWidgets import *
 
 from core import downloader, scraper
 from ui.tabs.downloads_page import DownloadsPage
-from ui.dialogs.settings_dialog import SettingsDialog, SettingsManager
+from ui.dialogs.settings_dialog import SettingsManager
 from ui.core.splash_screen import SplashScreen
 from ui.core.styles import COLORS, STYLESHEET
 from ui.core.components import AnimatedStackedWidget, ModernSidebar
 from ui.tabs.search_tab import SearchTab
 from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.info_tab import InfoTab
+from ui.tabs.settings_tab import SettingsTab
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -112,6 +113,9 @@ class GameSearchApp(QMainWindow):
         self.info_tab = InfoTab(self)
         self.main_stack.addWidget(self.info_tab)
 
+        self.settings_tab = SettingsTab(self.settings_manager, self)
+        self.main_stack.addWidget(self.settings_tab)
+
         content_layout.addWidget(self.main_stack)
         self.content_container.setLayout(content_layout)
         layout.addWidget(self.content_container)
@@ -201,7 +205,7 @@ class GameSearchApp(QMainWindow):
         elif result == "ERROR": self.update_download_status(download_id, "❌ Error occurred", 0)
 
     def open_settings(self):
-        dialog = SettingsDialog(self.settings_manager, self); dialog.exec()
+        self.sidebar.set_active("settings")
 
 def main():
     app = QApplication(sys.argv); app.setStyle("Fusion")
