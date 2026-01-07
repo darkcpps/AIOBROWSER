@@ -1,31 +1,120 @@
 # styles.py
 from PyQt6.QtGui import QColor
 
-COLORS = {
-    "bg_primary": "#0F111A",      # Premium Deep Navy
-    "bg_secondary": "#090B13",    # Darker Sidebar
-    "bg_card": "#1A1F35",         # Solid Card Background
-    "bg_card_hover": "#222841",   # Hover Highlight
-    "accent_primary": "#7C3AED",  # Vibrant Purple
-    "accent_secondary": "#A78BFA",# Lighter Purple
-    "accent_glow": "rgba(124, 58, 237, 0.15)",
-    "accent_red": "#EF4444",
-    "accent_red_hover": "#DC2626",
-    "accent_green": "#10B981",
-    "accent_green_hover": "#059669",
-    "text_primary": "#F8FAFC",
-    "text_secondary": "#94A3B8",
-    "text_muted": "#475569",
-    "border": "#1E293B",
-    "border_hover": "#334155",
+# Theme Definitions
+THEMES = {
+    "default": {
+        "name": "Default Purple",
+        "bg_primary": "#0F111A",
+        "bg_secondary": "#090B13",
+        "bg_card": "#1A1F35",
+        "bg_card_hover": "#222841",
+        "accent_primary": "#7C3AED",
+        "accent_secondary": "#A78BFA",
+        "accent_glow": "rgba(124, 58, 237, 0.15)",
+        "accent_red": "#EF4444",
+        "accent_red_hover": "#DC2626",
+        "accent_green": "#10B981",
+        "accent_green_hover": "#059669",
+        "text_primary": "#F8FAFC",
+        "text_secondary": "#94A3B8",
+        "text_muted": "#475569",
+        "border": "#1E293B",
+        "border_hover": "#334155",
+        "glossy_gradient_start": "#7C3AED",
+        "glossy_gradient_end": "#5B21B6",
+        "glossy_shine": "rgba(255, 255, 255, 0.1)",
+    },
+    "black_gold": {
+        "name": "Black & Gold",
+        "bg_primary": "#000000",
+        "bg_secondary": "#0A0A0A",
+        "bg_card": "#0F0F0F",
+        "bg_card_hover": "#1A1A1A",
+        "accent_primary": "#D4AF37",
+        "accent_secondary": "#FFD700",
+        "accent_glow": "rgba(212, 175, 55, 0.2)",
+        "accent_red": "#B22222",
+        "accent_red_hover": "#8B0000",
+        "accent_green": "#228B22",
+        "accent_green_hover": "#006400",
+        "text_primary": "#FFD700",
+        "text_secondary": "#D4AF37",
+        "text_muted": "#8B7020",
+        "border": "#1A1A1A",
+        "border_hover": "#D4AF37",
+        "glossy_gradient_start": "#D4AF37",
+        "glossy_gradient_end": "#8B7020",
+        "glossy_shine": "rgba(255, 255, 255, 0.2)",
+    },
 }
 
-STYLESHEET = f"""
+# Current active theme (default)
+_current_theme = "default"
+
+
+def get_current_theme():
+    return _current_theme
+
+
+def set_current_theme(theme_name):
+    global _current_theme
+    if theme_name in THEMES:
+        _current_theme = theme_name
+        return True
+    return False
+
+
+def get_colors():
+    return THEMES.get(_current_theme, THEMES["default"])
+
+
+# For backward compatibility - create a copy, not a reference
+COLORS = dict(THEMES["default"])
+
+
+def update_colors():
+    global COLORS
+    # Update all keys in the COLORS dictionary with current theme
+    new_colors = get_colors()
+    # Remove keys that don't exist in new theme
+    for key in list(COLORS.keys()):
+        if key not in new_colors:
+            del COLORS[key]
+    # Update/add all keys from new theme
+    for key, value in new_colors.items():
+        COLORS[key] = value
+
+
+def generate_stylesheet(theme_name=None):
+    """Generate stylesheet for the given theme or current theme"""
+    if theme_name:
+        colors = THEMES.get(theme_name, THEMES["default"])
+    else:
+        colors = get_colors()
+
+    # Add white gloss overlay for black_gold theme
+    gloss_overlay = ""
+    if theme_name == "black_gold" or (
+        not theme_name and _current_theme == "black_gold"
+    ):
+        gloss_overlay = f"""
+
+QWidget#ContentArea, QFrame#Card {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255, 255, 255, 0.08),
+        stop:0.5 {colors["bg_primary"]},
+        stop:1 rgba(255, 255, 255, 0.03));
+}}
+        """
+
+    return f"""
 QMainWindow, QDialog, QWidget {{
-    background-color: {COLORS["bg_primary"]};
-    color: {COLORS["text_primary"]};
+    background-color: {colors["bg_primary"]};
+    color: {colors["text_primary"]};
     font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif;
 }}
+{gloss_overlay}
 
 QTabWidget::pane {{
     border: none;
@@ -34,7 +123,7 @@ QTabWidget::pane {{
 
 QTabBar::tab {{
     background-color: transparent;
-    color: {COLORS["text_secondary"]};
+    color: {colors["text_secondary"]};
     padding: 12px 25px;
     margin-right: 5px;
     border-bottom: 2px solid transparent;
@@ -43,22 +132,27 @@ QTabBar::tab {{
 }}
 
 QTabBar::tab:selected {{
-    color: {COLORS["accent_primary"]};
-    border-bottom: 2px solid {COLORS["accent_primary"]};
+    color: {colors["accent_primary"]};
+    border-bottom: 2px solid {colors["accent_primary"]};
     font-weight: bold;
     background-color: transparent;
 }}
 
 QTabBar::tab:hover:!selected {{
-    color: {COLORS["text_primary"]};
-    background-color: {COLORS["bg_secondary"]};
+    color: {colors["text_primary"]};
+    background-color: {colors["bg_secondary"]};
     border-radius: 8px;
 }}
 
 QPushButton {{
-    background-color: {COLORS["accent_primary"]};
-    color: white;
-    border: none;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["glossy_shine"]},
+        stop:0.1 {colors["glossy_gradient_start"]},
+        stop:0.5 {colors["glossy_gradient_start"]},
+        stop:0.9 {colors["glossy_gradient_end"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    color: #000000;
+    border: 1px solid {colors["accent_secondary"]};
     padding: 8px 15px;
     border-radius: 8px;
     font-weight: 600;
@@ -66,30 +160,46 @@ QPushButton {{
 }}
 
 QPushButton:hover {{
-    background-color: {COLORS["accent_secondary"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255, 255, 255, 0.3),
+        stop:0.1 {colors["accent_secondary"]},
+        stop:0.5 {colors["accent_secondary"]},
+        stop:0.9 {colors["glossy_gradient_start"]},
+        stop:1 {colors["glossy_gradient_start"]});
+    border: 1px solid {colors["accent_secondary"]};
+    color: #000000;
 }}
 
 QPushButton:pressed {{
-    background-color: {COLORS["accent_primary"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["glossy_gradient_end"]},
+        stop:1 {colors["glossy_gradient_start"]});
 }}
 
 QPushButton:disabled {{
-    background-color: {COLORS["border"]};
-    color: {COLORS["text_muted"]};
+    background-color: {colors["border"]};
+    color: {colors["text_muted"]};
+    border: none;
 }}
 
 QLineEdit {{
-    background-color: {COLORS["bg_secondary"]};
-    color: {COLORS["text_primary"]};
-    border: 1px solid {COLORS["border"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_secondary"]},
+        stop:0.1 {colors["bg_card"]},
+        stop:1 {colors["bg_secondary"]});
+    color: {colors["text_primary"]};
+    border: 1px solid {colors["border"]};
     border-radius: 10px;
     padding: 12px;
     font-size: 14px;
 }}
 
 QLineEdit:focus {{
-    border: 1px solid {COLORS["accent_primary"]};
-    background-color: {COLORS["bg_card"]};
+    border: 2px solid {colors["accent_primary"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_card"]},
+        stop:0.1 {colors["bg_card_hover"]},
+        stop:1 {colors["bg_card"]});
 }}
 
 QScrollArea {{
@@ -98,19 +208,29 @@ QScrollArea {{
 }}
 
 QScrollBar:vertical {{
-    background-color: transparent;
-    width: 8px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 transparent,
+        stop:0.5 {colors["bg_secondary"]},
+        stop:1 transparent);
+    width: 10px;
     margin: 0px;
+    border-radius: 5px;
 }}
 
 QScrollBar::handle:vertical {{
-    background-color: {COLORS["border"]};
-    border-radius: 4px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {colors["accent_primary"]},
+        stop:0.5 {colors["accent_secondary"]},
+        stop:1 {colors["accent_primary"]});
+    border-radius: 5px;
     min-height: 40px;
 }}
 
 QScrollBar::handle:vertical:hover {{
-    background-color: {COLORS["text_muted"]};
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {colors["accent_secondary"]},
+        stop:0.5 {colors["accent_primary"]},
+        stop:1 {colors["accent_secondary"]});
 }}
 
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
@@ -118,50 +238,220 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
 }}
 
 QProgressBar {{
-    border: none;
+    border: 1px solid {colors["border"]};
     border-radius: 10px;
-    background-color: {COLORS["bg_secondary"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_secondary"]},
+        stop:0.5 {colors["bg_card"]},
+        stop:1 {colors["bg_secondary"]});
     text-align: center;
     color: transparent;
-    height: 8px;
+    height: 10px;
 }}
 
 QProgressBar::chunk {{
-    background-color: {COLORS["accent_primary"]};
-    border-radius: 10px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {colors["glossy_gradient_end"]},
+        stop:0.2 {colors["accent_primary"]},
+        stop:0.4 rgba(255, 255, 255, 0.3),
+        stop:0.5 {colors["accent_secondary"]},
+        stop:0.6 rgba(255, 255, 255, 0.3),
+        stop:0.8 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    border-radius: 9px;
 }}
 
 QLabel {{
-    color: {COLORS["text_primary"]};
+    color: {colors["text_primary"]};
     background-color: transparent;
 }}
 
 QFrame#Card {{
-    background-color: {COLORS["bg_card"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255, 255, 255, 0.05),
+        stop:0.05 {colors["bg_card_hover"]},
+        stop:0.1 {colors["bg_card"]},
+        stop:0.9 {colors["bg_card"]},
+        stop:0.95 {colors["bg_secondary"]},
+        stop:1 rgba(0, 0, 0, 0.8));
     border-radius: 12px;
-    border: 1px solid {COLORS["border"]};
+    border: 1px solid {colors["border"]};
 }}
 
 QFrame#Card:hover {{
-    border: 1px solid {COLORS["accent_primary"]};
-    background-color: {COLORS["bg_card_hover"]};
+    border: 1px solid {colors["accent_primary"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_card_hover"]},
+        stop:0.1 {colors["bg_card_hover"]},
+        stop:0.9 {colors["bg_card"]},
+        stop:1 {colors["bg_card"]});
 }}
 
 QCheckBox {{
-    color: {COLORS["text_primary"]};
+    color: {colors["text_primary"]};
     spacing: 10px;
 }}
 
 QCheckBox::indicator {{
-    width: 20px;
-    height: 20px;
+    width: 22px;
+    height: 22px;
     border-radius: 6px;
-    border: 2px solid {COLORS["border"]};
-    background-color: {COLORS["bg_secondary"]};
+    border: 2px solid {colors["border"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_card"]},
+        stop:0.5 {colors["bg_secondary"]},
+        stop:1 {colors["bg_card"]});
 }}
 
 QCheckBox::indicator:checked {{
-    background-color: {COLORS["accent_primary"]};
-    border-color: {COLORS["accent_primary"]};
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["accent_secondary"]},
+        stop:0.4 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    border-color: {colors["accent_primary"]};
+}}
+
+QCheckBox::indicator:hover {{
+    border-color: {colors["accent_primary"]};
+}}
+
+QComboBox {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_card_hover"]},
+        stop:0.5 {colors["bg_card"]},
+        stop:1 {colors["bg_secondary"]});
+    color: {colors["text_primary"]};
+    border: 1px solid {colors["border"]};
+    border-radius: 8px;
+    padding: 10px 15px;
+    font-size: 14px;
+    min-width: 150px;
+}}
+
+QComboBox:hover {{
+    border: 1px solid {colors["accent_primary"]};
+}}
+
+QComboBox:focus {{
+    border: 2px solid {colors["accent_primary"]};
+}}
+
+QComboBox::drop-down {{
+    subcontrol-origin: padding;
+    subcontrol-position: top right;
+    width: 30px;
+    border-left: 1px solid {colors["border"]};
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
+}}
+
+QComboBox::down-arrow {{
+    width: 12px;
+    height: 12px;
+}}
+
+QComboBox QAbstractItemView {{
+    background-color: {colors["bg_card"]};
+    color: {colors["text_primary"]};
+    border: 1px solid {colors["accent_primary"]};
+    border-radius: 8px;
+    selection-background-color: {colors["accent_primary"]};
+    selection-color: white;
+    padding: 5px;
+}}
+
+QToolTip {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["bg_card_hover"]},
+        stop:1 {colors["bg_card"]});
+    color: {colors["text_primary"]};
+    border: 1px solid {colors["accent_primary"]};
+    border-radius: 6px;
+    padding: 8px;
+    font-size: 12px;
+}}
+
+/* Glossy Sidebar Style */
+QWidget#Sidebar {{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {colors["bg_secondary"]},
+        stop:0.01 rgba(255, 255, 255, 0.03),
+        stop:0.02 {colors["bg_card"]},
+        stop:0.98 {colors["bg_secondary"]},
+        stop:0.99 rgba(255, 255, 255, 0.02),
+        stop:1 {colors["border"]});
+    border-right: 1px solid {colors["border"]};
+}}
+
+/* Glossy Header Style */
+QFrame#Header {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255, 255, 255, 0.05),
+        stop:0.1 {colors["bg_card"]},
+        stop:0.5 {colors["bg_primary"]},
+        stop:1 {colors["bg_secondary"]});
+    border-bottom: 1px solid {colors["border"]};
 }}
 """
+
+
+# Default stylesheet for backward compatibility
+STYLESHEET = generate_stylesheet("default")
+
+
+def get_sidebar_button_style(colors, is_active=False):
+    """Generate glossy sidebar button style"""
+    if is_active:
+        return f"""
+            QPushButton {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 transparent,
+                    stop:0.1 {colors["accent_glow"]},
+                    stop:0.9 {colors["accent_glow"]},
+                    stop:1 transparent);
+                color: {colors["accent_primary"]};
+                border: none;
+                border-left: 3px solid {colors["accent_primary"]};
+                border-radius: 0px;
+                padding: 15px 20px;
+                text-align: left;
+                font-weight: 600;
+            }}
+        """
+    else:
+        return f"""
+            QPushButton {{
+                background-color: transparent;
+                color: {colors["text_secondary"]};
+                border: none;
+                border-left: 3px solid transparent;
+                border-radius: 0px;
+                padding: 15px 20px;
+                text-align: left;
+                font-weight: 500;
+            }}
+            QPushButton:hover {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 transparent,
+                    stop:0.1 {colors["bg_card_hover"]},
+                    stop:0.9 {colors["bg_card_hover"]},
+                    stop:1 transparent);
+                color: {colors["text_primary"]};
+            }}
+        """
+
+
+def get_theme_preview_style(theme_name):
+    """Generate a mini preview style for theme selection"""
+    colors = THEMES.get(theme_name, THEMES["default"])
+    return f"""
+        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
+            stop:0 {colors["bg_primary"]},
+            stop:0.5 {colors["accent_primary"]},
+            stop:1 {colors["bg_secondary"]});
+        border: 2px solid {colors["accent_primary"]};
+        border-radius: 8px;
+    """

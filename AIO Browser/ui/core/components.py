@@ -1,15 +1,18 @@
 # components.py
+import io
 import math
 import random
-import io
-import requests
-import webbrowser
 import threading
+import webbrowser
+
+import requests
+from PIL import Image
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
-from PIL import Image
+
 from ui.core.styles import COLORS
+
 
 # =========================================================================
 # ANIMATED LOADING WIDGET WITH COOL EFFECTS
@@ -222,11 +225,19 @@ class LoadingWidget(QWidget):
         self.spinner.stop()
         self.particles.stop()
 
+
 # =========================================================================
 # GAME PATCHER CARD (Used in Patcher Tab)
 # =========================================================================
 class GamePatcherCard(QFrame):
-    def __init__(self, game, type="CreamAPI", patch_callback=None, revert_callback=None, parent=None):
+    def __init__(
+        self,
+        game,
+        type="CreamAPI",
+        patch_callback=None,
+        revert_callback=None,
+        parent=None,
+    ):
         super().__init__(parent)
         self.game = game
         self.type = type
@@ -248,7 +259,7 @@ class GamePatcherCard(QFrame):
                 background-color: #1E243A;
             }}
         """)
-        
+
         layout = QHBoxLayout(self)
         layout.setContentsMargins(15, 0, 25, 0)
         layout.setSpacing(15)
@@ -256,49 +267,91 @@ class GamePatcherCard(QFrame):
         # Game Image (if available)
         if self.game.get("image"):
             import requests
+
             img_container = QLabel()
             img_container.setFixedSize(50, 50)
             img_container.setStyleSheet("border-radius: 6px; background: #222;")
+
             def load_img():
                 try:
                     res = requests.get(self.game["image"], timeout=5)
                     pixmap = QPixmap()
                     pixmap.loadFromData(res.content)
-                    QMetaObject.invokeMethod(img_container, "setPixmap", Qt.ConnectionType.QueuedConnection, Q_ARG(QPixmap, pixmap.scaled(50, 50, Qt.AspectRatioMode.KeepAspectRatioByExpanding, Qt.TransformationMode.SmoothTransformation)))
-                except: pass
+                    QMetaObject.invokeMethod(
+                        img_container,
+                        "setPixmap",
+                        Qt.ConnectionType.QueuedConnection,
+                        Q_ARG(
+                            QPixmap,
+                            pixmap.scaled(
+                                50,
+                                50,
+                                Qt.AspectRatioMode.KeepAspectRatioByExpanding,
+                                Qt.TransformationMode.SmoothTransformation,
+                            ),
+                        ),
+                    )
+                except:
+                    pass
+
             import threading
+
             threading.Thread(target=load_img, daemon=True).start()
             layout.addWidget(img_container)
-        
+
         # Info
-        info = QVBoxLayout(); info.setAlignment(Qt.AlignmentFlag.AlignVCenter); info.setSpacing(2)
+        info = QVBoxLayout()
+        info.setAlignment(Qt.AlignmentFlag.AlignVCenter)
+        info.setSpacing(2)
         name_text = self.game["name"]
-        if len(name_text) > 40: name_text = name_text[:37] + "..."
-        name = QLabel(name_text); name.setStyleSheet(f"font-size: 15px; font-weight: 800; color: {COLORS['text_primary']}; background: transparent;")
+        if len(name_text) > 40:
+            name_text = name_text[:37] + "..."
+        name = QLabel(name_text)
+        name.setStyleSheet(
+            f"font-size: 15px; font-weight: 800; color: {COLORS['text_primary']}; background: transparent;"
+        )
         info.addWidget(name)
-        
-        meta_layout = QHBoxLayout(); meta_layout.setSpacing(15)
-        id_lbl = QLabel(f"🆔 {self.game['id']}"); id_lbl.setStyleSheet("color: #6366F1; font-weight: bold; font-size: 11px; background: transparent;")
+
+        meta_layout = QHBoxLayout()
+        meta_layout.setSpacing(15)
+        id_lbl = QLabel(f"🆔 {self.game['id']}")
+        id_lbl.setStyleSheet(
+            "color: #6366F1; font-weight: bold; font-size: 11px; background: transparent;"
+        )
         meta_layout.addWidget(id_lbl)
-        
+
         install_path = self.game.get("install_dir", "Remote / Steam Store")
-        if len(install_path) > 40: install_path = "..." + install_path[-37:]
-        path_lbl = QLabel(f"📁 {install_path}"); path_lbl.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px; background: transparent;")
-        meta_layout.addWidget(path_lbl); meta_layout.addStretch()
+        if len(install_path) > 40:
+            install_path = "..." + install_path[-37:]
+        path_lbl = QLabel(f"📁 {install_path}")
+        path_lbl.setStyleSheet(
+            f"color: {COLORS['text_secondary']}; font-size: 11px; background: transparent;"
+        )
+        meta_layout.addWidget(path_lbl)
+        meta_layout.addStretch()
         info.addLayout(meta_layout)
         layout.addLayout(info, 1)
-        
+
         # Actions
-        btn_layout = QHBoxLayout(); btn_layout.setSpacing(10)
+        btn_layout = QHBoxLayout()
+        btn_layout.setSpacing(10)
         # Only show revert for installed games or Goldberg
         if self.game.get("install_dir"):
-            revert_btn = QPushButton("Revert"); revert_btn.setFixedSize(80, 32); revert_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            revert_btn.setStyleSheet(f"QPushButton {{ background: {COLORS['bg_secondary']}; color: {COLORS['text_secondary']}; border: 1px solid {COLORS['border']}; border-radius: 6px; }} QPushButton:hover {{ background: #ff4444; color: white; }}")
+            revert_btn = QPushButton("Revert")
+            revert_btn.setFixedSize(80, 32)
+            revert_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+            revert_btn.setStyleSheet(
+                f"QPushButton {{ background: {COLORS['bg_secondary']}; color: {COLORS['text_secondary']}; border: 1px solid {COLORS['border']}; border-radius: 6px; }} QPushButton:hover {{ background: #ff4444; color: white; }}"
+            )
             revert_btn.clicked.connect(lambda: self.revert_callback(self.game))
             btn_layout.addWidget(revert_btn)
-        
-        patch_btn = QPushButton("Patch"); patch_btn.setFixedSize(80, 32); patch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        patch_btn.setStyleSheet(f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: bold; border-radius: 6px; }} QPushButton:hover {{ background: {COLORS['accent_secondary']}; }}")
+
+        patch_btn = QPushButton("Patch")
+        patch_btn.setFixedSize(80, 32)
+        patch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        patch_btn.setStyleSheet(
+            f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: bold; border-radius: 6px; }} QPushButton:hover {{ background: {COLORS['accent_secondary']}; }}"
+        )
         patch_btn.clicked.connect(lambda: self.patch_callback(self.game))
         btn_layout.addWidget(patch_btn)
         layout.addLayout(btn_layout)
@@ -483,26 +536,56 @@ class GameCardWidget(QFrame):
             img = img.resize((80, 110), Image.Resampling.LANCZOS)
 
             if img.mode == "RGB":
-                qimg = QImage(img.tobytes(), img.width, img.height, img.width * 3, QImage.Format.Format_RGB888)
+                qimg = QImage(
+                    img.tobytes(),
+                    img.width,
+                    img.height,
+                    img.width * 3,
+                    QImage.Format.Format_RGB888,
+                )
             elif img.mode == "RGBA":
-                qimg = QImage(img.tobytes(), img.width, img.height, img.width * 4, QImage.Format.Format_RGBA8888)
+                qimg = QImage(
+                    img.tobytes(),
+                    img.width,
+                    img.height,
+                    img.width * 4,
+                    QImage.Format.Format_RGBA8888,
+                )
             else:
                 img = img.convert("RGB")
-                qimg = QImage(img.tobytes(), img.width, img.height, img.width * 3, QImage.Format.Format_RGB888)
+                qimg = QImage(
+                    img.tobytes(),
+                    img.width,
+                    img.height,
+                    img.width * 3,
+                    QImage.Format.Format_RGB888,
+                )
 
             pixmap = QPixmap.fromImage(qimg)
-            QMetaObject.invokeMethod(self, "set_pixmap", Qt.ConnectionType.QueuedConnection, Q_ARG(QPixmap, pixmap))
+            QMetaObject.invokeMethod(
+                self,
+                "set_pixmap",
+                Qt.ConnectionType.QueuedConnection,
+                Q_ARG(QPixmap, pixmap),
+            )
         except:
             pass
 
     @pyqtSlot(QPixmap)
     def set_pixmap(self, pixmap):
-        self.image_label.setPixmap(pixmap.scaled(80, 110, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation))
+        self.image_label.setPixmap(
+            pixmap.scaled(
+                80,
+                110,
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation,
+            )
+        )
         self.image_label.setText("")
 
     def start_direct_download(self):
         # We'll use a signal or callback here usually, but for now we follow the existing pattern
-        if hasattr(self.parent, 'initiate_anker_download'):
+        if hasattr(self.parent, "initiate_anker_download"):
             self.parent.initiate_anker_download(self.game)
 
     def open_torrent_link(self):
@@ -547,22 +630,28 @@ class AnimatedStackedWidget(QStackedWidget):
         def on_fade_in_done():
             self.setGraphicsEffect(None)
             self.opacity_effect = None
-            try: self.anim.finished.disconnect()
-            except: pass
+            try:
+                self.anim.finished.disconnect()
+            except:
+                pass
 
         def on_fade_out():
             super(AnimatedStackedWidget, self).setCurrentIndex(index)
             self.opacity_effect = QGraphicsOpacityEffect(self)
             self.setGraphicsEffect(self.opacity_effect)
-            try: self.anim.finished.disconnect()
-            except: pass
+            try:
+                self.anim.finished.disconnect()
+            except:
+                pass
             self.anim.setStartValue(0.0)
             self.anim.setEndValue(1.0)
             self.anim.finished.connect(on_fade_in_done)
             self.anim.start()
 
-        try: self.anim.finished.disconnect()
-        except: pass
+        try:
+            self.anim.finished.disconnect()
+        except:
+            pass
         self.anim.finished.connect(on_fade_out)
         self.anim.start()
 
@@ -578,12 +667,15 @@ class SidebarButton(QPushButton):
         self.update_style()
 
     def update_style(self):
+        from ui.core.styles import get_colors
+
+        colors = get_colors()
         choice = "selected" if self.isChecked() else "normal"
         styles = {
             "normal": f"""
                 QPushButton {{
                     background-color: transparent;
-                    color: {COLORS["text_secondary"]};
+                    color: {colors["text_secondary"]};
                     border: none;
                     text-align: left;
                     padding-left: 20px;
@@ -592,15 +684,23 @@ class SidebarButton(QPushButton):
                     border-radius: 10px;
                 }}
                 QPushButton:hover {{
-                    background-color: {COLORS["bg_card"]};
-                    color: {COLORS["text_primary"]};
+                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                        stop:0 transparent,
+                        stop:0.1 {colors["bg_card"]},
+                        stop:0.9 {colors["bg_card"]},
+                        stop:1 transparent);
+                    color: {colors["text_primary"]};
                 }}
             """,
             "selected": f"""
                 QPushButton {{
-                    background-color: {COLORS["accent_primary"]};
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 {colors["accent_secondary"]},
+                        stop:0.3 {colors["accent_primary"]},
+                        stop:0.7 {colors["accent_primary"]},
+                        stop:1 {colors["glossy_gradient_end"]});
                     color: white;
-                    border: none;
+                    border: 1px solid {colors["accent_secondary"]};
                     text-align: left;
                     padding-left: 20px;
                     font-size: 14px;
@@ -611,6 +711,7 @@ class SidebarButton(QPushButton):
         }
         self.setStyleSheet(styles[choice])
 
+
 class ModernSidebar(QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -619,10 +720,20 @@ class ModernSidebar(QFrame):
         self.initUI()
 
     def initUI(self):
+        from ui.core.styles import get_colors
+
+        colors = get_colors()
         self.setFixedWidth(240)
+        self.setObjectName("Sidebar")
         self.setStyleSheet(f"""
-            background-color: {COLORS["bg_secondary"]};
-            border-right: 1px solid {COLORS["border"]};
+            QFrame#Sidebar {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {colors["bg_secondary"]},
+                    stop:0.02 {colors["bg_card"]},
+                    stop:0.98 {colors["bg_secondary"]},
+                    stop:1 {colors["border"]});
+                border-right: 1px solid {colors["border"]};
+            }}
         """)
 
         layout = QVBoxLayout()
@@ -634,9 +745,10 @@ class ModernSidebar(QFrame):
         logo_label.setStyleSheet(f"""
             font-size: 20px;
             font-weight: 900;
-            color: {COLORS["text_primary"]};
+            color: {colors["accent_primary"]};
             margin-bottom: 30px;
             letter-spacing: 1px;
+            background: transparent;
         """)
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(logo_label)
@@ -683,3 +795,41 @@ class ModernSidebar(QFrame):
 
     def set_active(self, key):
         self.on_click(key)
+
+    def refresh_theme(self):
+        """Refresh all styles when theme changes"""
+        from ui.core.styles import get_colors
+
+        colors = get_colors()
+
+        # Update sidebar background
+        self.setStyleSheet(f"""
+            QFrame#Sidebar {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {colors["bg_secondary"]},
+                    stop:0.01 rgba(255, 255, 255, 0.03),
+                    stop:0.02 {colors["bg_card"]},
+                    stop:0.98 {colors["bg_secondary"]},
+                    stop:0.99 rgba(255, 255, 255, 0.02),
+                    stop:1 {colors["border"]});
+                border-right: 1px solid {colors["border"]};
+            }}
+        """)
+
+        # Update all buttons
+        for button in self.buttons.values():
+            button.update_style()
+
+        # Update logo
+        for i in range(self.layout().count()):
+            widget = self.layout().itemAt(i).widget()
+            if isinstance(widget, QLabel) and "BROWSER" in widget.text():
+                widget.setStyleSheet(f"""
+                    font-size: 20px;
+                    font-weight: 900;
+                    color: {colors["accent_primary"]};
+                    margin-bottom: 30px;
+                    letter-spacing: 1px;
+                    background: transparent;
+                """)
+                break
