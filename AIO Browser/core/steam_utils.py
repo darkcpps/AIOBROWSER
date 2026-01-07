@@ -5,23 +5,52 @@ import re
 from pathlib import Path
 
 def get_steam_path():
-    """Locate Steam installation path from Registry."""
+    """Locate Steam installation path from Registry, process list, or default locations."""
+    # 1. Registry Lookup (Thorough)
+    for root in [winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE]:
+        for subkey in [r"SOFTWARE\Valve\Steam", r"SOFTWARE\WOW6432Node\Valve\Steam"]:
+            try:
+                key = winreg.OpenKey(root, subkey)
+                path, _ = winreg.QueryValueEx(key, "InstallPath")
+                winreg.CloseKey(key)
+                if path and Path(path).exists():
+                    return Path(path)
+            except:
+                continue
+
+    # 2. Process Lookup (If Steam is running)
     try:
-        key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\WOW6432Node\Valve\Steam")
-        path, _ = winreg.QueryValueEx(key, "InstallPath")
-        return Path(path)
+        import psutil
+        for proc in psutil.process_iter(['name', 'exe']):
+            if proc.info['name'] and proc.info['name'].lower() == 'steam.exe':
+                p = Path(proc.info['exe']).parent
+                if p.exists():
+                    return p
     except:
-        try:
-            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Valve\Steam")
-            path, _ = winreg.QueryValueEx(key, "InstallPath")
-            return Path(path)
-        except:
-            return None
+        pass
+
+    # 3. Common Default Paths
+    defaults = [
+        r"C:\Program Files (x86)\Steam",
+        r"C:\Program Files\Steam",
+        Path.home() / "AppData" / "Local" / "Steam"
+    ]
+    for d in defaults:
+        p = Path(d)
+        if p.exists() and (p / "steam.exe").exists():
+            return p
+
+    return None
 
 def parse_vdf(content):
-    """Extremely basic VDF parser for ACF/Library files."""
-    items = re.findall(r'"(.*?)"\s*"(.*?)"', content)
-    return dict(items)
+    """Extremely basic VDF parser for ACF/Library files. Returns lowercase keys."""
+    # Handle both tabs and spaces
+    items = re.findall(r'"(.*?)"\s+"(.*?)"', content)
+    if not items:
+        # Fallback for some VDF variants
+        items = re.findall(r'"(.*?)"\s*"(.*?)"', content)
+    
+    return {k.lower(): v for k, v in items}
 
 def get_steam_libraries():
     """Find all Steam library folders."""
@@ -33,14 +62,20 @@ def get_steam_libraries():
     lib_vdf = steam_path / "steamapps" / "libraryfolders.vdf"
     
     if lib_vdf.exists():
-        with open(lib_vdf, "r", encoding="utf-8") as f:
-            content = f.read()
-            # Find all "path" values
-            paths = re.findall(r'"path"\s*"(.*?)"', content)
-            for p in paths:
-                p_path = Path(p.replace("\\\\", "\\"))
-                if p_path not in libraries:
-                    libraries.append(p_path)
+        try:
+            with open(lib_vdf, "r", encoding="utf-8", errors="ignore") as f:
+                content = f.read()
+                # Find all "path" values (case insensitive search)
+                paths = re.findall(r'"path"\s+"(.*?)"', content, re.IGNORECASE)
+                if not paths:
+                    paths = re.findall(r'"path"\s*"(.*?)"', content, re.IGNORECASE)
+                
+                for p in paths:
+                    p_path = Path(p.replace("\\\\", "\\"))
+                    if p_path.exists() and p_path not in libraries:
+                        libraries.append(p_path)
+        except Exception as e:
+            print(f"[ERROR] Failed to parse libraryfolders.vdf: {e}")
     
     return libraries
 
@@ -56,19 +91,25 @@ def get_installed_games():
             
         for acf in apps_path.glob("appmanifest_*.acf"):
             try:
-                with open(acf, "r", encoding="utf-8") as f:
+                # Use errors="ignore" to handle potential encoding issues in user names or dirs
+                with open(acf, "r", encoding="utf-8", errors="ignore") as f:
                     content = f.read()
                     data = parse_vdf(content)
                     
                     if "name" in data and "installdir" in data:
-                        games.append({
-                            "id": data.get("appid", acf.stem.split("_")[1]),
-                            "name": data["name"],
-                            "install_dir": data["installdir"],
-                            "full_path": apps_path / "common" / data["installdir"],
-                            "source": "Steam"
-                        })
-            except:
+                        full_path = apps_path / "common" / data["installdir"]
+                        
+                        # Only include if the game folder actually exists
+                        if full_path.exists():
+                            games.append({
+                                "id": data.get("appid", acf.stem.split("_")[1]),
+                                "name": data["name"],
+                                "install_dir": data["installdir"],
+                                "full_path": full_path,
+                                "source": "Steam"
+                            })
+            except Exception as e:
+                print(f"[DEBUG] Failed to parse ACF {acf.name}: {e}")
                 continue
                 
     return sorted(games, key=lambda x: x["name"])

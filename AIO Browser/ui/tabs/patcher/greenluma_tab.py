@@ -57,6 +57,12 @@ class GreenLumaTab(QWidget):
         self.launch_gl_btn.clicked.connect(self.launch_greenluma)
         header_layout.addWidget(self.launch_gl_btn)
 
+        self.manual_patch_btn = QPushButton("📂  Manual Path")
+        self.manual_patch_btn.setFixedSize(140, 40)
+        self.manual_patch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.manual_patch_btn.clicked.connect(self.manual_folder_patch)
+        header_layout.addWidget(self.manual_patch_btn)
+
         self.refresh_steam_btn = QPushButton("🔄  Scan Library")
         self.refresh_steam_btn.setFixedSize(140, 40)
         self.refresh_steam_btn.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -180,6 +186,21 @@ class GreenLumaTab(QWidget):
         QTimer.singleShot(500, self.request_library_scan)
         self.refresh_active_applist_label()
 
+    def manual_folder_patch(self):
+        folder = QFileDialog.getExistingDirectory(self, "Select Game Folder (used to get AppID)")
+        if not folder: return
+        
+        # We need an AppID for GreenLuma.
+        appid, ok = QInputDialog.getInt(self, "AppID Required", "Enter Steam AppID for this game:", 0, 0, 9999999)
+        if not ok: return
+        
+        game = {
+            "name": os.path.basename(folder),
+            "id": appid,
+            "full_path": folder
+        }
+        self.trigger_patch(game)
+
     def clear_layout(self, layout):
         if layout is not None:
             while layout.count():
@@ -202,17 +223,35 @@ class GreenLumaTab(QWidget):
             try:
                 games = steam_utils.get_installed_games()
                 games.sort(key=lambda x: x["name"])
-                QTimer.singleShot(0, lambda: self.on_scan_completed(games))
+                QMetaObject.invokeMethod(self, "on_scan_completed", Qt.ConnectionType.QueuedConnection, Q_ARG(list, games))
             except Exception as e:
                 print(f"[ERROR] GreenLuma scan failed: {e}")
+                QMetaObject.invokeMethod(self, "on_scan_failed", Qt.ConnectionType.QueuedConnection, Q_ARG(str, str(e)))
+            finally:
                 self._is_scanning = False
+
         threading.Thread(target=scan, daemon=True).start()
 
+    @pyqtSlot(list)
     def on_scan_completed(self, games):
-        self._is_scanning = False
-        if hasattr(self, 'loader'): self.loader.stop(); self.loader.setParent(None)
+        if hasattr(self, 'loader'): 
+            self.loader.stop()
+            self.loader.setParent(None)
+            # No del self.loader here to be safe and consistent
         self._shared_steam_games = games
         self.display_steam_games()
+
+    @pyqtSlot(str)
+    def on_scan_failed(self, error_msg):
+        if hasattr(self, 'loader'):
+            self.loader.stop()
+            self.loader.setParent(None)
+        
+        self.clear_layout(self.steam_container_layout)
+        err_label = QLabel(f"❌ Scan Failed: {error_msg}")
+        err_label.setStyleSheet(f"color: {COLORS['accent_red']}; font-weight: bold;")
+        err_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        self.steam_container_layout.addWidget(err_label)
 
     def display_steam_games(self, filtered_list=None):
         self.clear_layout(self.steam_container_layout)
