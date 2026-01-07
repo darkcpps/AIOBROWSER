@@ -1,14 +1,33 @@
-Install and patch games all in one software!
+# AIO Browser - A software designed to make life easier
 
-Currently work in progress and everything is subject to change.
+**Status:** 🚧 Work in Progress (Expect bugs + instability)
 
-I wanted to make a software that has everything in it besides games, this is just the beginning lol
+An all-in-one software solution designed to handle the complicated stuff, making it easier for first-time users.
 
-Currently its very barebones.
+## 🚀 Features
+- **Game Finder:** Search for games using both **Direct Download** links and **Torrents**.
+- **Built-in Patching:** Easily apply the **Goldberg** emulator directly through the app (beginner-friendly).
+- **Modern GUI:** A clean, easy-to-navigate interface.
+- **Visuals:** Includes a custom splash screen on launch.
 
-All it can do is 
+## 🐛 Known issues
+- This project is in early access and will be unstable (crashes, failed downloads, broken UI, etc.).
+- Bugs are expected. If you find one, please report it in GitHub Issues.
 
-- Find games in both direct download links and torrents
-- Can use goldberg through the software, Easy for beginners
-- Has a pretty decent GUI which should be easy to navigate
-- Has a cool looking splash screen lol
+## 🗺️ Planned features
+- **Video downloading:** YouTube videos, movies, series.
+- **Streaming videos:** Stream movies and series inside the app.
+- **Built-in BitTorrent:** Easier torrenting for beginners.
+- **Software downloads:** Install apps (not just games).
+- **More download servers:** More sources for faster downloads and more game results.
+- **Optional Installations** Make most features optional for user experience and the user gets to choose what they want to install.
+
+## ⚖️ Legal disclaimer
+- AIO Browser does not include any game files, and it is not affiliated with any game publishers or platforms.
+- You use this software at your own risk. I’m not responsible for any damage, data loss, or issues caused to your computer from using it.
+
+---
+
+*Note: This project is in early development and currently barebones. Updates and new features are coming soon.*
+
+
