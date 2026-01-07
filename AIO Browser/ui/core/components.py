@@ -667,7 +667,7 @@ class SidebarButton(QPushButton):
         self.update_style()
 
     def update_style(self):
-        from ui.core.styles import get_colors
+        from ui.core.styles import get_colors, get_current_theme
 
         # Reset style state to ensure theme changes apply 100%
         self.style().unpolish(self)
@@ -699,13 +699,13 @@ class SidebarButton(QPushButton):
                 QPushButton {{
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 {colors["accent_secondary"]},
-                        stop:0.1 #FFFFFF,
+                        stop:0.1 {("#FFFFFF" if get_current_theme() == "black_gold" else colors["glossy_shine"])},
                         stop:0.3 {colors["accent_secondary"]},
                         stop:0.5 {colors["accent_primary"]},
                         stop:0.8 {colors["glossy_gradient_end"]},
-                        stop:1 #4D3308);
-                    color: #000000;
-                    border: 1px solid rgba(255, 255, 255, 0.8);
+                        stop:1 {("#4D3308" if get_current_theme() == "black_gold" else colors["bg_primary"])});
+                    color: {"#000000" if get_current_theme() == "black_gold" else "#FFFFFF"};
+                    border: 1px solid {("rgba(255, 255, 255, 0.8)" if get_current_theme() == "black_gold" else colors["accent_primary"])};
                     text-align: left;
                     padding-left: 20px;
                     font-size: 14px;
