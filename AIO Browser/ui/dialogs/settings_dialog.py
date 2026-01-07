@@ -6,7 +6,7 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QWidget, QCheckBox,
                              QLineEdit)
 from PyQt6.QtCore import Qt, pyqtSignal, QObject
 from PyQt6.QtGui import QColor
-from ui.styles import COLORS
+from ui.core.styles import COLORS
 
 class SettingsManager(QObject):
     settings_changed = pyqtSignal(dict)

@@ -2,7 +2,7 @@
 from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
                              QProgressBar, QPushButton, QScrollArea, QFrame)
 from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
-from ui.styles import COLORS
+from ui.core.styles import COLORS
 
 class DownloadItemWidget(QFrame):
     removed = pyqtSignal(object)

@@ -9,7 +9,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 from PIL import Image
-from ui.styles import COLORS
+from ui.core.styles import COLORS
 
 # =========================================================================
 # ANIMATED LOADING WIDGET WITH COOL EFFECTS

@@ -2,7 +2,7 @@
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QTimer
 from PyQt6.QtGui import QColor
-from ui.styles import COLORS
+from ui.core.styles import COLORS
 
 class SplashScreen(QWidget):
     def __init__(self, on_finished_callback):

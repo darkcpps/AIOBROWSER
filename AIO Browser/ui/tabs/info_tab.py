@@ -2,7 +2,7 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
-from ui.styles import COLORS
+from ui.core.styles import COLORS
 
 class InfoTab(QWidget):
     def __init__(self, parent=None):

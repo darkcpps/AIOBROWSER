@@ -1,7 +1,7 @@
 # main_pyqt.py
 # Entry point for PyQt6 application
 import sys
-from ui.gui_pyqt import main
+from ui.core.main_window import main
 
 if __name__ == "__main__":
     main()

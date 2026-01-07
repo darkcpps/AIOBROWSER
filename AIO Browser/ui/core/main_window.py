@@ -11,14 +11,14 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 from core import downloader, scraper
-from ui.downloads import DownloadsPage
-from ui.settings import SettingsDialog, SettingsManager
-from ui.splash_screen import SplashScreen
-from ui.styles import COLORS, STYLESHEET
-from ui.components import AnimatedStackedWidget, ModernSidebar
-from ui.search_tab import SearchTab
-from ui.patcher_tab import PatcherTab
-from ui.info_tab import InfoTab
+from ui.tabs.downloads_page import DownloadsPage
+from ui.dialogs.settings_dialog import SettingsDialog, SettingsManager
+from ui.core.splash_screen import SplashScreen
+from ui.core.styles import COLORS, STYLESHEET
+from ui.core.components import AnimatedStackedWidget, ModernSidebar
+from ui.tabs.search_tab import SearchTab
+from ui.tabs.patcher_tab import PatcherTab
+from ui.tabs.info_tab import InfoTab
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -148,7 +148,7 @@ class GameSearchApp(QMainWindow):
         download_id = str(uuid.uuid4())
         self.downloads_tab.add_download(download_id, game["title"])
         self.sidebar.set_active("downloads")
-        threading.Thread(target=self.process_anker_download_flow, args=(game["link"], game["title"], self.search_tab.direct_anker_client, download_id), daemon=True).start()
+        threading.Thread(target=self.process_anker_download_flow, args=(game["link"], game["title"], self.search_tab.direct_tab.anker_client, download_id), daemon=True).start()
 
     def process_anker_download_flow(self, game_url, game_title, anker, download_id):
         self.download_status_updated.emit(download_id, "🔗 Fetching direct link...", 0.1)

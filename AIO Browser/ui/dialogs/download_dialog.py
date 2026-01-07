@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import (QDialog, QVBoxLayout, QLabel, QProgressBar,
                              QWidget, QHBoxLayout, QPushButton, QGraphicsDropShadowEffect)
 from PyQt6.QtCore import Qt, QPropertyAnimation
 from PyQt6.QtGui import QColor
-from ui.styles import COLORS
+from ui.core.styles import COLORS
 
 class DownloadDialog(QDialog):
     def __init__(self, game_title, parent=None):
