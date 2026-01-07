@@ -669,6 +669,9 @@ class SidebarButton(QPushButton):
     def update_style(self):
         from ui.core.styles import get_colors
 
+        # Reset style state to ensure theme changes apply 100%
+        self.style().unpolish(self)
+
         colors = get_colors()
         choice = "selected" if self.isChecked() else "normal"
         styles = {
@@ -696,20 +699,109 @@ class SidebarButton(QPushButton):
                 QPushButton {{
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 {colors["accent_secondary"]},
-                        stop:0.3 {colors["accent_primary"]},
-                        stop:0.7 {colors["accent_primary"]},
-                        stop:1 {colors["glossy_gradient_end"]});
-                    color: white;
-                    border: 1px solid {colors["accent_secondary"]};
+                        stop:0.1 #FFFFFF,
+                        stop:0.3 {colors["accent_secondary"]},
+                        stop:0.5 {colors["accent_primary"]},
+                        stop:0.8 {colors["glossy_gradient_end"]},
+                        stop:1 #4D3308);
+                    color: #000000;
+                    border: 1px solid rgba(255, 255, 255, 0.8);
                     text-align: left;
                     padding-left: 20px;
                     font-size: 14px;
-                    font-weight: bold;
+                    font-weight: 900;
                     border-radius: 10px;
                 }}
             """,
         }
         self.setStyleSheet(styles[choice])
+        self.style().polish(self)
+        self.update()
+
+
+class GoldParticleBackground(QWidget):
+    """Subtle floating gold dust animation for premium themes"""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setAttribute(Qt.WidgetAttribute.WA_TransparentForMouseEvents)
+        self.particles = []
+        # Create premium diamond sparkle particles
+        for _ in range(45):
+            self.particles.append(
+                {
+                    "x": random.random(),
+                    "y": random.random(),
+                    "size": random.uniform(0.5, 2.5),
+                    "speed": random.uniform(0.0001, 0.0004),
+                    "opacity": random.uniform(0.2, 0.7),
+                    "pulse": random.uniform(0, 6.28),
+                    "pulse_speed": random.uniform(0.02, 0.08),
+                    "drift": random.uniform(-0.0002, 0.0002),
+                }
+            )
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_particles)
+        self.timer.start(16)  # 60 FPS for smoother motion
+
+    def update_particles(self):
+        for p in self.particles:
+            p["y"] -= p["speed"]
+            p["x"] += p["drift"]
+            p["pulse"] += p["pulse_speed"]
+
+            # Loop particles
+            if p["y"] < -0.05:
+                p["y"] = 1.05
+                p["x"] = random.random()
+            if p["x"] < -0.05:
+                p["x"] = 1.05
+            elif p["x"] > 1.05:
+                p["x"] = -0.05
+        self.update()
+
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        from ui.core.styles import get_colors
+
+        colors = get_colors()
+        gold_color = QColor(colors.get("accent_secondary", "#F9E076"))
+        white_sparkle = QColor("#FFFFFF")
+
+        for p in self.particles:
+            x, y = p["x"] * self.width(), p["y"] * self.height()
+
+            # Calculate pulsing opacity for sparkle effect
+            dynamic_opacity = p["opacity"] * (0.5 + 0.5 * math.sin(p["pulse"]))
+
+            # Draw core diamond sparkle
+            painter.setOpacity(dynamic_opacity)
+
+            # Glow effect
+            rad = QRadialGradient(QPointF(x, y), p["size"] * 4)
+            c_gold = QColor(gold_color)
+            c_gold.setAlphaF(0.4)
+            rad.setColorAt(0, c_gold)
+            rad.setColorAt(1, Qt.GlobalColor.transparent)
+            painter.setBrush(rad)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.drawEllipse(QPointF(x, y), p["size"] * 4, p["size"] * 4)
+
+            # Center bright point
+            painter.setOpacity(dynamic_opacity * 1.5)
+            painter.setBrush(white_sparkle)
+            painter.drawEllipse(QPointF(x, y), p["size"], p["size"])
+
+            # Optional cross-flare for "Diamond" look
+            if p["pulse"] % 6.28 > 5.8:
+                painter.setPen(QPen(white_sparkle, 0.5))
+                painter.drawLine(
+                    QPointF(x - p["size"] * 3, y), QPointF(x + p["size"] * 3, y)
+                )
+                painter.drawLine(
+                    QPointF(x, y - p["size"] * 3), QPointF(x, y + p["size"] * 3)
+                )
 
 
 class ModernSidebar(QFrame):
@@ -720,9 +812,15 @@ class ModernSidebar(QFrame):
         self.initUI()
 
     def initUI(self):
-        from ui.core.styles import get_colors
+        from ui.core.styles import get_colors, get_current_theme
 
         colors = get_colors()
+
+        # Add background particles if in black_gold theme
+        if get_current_theme() == "black_gold":
+            self.particles = GoldParticleBackground(self)
+            self.particles.lower()  # Place behind everything
+
         self.setFixedWidth(240)
         self.setObjectName("Sidebar")
         self.setStyleSheet(f"""
@@ -743,13 +841,22 @@ class ModernSidebar(QFrame):
         # Logo / Brand
         logo_label = QLabel("🎮  AIO BROWSER")
         logo_label.setStyleSheet(f"""
-            font-size: 20px;
+            font-size: 18px;
             font-weight: 900;
-            color: {colors["accent_primary"]};
+            color: {colors["accent_secondary"]};
             margin-bottom: 30px;
-            letter-spacing: 1px;
+            letter-spacing: 1.5px;
             background: transparent;
+            border-bottom: 2px solid {colors["accent_primary"]};
+            padding-bottom: 8px;
         """)
+        if get_current_theme() == "black_gold":
+            shadow = QGraphicsDropShadowEffect()
+            shadow.setBlurRadius(20)
+            shadow.setColor(QColor(colors["accent_secondary"]))
+            shadow.setOffset(0, 0)
+            logo_label.setGraphicsEffect(shadow)
+
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(logo_label)
 
@@ -796,9 +903,27 @@ class ModernSidebar(QFrame):
     def set_active(self, key):
         self.on_click(key)
 
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, "particles"):
+            self.particles.setGeometry(self.rect())
+
     def refresh_theme(self):
         """Refresh all styles when theme changes"""
-        from ui.core.styles import get_colors
+        from ui.core.styles import get_colors, get_current_theme
+
+        # Force unpolish for complete style reset
+        self.style().unpolish(self)
+
+        # Handle particles visibility based on theme
+        if get_current_theme() == "black_gold":
+            if not hasattr(self, "particles"):
+                self.particles = GoldParticleBackground(self)
+                self.particles.lower()
+                self.particles.setGeometry(self.rect())
+            self.particles.show()
+        elif hasattr(self, "particles"):
+            self.particles.hide()
 
         colors = get_colors()
 
@@ -825,11 +950,25 @@ class ModernSidebar(QFrame):
             widget = self.layout().itemAt(i).widget()
             if isinstance(widget, QLabel) and "BROWSER" in widget.text():
                 widget.setStyleSheet(f"""
-                    font-size: 20px;
+                    font-size: 18px;
                     font-weight: 900;
-                    color: {colors["accent_primary"]};
+                    color: {colors["accent_secondary"] if get_current_theme() == "black_gold" else colors["accent_primary"]};
                     margin-bottom: 30px;
-                    letter-spacing: 1px;
+                    letter-spacing: 1.5px;
                     background: transparent;
+                    border-bottom: 2px solid {colors["accent_primary"]};
+                    padding-bottom: 8px;
                 """)
+                if get_current_theme() == "black_gold":
+                    shadow = QGraphicsDropShadowEffect()
+                    shadow.setBlurRadius(20)
+                    shadow.setColor(QColor(colors["accent_secondary"]))
+                    shadow.setOffset(0, 0)
+                    widget.setGraphicsEffect(shadow)
+                else:
+                    widget.setGraphicsEffect(None)
                 break
+
+        # Re-polish for theme application
+        self.style().polish(self)
+        self.update()

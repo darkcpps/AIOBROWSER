@@ -1,4 +1,7 @@
 # settings_tab.py
+import os
+import sys
+
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -11,6 +14,7 @@ from PyQt6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMessageBox,
     QPushButton,
     QSizePolicy,
     QVBoxLayout,
@@ -65,13 +69,30 @@ class ThemePreviewCard(QFrame):
         # Mini accent bar
         accent_bar = QFrame()
         accent_bar.setFixedHeight(8)
+
+        if self.theme_key == "black_gold":
+            accent_style = f"""
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {self.theme_data["glossy_gradient_end"]},
+                    stop:0.2 {self.theme_data["accent_primary"]},
+                    stop:0.4 #FFFFFF,
+                    stop:0.5 {self.theme_data["accent_secondary"]},
+                    stop:0.6 #FFFFFF,
+                    stop:0.8 {self.theme_data["accent_primary"]},
+                    stop:1 {self.theme_data["glossy_gradient_end"]});
+            """
+        else:
+            accent_style = f"""
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {self.theme_data["glossy_gradient_end"]},
+                    stop:0.3 {self.theme_data["accent_primary"]},
+                    stop:0.5 {self.theme_data["accent_secondary"]},
+                    stop:0.7 {self.theme_data["accent_primary"]},
+                    stop:1 {self.theme_data["glossy_gradient_end"]});
+            """
+
         accent_bar.setStyleSheet(f"""
-            background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                stop:0 {self.theme_data["glossy_gradient_end"]},
-                stop:0.3 {self.theme_data["accent_primary"]},
-                stop:0.5 {self.theme_data["accent_secondary"]},
-                stop:0.7 {self.theme_data["accent_primary"]},
-                stop:1 {self.theme_data["glossy_gradient_end"]});
+            {accent_style}
             border-radius: 4px;
         """)
         preview_layout.addWidget(accent_bar)
@@ -114,12 +135,25 @@ class ThemePreviewCard(QFrame):
 
     def update_preview_style(self):
         if self.preview_frame:
-            self.preview_frame.setStyleSheet(f"""
-                QFrame {{
+            if self.theme_key == "black_gold":
+                # Special radial preview for Royal Obsidian
+                bg_style = f"""
+                    background: qradialgradient(cx:0.5, cy:0, radius:1, fx:0.5, fy:0,
+                        stop:0 rgba(212, 175, 55, 0.2),
+                        stop:0.4 {self.theme_data["bg_primary"]},
+                        stop:1 {self.theme_data["bg_secondary"]});
+                """
+            else:
+                bg_style = f"""
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 {self.theme_data["bg_card_hover"]},
                         stop:0.3 {self.theme_data["bg_primary"]},
                         stop:1 {self.theme_data["bg_secondary"]});
+                """
+
+            self.preview_frame.setStyleSheet(f"""
+                QFrame {{
+                    {bg_style}
                     border-top-left-radius: 12px;
                     border-top-right-radius: 12px;
                     border: 2px solid {self.theme_data["accent_primary"] if self.is_selected else self.theme_data["border"]};
@@ -129,11 +163,18 @@ class ThemePreviewCard(QFrame):
 
     def update_label_style(self):
         if self.label_frame:
-            self.label_frame.setStyleSheet(f"""
-                QFrame {{
+            if self.theme_key == "black_gold":
+                bg_style = f"background: {self.theme_data['bg_secondary']};"
+            else:
+                bg_style = f"""
                     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                         stop:0 {self.theme_data["bg_card"]},
                         stop:1 {self.theme_data["bg_secondary"]});
+                """
+
+            self.label_frame.setStyleSheet(f"""
+                QFrame {{
+                    {bg_style}
                     border-bottom-left-radius: 12px;
                     border-bottom-right-radius: 12px;
                     border: 2px solid {self.theme_data["accent_primary"] if self.is_selected else self.theme_data["border"]};
@@ -143,8 +184,16 @@ class ThemePreviewCard(QFrame):
 
     def update_name_style(self):
         if self.name_label:
+            color = (
+                self.theme_data["accent_primary"]
+                if self.is_selected
+                else self.theme_data["text_primary"]
+            )
+            if self.theme_key == "black_gold" and not self.is_selected:
+                color = self.theme_data["text_secondary"]
+
             self.name_label.setStyleSheet(f"""
-                color: {self.theme_data["accent_primary"] if self.is_selected else self.theme_data["text_primary"]};
+                color: {color};
                 font-size: 13px;
                 font-weight: {"bold" if self.is_selected else "normal"};
                 background: transparent;
@@ -206,8 +255,8 @@ class SettingsTab(QWidget):
         theme_layout.addWidget(theme_desc)
 
         # Theme cards container
-        themes_frame = QFrame()
-        themes_frame.setStyleSheet(f"""
+        self.themes_frame = QFrame()
+        self.themes_frame.setStyleSheet(f"""
             QFrame {{
                 background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                     stop:0 {COLORS["bg_card"]},
@@ -216,7 +265,7 @@ class SettingsTab(QWidget):
                 border-radius: 16px;
             }}
         """)
-        themes_grid = QHBoxLayout(themes_frame)
+        themes_grid = QHBoxLayout(self.themes_frame)
         themes_grid.setContentsMargins(20, 20, 20, 20)
         themes_grid.setSpacing(20)
 
@@ -231,15 +280,17 @@ class SettingsTab(QWidget):
             themes_grid.addWidget(card)
 
         themes_grid.addStretch()
-        theme_layout.addWidget(themes_frame)
+        theme_layout.addWidget(self.themes_frame)
 
         layout.addWidget(theme_container)
 
         # Separator
-        sep1 = QFrame()
-        sep1.setFrameShape(QFrame.Shape.HLine)
-        sep1.setStyleSheet(f"background-color: {COLORS['border']}; max-height: 1px;")
-        layout.addWidget(sep1)
+        self.sep1 = QFrame()
+        self.sep1.setFrameShape(QFrame.Shape.HLine)
+        self.sep1.setStyleSheet(
+            f"background-color: {COLORS['border']}; max-height: 1px;"
+        )
+        layout.addWidget(self.sep1)
 
         # ============ GENERAL SECTION ============
         general_container = QWidget()
@@ -261,10 +312,12 @@ class SettingsTab(QWidget):
         layout.addWidget(general_container)
 
         # Separator
-        sep2 = QFrame()
-        sep2.setFrameShape(QFrame.Shape.HLine)
-        sep2.setStyleSheet(f"background-color: {COLORS['border']}; max-height: 1px;")
-        layout.addWidget(sep2)
+        self.sep2 = QFrame()
+        self.sep2.setFrameShape(QFrame.Shape.HLine)
+        self.sep2.setStyleSheet(
+            f"background-color: {COLORS['border']}; max-height: 1px;"
+        )
+        layout.addWidget(self.sep2)
 
         # ============ DOWNLOADS SECTION ============
         down_container = QWidget()
@@ -282,15 +335,15 @@ class SettingsTab(QWidget):
         path_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 14px;")
         down_layout.addWidget(path_label)
 
-        path_box = QFrame()
-        path_box.setStyleSheet(f"""
+        self.path_box = QFrame()
+        self.path_box.setStyleSheet(f"""
             background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
                 stop:0 {COLORS["bg_card"]},
                 stop:1 {COLORS["bg_secondary"]});
             border: 1px solid {COLORS["border"]};
             border-radius: 12px;
         """)
-        path_box_layout = QHBoxLayout(path_box)
+        path_box_layout = QHBoxLayout(self.path_box)
         path_box_layout.setContentsMargins(15, 10, 15, 10)
 
         self.path_display = QLabel(
@@ -308,14 +361,16 @@ class SettingsTab(QWidget):
         browse_btn.clicked.connect(self.browse_path)
         path_box_layout.addWidget(browse_btn)
 
-        down_layout.addWidget(path_box)
+        down_layout.addWidget(self.path_box)
         layout.addWidget(down_container)
 
         # Separator
-        sep3 = QFrame()
-        sep3.setFrameShape(QFrame.Shape.HLine)
-        sep3.setStyleSheet(f"background-color: {COLORS['border']}; max-height: 1px;")
-        layout.addWidget(sep3)
+        self.sep3 = QFrame()
+        self.sep3.setFrameShape(QFrame.Shape.HLine)
+        self.sep3.setStyleSheet(
+            f"background-color: {COLORS['border']}; max-height: 1px;"
+        )
+        layout.addWidget(self.sep3)
 
         # ============ EMULATOR SECTION ============
         emu_container = QWidget()
@@ -388,86 +443,40 @@ class SettingsTab(QWidget):
         )
 
     def on_theme_selected(self, theme_key):
-        # Update card selection states
-        for key, card in self.theme_cards.items():
-            card.set_selected(key == theme_key)
+        current_theme = self.settings_manager.get("theme", "default")
+        if theme_key == current_theme:
+            return
 
-        # Save theme preference
-        self.settings_manager.update_setting("theme", theme_key)
+        reply = QMessageBox.question(
+            self,
+            "Restart Required",
+            "Changing the theme requires restarting the application.\n\n"
+            "⚠️ WARNING: Any active downloads will be cancelled!\n\n"
+            "Do you want to proceed?",
+            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+            QMessageBox.StandardButton.No,
+        )
 
-        # Set the new theme globally
-        set_current_theme(theme_key)
+        if reply == QMessageBox.StandardButton.Yes:
+            # Update card selection states
+            for key, card in self.theme_cards.items():
+                card.set_selected(key == theme_key)
 
-        # Update the global COLORS dictionary
-        from ui.core.styles import update_colors
+            # Save theme preference
+            self.settings_manager.update_setting("theme", theme_key)
 
-        update_colors()
-
-        # Apply theme to the main window
-        if self.main_window:
-            # Generate fresh stylesheet with the new theme
-            new_stylesheet = generate_stylesheet(theme_key)
-
-            # Apply to entire application
-            self.main_window.setStyleSheet("")  # Clear first
-            QApplication.instance().processEvents()  # Process the clear
-            self.main_window.setStyleSheet(new_stylesheet)  # Apply new
-
-            # Force update all child widgets
-            self._recursive_update(self.main_window)
-
-            # Update sidebar specifically
-            if hasattr(self.main_window, "sidebar"):
-                self.main_window.sidebar.refresh_theme()
-
-            # Get fresh colors
-            from ui.core.styles import get_colors
-
-            colors = get_colors()
-
-            # Update specific components with inline styles
-            if hasattr(self.main_window, "content_container"):
-                self.main_window.content_container.setStyleSheet(
-                    f"QWidget#ContentArea {{ background-color: {colors['bg_primary']}; }}"
-                )
-
-            if hasattr(self.main_window, "page_title"):
-                self.main_window.page_title.setStyleSheet(
-                    f"font-size: 20px; font-weight: 800; color: {colors['text_primary']};"
-                )
-
-            if self.main_window.statusBar():
-                self.main_window.statusBar().setStyleSheet(
-                    f"background-color: {colors['bg_secondary']}; color: {colors['text_secondary']}; border-top: 1px solid {colors['border']};"
-                )
-
-            # Refresh settings tab colors
-            self.refresh_theme()
-
-            # Final full repaint
-            QApplication.instance().processEvents()
-            self.main_window.repaint()
-
-            # Emit signal
-            self.theme_changed.emit(theme_key)
-
-    def _recursive_update(self, widget):
-        """Recursively update all child widgets to apply new styles"""
-        widget.style().unpolish(widget)
-        widget.style().polish(widget)
-        widget.update()
-        for child in widget.findChildren(QWidget):
-            child.style().unpolish(child)
-            child.style().polish(child)
-            child.update()
+            # Restart application
+            QApplication.quit()
+            os.execl(sys.executable, sys.executable, *sys.argv)
 
     def refresh_theme(self):
         """Refresh all color references in the settings tab"""
-        from ui.core.styles import get_colors
+        from ui.core.styles import get_colors, get_current_theme
 
         colors = get_colors()
+        theme_key = get_current_theme()
 
-        # Update section titles
+        # Update section titles and containers
         for i in range(self.layout().count()):
             item = self.layout().itemAt(i)
             if item and item.widget():
@@ -506,6 +515,42 @@ class SettingsTab(QWidget):
                         color: {colors["text_primary"]};
                     """)
                     break
+
+        # Update specific containers
+        if hasattr(self, "themes_frame"):
+            self.themes_frame.setStyleSheet(f"""
+                QFrame {{
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 {colors["bg_card"]},
+                        stop:1 {colors["bg_secondary"]});
+                    border: 1px solid {colors["border"]};
+                    border-radius: 16px;
+                }}
+            """)
+
+        if hasattr(self, "path_box"):
+            self.path_box.setStyleSheet(f"""
+                QFrame {{
+                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                        stop:0 {colors["bg_card"]},
+                        stop:1 {colors["bg_secondary"]});
+                    border: 1px solid {colors["border"]};
+                    border-radius: 12px;
+                }}
+            """)
+
+        if hasattr(self, "sep1"):
+            self.sep1.setStyleSheet(
+                f"background-color: {colors['border']}; max-height: 1px;"
+            )
+        if hasattr(self, "sep2"):
+            self.sep2.setStyleSheet(
+                f"background-color: {colors['border']}; max-height: 1px;"
+            )
+        if hasattr(self, "sep3"):
+            self.sep3.setStyleSheet(
+                f"background-color: {colors['border']}; max-height: 1px;"
+            )
 
     def browse_path(self):
         path = QFileDialog.getExistingDirectory(

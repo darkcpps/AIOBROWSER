@@ -26,26 +26,26 @@ THEMES = {
         "glossy_shine": "rgba(255, 255, 255, 0.1)",
     },
     "black_gold": {
-        "name": "Black & Gold",
-        "bg_primary": "#000000",
-        "bg_secondary": "#0A0A0A",
-        "bg_card": "#0F0F0F",
-        "bg_card_hover": "#1A1A1A",
+        "name": "Royal Obsidian",
+        "bg_primary": "#040404",
+        "bg_secondary": "#000000",
+        "bg_card": "#0A0A0A",
+        "bg_card_hover": "#121212",
         "accent_primary": "#D4AF37",
-        "accent_secondary": "#FFD700",
-        "accent_glow": "rgba(212, 175, 55, 0.2)",
-        "accent_red": "#B22222",
-        "accent_red_hover": "#8B0000",
-        "accent_green": "#228B22",
-        "accent_green_hover": "#006400",
-        "text_primary": "#FFD700",
-        "text_secondary": "#D4AF37",
-        "text_muted": "#8B7020",
+        "accent_secondary": "#F9E076",
+        "accent_glow": "rgba(212, 175, 55, 0.4)",
+        "accent_red": "#991B1B",
+        "accent_red_hover": "#7F1D1D",
+        "accent_green": "#065F46",
+        "accent_green_hover": "#064E3B",
+        "text_primary": "#FFFFFF",
+        "text_secondary": "#F9E076",
+        "text_muted": "#8A6D1D",
         "border": "#1A1A1A",
         "border_hover": "#D4AF37",
-        "glossy_gradient_start": "#D4AF37",
-        "glossy_gradient_end": "#8B7020",
-        "glossy_shine": "rgba(255, 255, 255, 0.2)",
+        "glossy_gradient_start": "#F9E076",
+        "glossy_gradient_end": "#996515",
+        "glossy_shine": "rgba(255, 255, 255, 0.6)",
     },
 }
 
@@ -93,20 +93,125 @@ def generate_stylesheet(theme_name=None):
     else:
         colors = get_colors()
 
-    # Add white gloss overlay for black_gold theme
+    # Add white gloss overlay and premium particle simulation for black_gold theme
     gloss_overlay = ""
     if theme_name == "black_gold" or (
         not theme_name and _current_theme == "black_gold"
     ):
         gloss_overlay = f"""
-
 QWidget#ContentArea, QFrame#Card {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.08),
-        stop:0.5 {colors["bg_primary"]},
-        stop:1 rgba(255, 255, 255, 0.03));
+    background: qradialgradient(cx:0.5, cy:0, radius:1, fx:0.5, fy:0,
+        stop:0 rgba(212, 175, 55, 0.08),
+        stop:0.4 {colors["bg_primary"]},
+        stop:1 {colors["bg_secondary"]});
+    border: 1px solid rgba(212, 175, 55, 0.1);
+}}
+
+QLabel#ParticleBackground {{
+    background-color: transparent;
 }}
         """
+
+    # Define theme-specific component styles
+    if theme_name == "black_gold" or (
+        not theme_name and _current_theme == "black_gold"
+    ):
+        # Royal Obsidian specific styles
+        btn_style = f"""
+QPushButton {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["accent_secondary"]},
+        stop:0.2 rgba(255, 255, 255, 0.9),
+        stop:0.4 {colors["accent_primary"]},
+        stop:0.5 {colors["glossy_gradient_end"]},
+        stop:1 #4D3308);
+    color: #000000;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+}}
+
+QPushButton:hover {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 rgba(255, 255, 255, 0.3),
+        stop:0.1 {colors["accent_secondary"]},
+        stop:0.5 {colors["accent_secondary"]},
+        stop:0.9 {colors["glossy_gradient_start"]},
+        stop:1 {colors["glossy_gradient_start"]});
+    border: 1px solid {colors["accent_secondary"]};
+    color: #000000;
+}}
+"""
+        progress_chunk_style = f"""
+QProgressBar::chunk {{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 #996515,
+        stop:0.4 {colors["accent_secondary"]},
+        stop:0.5 #FFFFFF,
+        stop:0.6 {colors["accent_secondary"]},
+        stop:1 #996515);
+    border-radius: 9px;
+}}
+"""
+        checkbox_checked_style = f"""
+QCheckBox::indicator:checked {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 #FFFFFF,
+        stop:0.2 {colors["accent_secondary"]},
+        stop:0.6 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    border-color: #FFFFFF;
+}}
+"""
+    else:
+        # Default style
+        btn_style = f"""
+QPushButton {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["glossy_shine"]},
+        stop:0.1 {colors["glossy_gradient_start"]},
+        stop:0.5 {colors["glossy_gradient_start"]},
+        stop:0.9 {colors["glossy_gradient_end"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    color: white;
+    border: 1px solid {colors["accent_secondary"]};
+    padding: 8px 15px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 13px;
+}}
+
+QPushButton:hover {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["accent_secondary"]},
+        stop:0.4 {colors["accent_secondary"]},
+        stop:0.5 {colors["glossy_gradient_start"]},
+        stop:1 {colors["glossy_gradient_start"]});
+    border: 1px solid {colors["accent_secondary"]};
+}}
+"""
+        progress_chunk_style = f"""
+QProgressBar::chunk {{
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+        stop:0 {colors["glossy_gradient_end"]},
+        stop:0.3 {colors["accent_primary"]},
+        stop:0.5 {colors["accent_secondary"]},
+        stop:0.7 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    border-radius: 9px;
+}}
+"""
+        checkbox_checked_style = f"""
+QCheckBox::indicator:checked {{
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+        stop:0 {colors["accent_secondary"]},
+        stop:0.4 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
+    border-color: {colors["accent_primary"]};
+}}
+"""
 
     return f"""
 QMainWindow, QDialog, QWidget {{
@@ -144,31 +249,7 @@ QTabBar::tab:hover:!selected {{
     border-radius: 8px;
 }}
 
-QPushButton {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["glossy_shine"]},
-        stop:0.1 {colors["glossy_gradient_start"]},
-        stop:0.5 {colors["glossy_gradient_start"]},
-        stop:0.9 {colors["glossy_gradient_end"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    color: #000000;
-    border: 1px solid {colors["accent_secondary"]};
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-}}
-
-QPushButton:hover {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.3),
-        stop:0.1 {colors["accent_secondary"]},
-        stop:0.5 {colors["accent_secondary"]},
-        stop:0.9 {colors["glossy_gradient_start"]},
-        stop:1 {colors["glossy_gradient_start"]});
-    border: 1px solid {colors["accent_secondary"]};
-    color: #000000;
-}}
+{btn_style}
 
 QPushButton:pressed {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
@@ -249,17 +330,7 @@ QProgressBar {{
     height: 10px;
 }}
 
-QProgressBar::chunk {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 {colors["glossy_gradient_end"]},
-        stop:0.2 {colors["accent_primary"]},
-        stop:0.4 rgba(255, 255, 255, 0.3),
-        stop:0.5 {colors["accent_secondary"]},
-        stop:0.6 rgba(255, 255, 255, 0.3),
-        stop:0.8 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    border-radius: 9px;
-}}
+{progress_chunk_style}
 
 QLabel {{
     color: {colors["text_primary"]};
@@ -303,13 +374,7 @@ QCheckBox::indicator {{
         stop:1 {colors["bg_card"]});
 }}
 
-QCheckBox::indicator:checked {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["accent_secondary"]},
-        stop:0.4 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    border-color: {colors["accent_primary"]};
-}}
+{checkbox_checked_style}
 
 QCheckBox::indicator:hover {{
     border-color: {colors["accent_primary"]};

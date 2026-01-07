@@ -12,7 +12,11 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
-from ui.core.components import AnimatedStackedWidget, ModernSidebar
+from ui.core.components import (
+    AnimatedStackedWidget,
+    GoldParticleBackground,
+    ModernSidebar,
+)
 from ui.core.splash_screen import SplashScreen
 from ui.core.styles import (
     COLORS,
@@ -106,6 +110,12 @@ class GameSearchApp(QMainWindow):
         # Content Area
         self.content_container = QWidget()
         self.content_container.setObjectName("ContentArea")
+
+        # Add background particles if in black_gold theme
+        if self.settings_manager.get("theme", "default") == "black_gold":
+            self.content_particles = GoldParticleBackground(self.content_container)
+            self.content_particles.lower()
+
         self.content_container.setStyleSheet(
             f"QWidget#ContentArea {{ background-color: {COLORS['bg_primary']}; }}"
         )
@@ -156,6 +166,23 @@ class GameSearchApp(QMainWindow):
         central.setLayout(layout)
 
         self.sidebar.set_active("search")
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        if hasattr(self, "content_particles"):
+            self.content_particles.setGeometry(self.content_container.rect())
+
+    def refresh_content_particles(self):
+        """Toggle content area particles based on theme"""
+        is_gold = self.settings_manager.get("theme", "default") == "black_gold"
+        if is_gold:
+            if not hasattr(self, "content_particles"):
+                self.content_particles = GoldParticleBackground(self.content_container)
+                self.content_particles.lower()
+                self.content_particles.setGeometry(self.content_container.rect())
+            self.content_particles.show()
+        elif hasattr(self, "content_particles"):
+            self.content_particles.hide()
 
     def create_pagination_controls(
         self, layout, total_items, current_page, page_size, callback
