@@ -185,6 +185,38 @@ class GameSearchApp(QMainWindow):
         if hasattr(self, "content_particles"):
             self.content_particles.setGeometry(self.content_container.rect())
 
+    def closeEvent(self, event):
+        if hasattr(self, "downloads_tab") and self.downloads_tab.has_active_downloads():
+            reply = QMessageBox.question(
+                self,
+                "Warning: Active Downloads",
+                "There are downloads currently in progress.\n\n"
+                "If you close the application now, these downloads will be CANCELLED and incomplete files will be removed.\n\n"
+                "Are you sure you want to exit?",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
+                QMessageBox.StandardButton.No,
+            )
+
+            if reply == QMessageBox.StandardButton.Yes:
+                self.cleanup_active_downloads()
+                event.accept()
+            else:
+                event.ignore()
+        else:
+            event.accept()
+
+    def cleanup_active_downloads(self):
+        """Attempts to stop all active downloads before closing."""
+        if hasattr(self, "downloads_tab"):
+            for item in self.downloads_tab.items.values():
+                if not item.control_flags["stopped"]:
+                    item.control_flags["stopped"] = True
+
+            # Give threads a short moment to process the stop flag and delete files
+            loop = QEventLoop()
+            QTimer.singleShot(1000, loop.quit)
+            loop.exec()
+
     def refresh_content_particles(self):
         """Toggle content area particles based on theme"""
         is_gold = self.settings_manager.get("theme", "default") == "black_gold"

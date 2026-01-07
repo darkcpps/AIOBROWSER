@@ -1,15 +1,16 @@
 # ui/downloads.py
+from PyQt6.QtCore import Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
-    QWidget,
-    QVBoxLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QProgressBar,
     QPushButton,
     QScrollArea,
-    QFrame,
+    QVBoxLayout,
+    QWidget,
 )
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
+
 from ui.core.styles import COLORS
 
 
@@ -146,8 +147,9 @@ class DownloadItemWidget(QFrame):
         # If already stopped or finished (indicated by disabled or special status), remove it
         if (
             self.control_flags["stopped"]
-            or self.status_label.text().startswith("✅")
+            or self.status_label.text() == "Finished"
             or self.status_label.text() == "Stopped"
+            or self.status_label.text() == "Error"
         ):
             self.removed.emit(self)
         else:
@@ -160,11 +162,29 @@ class DownloadItemWidget(QFrame):
 
     @pyqtSlot(str, float)
     def update_progress(self, status_msg, progress):
-        # We need to parse status_msg potentially or just display it
-        # downloader.py sends something like "100 MB / 500 MB (20%) • 2 MB/s • ETA: 5m"
-        self.status_label.setText("Downloading")
         self.info_label.setText(status_msg)
         self.progress_bar.setValue(int(progress * 100))
+
+        # Check msg for status indicators
+        if "Complete" in status_msg or "✅" in status_msg:
+            self.status_label.setText("Finished")
+            self.pause_btn.hide()
+            self.stop_btn.setText("🗑")
+        elif "Error" in status_msg or "❌" in status_msg:
+            self.status_label.setText("Error")
+            self.control_flags["stopped"] = True
+            self.stop_btn.setText("🗑")
+            self.pause_btn.hide()
+        elif "Stopped" in status_msg or "⏹" in status_msg:
+            self.status_label.setText("Stopped")
+            self.control_flags["stopped"] = True
+            self.stop_btn.setText("🗑")
+            self.pause_btn.hide()
+        elif self.control_flags["paused"]:
+            self.status_label.setText("Paused")
+        else:
+            self.status_label.setText("Downloading")
+
         if not self.btn_frame.isVisible():
             self.btn_frame.show()
 
@@ -206,16 +226,6 @@ class DownloadsPage(QWidget):
         self.empty_label.setStyleSheet(
             f"color: {COLORS['text_muted']}; font-size: 14px;"
         )
-        self.container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self.container_layout.setSpacing(15)
-        self.container_layout.setContentsMargins(0, 0, 10, 0)
-
-        self.scroll.setWidget(self.container)
-        layout.addWidget(self.scroll)
-
-        # Empty state message
-        self.empty_label = QLabel("No active downloads. Go find some games!")
-        self.empty_label.setStyleSheet(f"color: {COLORS['text_muted']}; font-size: 14px;")
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.container_layout.addWidget(self.empty_label)
 
@@ -248,3 +258,15 @@ class DownloadsPage(QWidget):
 
         if not self.items:
             self.empty_label.show()
+
+    def has_active_downloads(self):
+        """Check if there are any downloads currently running (not finished/stopped)"""
+        for item in self.items.values():
+            status = item.status_label.text()
+            if (
+                status == "Downloading"
+                or status == "Paused"
+                or status == "Initializing..."
+            ):
+                return True
+        return False

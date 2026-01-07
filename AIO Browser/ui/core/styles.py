@@ -116,7 +116,7 @@ QLabel#ParticleBackground {{
     if theme_name == "black_gold" or (
         not theme_name and _current_theme == "black_gold"
     ):
-        # Royal Obsidian specific styles
+        # Luxury specific styles
         btn_style = f"""
 QPushButton {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
