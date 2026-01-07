@@ -15,6 +15,7 @@ An all-in-one software solution designed to handle the complicated stuff, making
 - Bugs are expected. If you find one, please report it in GitHub Issues.
 
 ## 🗺️ Planned features
+- **Greenluma and Onlinefix Patcher** - Add games on steam and unlock DLC and Online.
 - **Video downloading:** YouTube videos, movies, series.
 - **Streaming videos:** Stream movies and series inside the app.
 - **Built-in BitTorrent:** Easier torrenting for beginners.
