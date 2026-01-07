@@ -1,8 +1,17 @@
 # ui/downloads.py
-from PyQt6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel, 
-                             QProgressBar, QPushButton, QScrollArea, QFrame)
-from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot
+from PyQt6.QtWidgets import (
+    QWidget,
+    QVBoxLayout,
+    QHBoxLayout,
+    QLabel,
+    QProgressBar,
+    QPushButton,
+    QScrollArea,
+    QFrame,
+)
+from PyQt6.QtCore import Qt, pyqtSignal, pyqtSlot, QTimer
 from ui.core.styles import COLORS
+
 
 class DownloadItemWidget(QFrame):
     removed = pyqtSignal(object)
@@ -33,15 +42,19 @@ class DownloadItemWidget(QFrame):
 
         # Header: Title and Status
         header_layout = QHBoxLayout()
-        
+
         self.title_label = QLabel(self.title)
-        self.title_label.setStyleSheet(f"font-size: 15px; font-weight: bold; color: {COLORS['text_primary']};")
+        self.title_label.setStyleSheet(
+            f"font-size: 15px; font-weight: bold; color: {COLORS['text_primary']};"
+        )
         header_layout.addWidget(self.title_label, 1)
 
         self.status_label = QLabel("Initializing...")
-        self.status_label.setStyleSheet(f"font-size: 12px; color: {COLORS['text_secondary']};")
+        self.status_label.setStyleSheet(
+            f"font-size: 12px; color: {COLORS['text_secondary']};"
+        )
         header_layout.addWidget(self.status_label)
-        
+
         main_layout.addLayout(header_layout)
 
         # Progress Bar
@@ -56,8 +69,8 @@ class DownloadItemWidget(QFrame):
                 color: transparent;
             }}
             QProgressBar::chunk {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 {COLORS["accent_primary"]}, 
+                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {COLORS["accent_primary"]},
                     stop:1 {COLORS["accent_secondary"]});
                 border-radius: 4px;
             }}
@@ -66,9 +79,11 @@ class DownloadItemWidget(QFrame):
 
         # Bottom section: Speed, ETA, and Controls
         bottom_layout = QHBoxLayout()
-        
+
         self.info_label = QLabel("Waiting for link resolution...")
-        self.info_label.setStyleSheet(f"font-size: 11px; color: {COLORS['text_muted']};")
+        self.info_label.setStyleSheet(
+            f"font-size: 11px; color: {COLORS['text_muted']};"
+        )
         bottom_layout.addWidget(self.info_label, 1)
 
         self.btn_frame = QWidget()
@@ -90,9 +105,9 @@ class DownloadItemWidget(QFrame):
         self.stop_btn.clicked.connect(self.handle_stop_or_remove)
         self.btn_layout.addWidget(self.stop_btn)
 
-        self.btn_frame.hide() # Hide until download starts
+        self.btn_frame.hide()  # Hide until download starts
         bottom_layout.addWidget(self.btn_frame)
-        
+
         main_layout.addLayout(bottom_layout)
 
     def get_button_style(self, bg):
@@ -129,14 +144,18 @@ class DownloadItemWidget(QFrame):
 
     def handle_stop_or_remove(self):
         # If already stopped or finished (indicated by disabled or special status), remove it
-        if self.control_flags["stopped"] or self.status_label.text().startswith("✅") or self.status_label.text() == "Stopped":
+        if (
+            self.control_flags["stopped"]
+            or self.status_label.text().startswith("✅")
+            or self.status_label.text() == "Stopped"
+        ):
             self.removed.emit(self)
         else:
             # First click stops it
             self.stop_download()
             # Change icon to a "bin" or just keep X for second click
-            self.stop_btn.setText("🗑") 
-            self.setEnabled(True) # Re-enable so they can click the trash icon
+            self.stop_btn.setText("🗑")
+            self.setEnabled(True)  # Re-enable so they can click the trash icon
             self.pause_btn.hide()
 
     @pyqtSlot(str, float)
@@ -148,6 +167,7 @@ class DownloadItemWidget(QFrame):
         self.progress_bar.setValue(int(progress * 100))
         if not self.btn_frame.isVisible():
             self.btn_frame.show()
+
 
 class DownloadsPage(QWidget):
     def __init__(self, parent=None):
@@ -162,20 +182,34 @@ class DownloadsPage(QWidget):
 
         # Header
         header = QLabel("Active Downloads")
-        header.setStyleSheet(f"font-size: 24px; font-weight: 800; color: {COLORS['text_primary']};")
+        header.setStyleSheet(
+            f"font-size: 24px; font-weight: 800; color: {COLORS['text_primary']};"
+        )
         layout.addWidget(header)
 
         # Scroll Area
         self.scroll = QScrollArea()
         self.scroll.setWidgetResizable(True)
         self.scroll.setStyleSheet("background: transparent;")
-        
+
         self.container = QWidget()
         self.container_layout = QVBoxLayout(self.container)
         self.container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         self.container_layout.setSpacing(15)
         self.container_layout.setContentsMargins(0, 0, 10, 0)
-        
+
+        self.scroll.setWidget(self.container)
+        layout.addWidget(self.scroll)
+
+        # Empty state message
+        self.empty_label = QLabel("No active downloads. Go find some games!")
+        self.empty_label.setStyleSheet(
+            f"color: {COLORS['text_muted']}; font-size: 14px;"
+        )
+        self.container_layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self.container_layout.setSpacing(15)
+        self.container_layout.setContentsMargins(0, 0, 10, 0)
+
         self.scroll.setWidget(self.container)
         layout.addWidget(self.scroll)
 
@@ -188,7 +222,7 @@ class DownloadsPage(QWidget):
     def add_download(self, download_id, title):
         if self.empty_label.isVisible():
             self.empty_label.hide()
-            
+
         item = DownloadItemWidget(title)
         item.removed.connect(lambda i: self.remove_download_by_widget(i, download_id))
         self.items[download_id] = item
@@ -199,7 +233,7 @@ class DownloadsPage(QWidget):
         if download_id in self.items:
             del self.items[download_id]
         widget.deleteLater()
-        
+
         # Check if empty
         QTimer.singleShot(100, self.check_empty)
 
@@ -211,6 +245,6 @@ class DownloadsPage(QWidget):
         if download_id in self.items:
             item = self.items.pop(download_id)
             item.deleteLater()
-            
+
         if not self.items:
             self.empty_label.show()
