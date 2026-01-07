@@ -3,7 +3,6 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 from ui.tabs.patcher.goldberg_tab import GoldbergTab
-from ui.tabs.patcher.greenluma_tab import GreenLumaTab
 
 class PatcherTab(QWidget):
     def __init__(self, parent=None):
@@ -21,11 +20,7 @@ class PatcherTab(QWidget):
         # Goldberg sub-tab
         self.goldberg_tab = GoldbergTab(self.main_app)
         
-        # GreenLuma sub-tab
-        self.greenluma_tab = GreenLumaTab(self.main_app)
-
         self.patcher_tabs.addTab(self.goldberg_tab, "Goldberg (Emulator)")
-        self.patcher_tabs.addTab(self.greenluma_tab, "GreenLuma (DLC/Steam Unlocker)")
 
         main_layout.addWidget(self.patcher_tabs)
         self.setLayout(main_layout)
