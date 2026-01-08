@@ -1,0 +1,23 @@
+# themes/midnight_purple.py
+MIDNIGHT_PURPLE = {
+    "name": "Midnight Purple",
+    "bg_primary": "#13111C",
+    "bg_secondary": "#0A090F",
+    "bg_card": "#1E1B2E",
+    "bg_card_hover": "#252238",
+    "accent_primary": "#8B5CF6",
+    "accent_secondary": "#A78BFA",
+    "accent_glow": "rgba(139, 92, 246, 0.25)",
+    "accent_red": "#F43F5E",
+    "accent_red_hover": "#E11D48",
+    "accent_green": "#10B981",
+    "accent_green_hover": "#059669",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#9CA3AF",
+    "text_muted": "#6B7280",
+    "border": "#2E2B3D",
+    "border_hover": "#4C4863",
+    "glossy_gradient_start": "#8B5CF6",
+    "glossy_gradient_end": "#6D28D9",
+    "glossy_shine": "rgba(255, 255, 255, 0.15)",
+}

@@ -1,0 +1,23 @@
+# themes/black_gold.py
+BLACK_GOLD = {
+    "name": "Luxury",
+    "bg_primary": "#040404",
+    "bg_secondary": "#000000",
+    "bg_card": "#0A0A0A",
+    "bg_card_hover": "#121212",
+    "accent_primary": "#D4AF37",
+    "accent_secondary": "#F9E076",
+    "accent_glow": "rgba(212, 175, 55, 0.4)",
+    "accent_red": "#991B1B",
+    "accent_red_hover": "#7F1D1D",
+    "accent_green": "#065F46",
+    "accent_green_hover": "#064E3B",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#F9E076",
+    "text_muted": "#8A6D1D",
+    "border": "#1A1A1A",
+    "border_hover": "#D4AF37",
+    "glossy_gradient_start": "#F9E076",
+    "glossy_gradient_end": "#996515",
+    "glossy_shine": "rgba(255, 255, 255, 0.6)",
+}

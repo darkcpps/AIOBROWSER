@@ -7,7 +7,8 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 from tools.ffmpeg_setup import ensure_ffmpeg
 
-from ui.core.styles import COLORS, get_colors
+from ui.core.styles import get_colors
+from ui.tabs.youtube import VideoTab, AudioTab
 
 try:
     from core.youtube_downloader import YoutubeDownloader, get_video_info
@@ -40,227 +41,9 @@ class YoutubeTab(QWidget):
             QTabWidget::pane {{ border: none; margin: 0px; padding: 0px; background: transparent; }}
         """)
 
-        # Video Tab
-        self.video_tab = QWidget()
-        video_layout = QVBoxLayout(self.video_tab)
-        video_layout.setContentsMargins(40, 40, 40, 40)
-        video_layout.setSpacing(20)
-
-        # Video Header
-        video_header = QHBoxLayout()
-        video_title_layout = QVBoxLayout()
-
-        video_title = QLabel("📹  Video Download")
-        video_title.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {colors['text_primary']};"
-        )
-        video_title_layout.addWidget(video_title)
-
-        video_subtitle = QLabel("Download YouTube videos in your preferred quality.")
-        video_subtitle.setStyleSheet(f"font-size: 14px; color: {colors['text_secondary']};")
-        video_title_layout.addWidget(video_subtitle)
-        video_header.addLayout(video_title_layout)
-        video_header.addStretch()
-        video_layout.addLayout(video_header)
-
-        # Video URL Input Card
-        video_input_card = QFrame()
-        video_input_card.setObjectName("Card")
-        video_input_card.setStyleSheet(f"""
-            QFrame#Card {{
-                background-color: {colors['bg_secondary']};
-                border: 1px solid {colors['border']};
-                border-radius: 12px;
-            }}
-        """)
-        video_input_layout = QVBoxLayout(video_input_card)
-        video_input_layout.setContentsMargins(20, 20, 20, 20)
-        video_input_layout.setSpacing(15)
-
-        self.video_url_input = QLineEdit()
-        self.video_url_input.setPlaceholderText("https://www.youtube.com/watch?v=...")
-        self.video_url_input.setFixedHeight(45)
-        self.video_url_input.setStyleSheet(
-            f"background-color: {colors['bg_primary']}; border: 1px solid {colors['border']}; border-radius: 8px; padding: 0 15px;"
-        )
-        video_input_layout.addWidget(self.video_url_input)
-
-        video_layout.addWidget(video_input_card)
-
-        # Video Quality Selection Card
-        video_quality_card = QFrame()
-        video_quality_card.setObjectName("QualityCard")
-        video_quality_card.setStyleSheet(f"""
-            QFrame#QualityCard {{
-                background-color: {colors['bg_secondary']};
-                border: 1px solid {colors['border']};
-                border-radius: 12px;
-            }}
-        """)
-        video_quality_layout = QVBoxLayout(video_quality_card)
-        video_quality_layout.setContentsMargins(20, 20, 20, 20)
-        video_quality_layout.setSpacing(15)
-
-        quality_label = QLabel("Select Video Quality")
-        quality_label.setStyleSheet(f"color: {colors['text_primary']}; font-weight: 700; font-size: 16px;")
-        video_quality_layout.addWidget(quality_label)
-
-        # Video quality buttons grid
-        self.video_quality_group = QButtonGroup(self)
-        video_qualities = ["Best Available", "1080p", "720p", "480p", "360p"]
-        video_buttons_layout = QGridLayout()
-        video_buttons_layout.setSpacing(10)
-
-        for idx, quality in enumerate(video_qualities):
-            btn = QPushButton(quality)
-            btn.setCheckable(True)
-            btn.setFixedHeight(50)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: {colors['bg_primary']};
-                    color: {colors['text_primary']};
-                    border: 2px solid {colors['border']};
-                    border-radius: 10px;
-                    font-weight: 600;
-                    font-size: 14px;
-                }}
-                QPushButton:hover {{
-                    background: {colors['bg_card_hover']};
-                    border: 2px solid {colors['accent_primary']};
-                }}
-                QPushButton:checked {{
-                    background: {colors['accent_primary']};
-                    color: white;
-                    border: 2px solid {colors['accent_primary']};
-                }}
-            """)
-            self.video_quality_group.addButton(btn)
-            row = idx // 3
-            col = idx % 3
-            video_buttons_layout.addWidget(btn, row, col)
-
-        self.video_quality_group.buttons()[0].setChecked(True)
-        video_quality_layout.addLayout(video_buttons_layout)
-        video_layout.addWidget(video_quality_card)
-
-        # Video Download Button
-        self.video_download_btn = QPushButton("🚀  Start Download")
-        self.video_download_btn.setFixedHeight(50)
-        self.video_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.video_download_btn.clicked.connect(lambda: self.start_download_flow("video"))
-        video_layout.addWidget(self.video_download_btn)
-        video_layout.addStretch()
-
-        # Audio Tab
-        self.audio_tab = QWidget()
-        audio_layout = QVBoxLayout(self.audio_tab)
-        audio_layout.setContentsMargins(40, 40, 40, 40)
-        audio_layout.setSpacing(20)
-
-        # Audio Header
-        audio_header = QHBoxLayout()
-        audio_title_layout = QVBoxLayout()
-
-        audio_title = QLabel("🎵  Audio Download")
-        audio_title.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {colors['text_primary']};"
-        )
-        audio_title_layout.addWidget(audio_title)
-
-        audio_subtitle = QLabel("Extract high-quality MP3 audio from YouTube videos.")
-        audio_subtitle.setStyleSheet(f"font-size: 14px; color: {colors['text_secondary']};")
-        audio_title_layout.addWidget(audio_subtitle)
-        audio_header.addLayout(audio_title_layout)
-        audio_header.addStretch()
-        audio_layout.addLayout(audio_header)
-
-        # Audio URL Input Card
-        audio_input_card = QFrame()
-        audio_input_card.setObjectName("Card")
-        audio_input_card.setStyleSheet(f"""
-            QFrame#Card {{
-                background-color: {colors['bg_secondary']};
-                border: 1px solid {colors['border']};
-                border-radius: 12px;
-            }}
-        """)
-        audio_input_layout = QVBoxLayout(audio_input_card)
-        audio_input_layout.setContentsMargins(20, 20, 20, 20)
-        audio_input_layout.setSpacing(15)
-
-        self.audio_url_input = QLineEdit()
-        self.audio_url_input.setPlaceholderText("https://www.youtube.com/watch?v=...")
-        self.audio_url_input.setFixedHeight(45)
-        self.audio_url_input.setStyleSheet(
-            f"background-color: {colors['bg_primary']}; border: 1px solid {colors['border']}; border-radius: 8px; padding: 0 15px;"
-        )
-        audio_input_layout.addWidget(self.audio_url_input)
-
-        audio_layout.addWidget(audio_input_card)
-
-        # Audio Quality Selection Card
-        audio_quality_card = QFrame()
-        audio_quality_card.setObjectName("QualityCard")
-        audio_quality_card.setStyleSheet(f"""
-            QFrame#QualityCard {{
-                background-color: {colors['bg_secondary']};
-                border: 1px solid {colors['border']};
-                border-radius: 12px;
-            }}
-        """)
-        audio_quality_layout = QVBoxLayout(audio_quality_card)
-        audio_quality_layout.setContentsMargins(20, 20, 20, 20)
-        audio_quality_layout.setSpacing(15)
-
-        bitrate_label = QLabel("Select Audio Bitrate")
-        bitrate_label.setStyleSheet(f"color: {colors['text_primary']}; font-weight: 700; font-size: 16px;")
-        audio_quality_layout.addWidget(bitrate_label)
-
-        # Audio bitrate buttons
-        self.audio_quality_group = QButtonGroup(self)
-        audio_qualities = ["320kbps", "192kbps", "128kbps"]
-        audio_buttons_layout = QHBoxLayout()
-        audio_buttons_layout.setSpacing(10)
-
-        for quality in audio_qualities:
-            btn = QPushButton(quality)
-            btn.setCheckable(True)
-            btn.setFixedHeight(50)
-            btn.setCursor(Qt.CursorShape.PointingHandCursor)
-            btn.setStyleSheet(f"""
-                QPushButton {{
-                    background: {colors['bg_primary']};
-                    color: {colors['text_primary']};
-                    border: 2px solid {colors['border']};
-                    border-radius: 10px;
-                    font-weight: 600;
-                    font-size: 14px;
-                }}
-                QPushButton:hover {{
-                    background: {colors['bg_card_hover']};
-                    border: 2px solid {colors['accent_primary']};
-                }}
-                QPushButton:checked {{
-                    background: {colors['accent_primary']};
-                    color: white;
-                    border: 2px solid {colors['accent_primary']};
-                }}
-            """)
-            self.audio_quality_group.addButton(btn)
-            audio_buttons_layout.addWidget(btn)
-
-        self.audio_quality_group.buttons()[0].setChecked(True)
-        audio_quality_layout.addLayout(audio_buttons_layout)
-        audio_layout.addWidget(audio_quality_card)
-
-        # Audio Download Button
-        self.audio_download_btn = QPushButton("🚀  Start Download")
-        self.audio_download_btn.setFixedHeight(50)
-        self.audio_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.audio_download_btn.clicked.connect(lambda: self.start_download_flow("audio"))
-        audio_layout.addWidget(self.audio_download_btn)
-        audio_layout.addStretch()
+        # Create Video and Audio tabs
+        self.video_tab = VideoTab(self)
+        self.audio_tab = AudioTab(self)
 
         # Add tabs to tab widget
         self.tab_widget.addTab(self.video_tab, "Video")
@@ -348,29 +131,21 @@ class YoutubeTab(QWidget):
             )
             return
 
-        # Get URL from the appropriate tab's input field
+        # Get URL from the appropriate tab
         if mode == "video":
-            url = self.video_url_input.text().strip()
+            url = self.video_tab.get_url()
+            quality = self.video_tab.get_quality()
         else:  # audio
-            url = self.audio_url_input.text().strip()
+            url = self.audio_tab.get_url()
+            quality = self.audio_tab.get_quality()
 
         if not url:
             QMessageBox.warning(self, "Error", "Please enter a valid YouTube URL.")
             return
 
-        # Get selected quality from appropriate button group
-        if mode == "video":
-            selected_btn = self.video_quality_group.checkedButton()
-            quality = selected_btn.text() if selected_btn else "Best Available"
-        else:  # audio
-            selected_btn = self.audio_quality_group.checkedButton()
-            quality = selected_btn.text() if selected_btn else "320kbps"
-
         # Prepare UI
-        self.video_download_btn.setEnabled(False)
-        self.audio_download_btn.setEnabled(False)
-        self.video_url_input.setEnabled(False)
-        self.audio_url_input.setEnabled(False)
+        self.video_tab.set_enabled(False)
+        self.audio_tab.set_enabled(False)
         self.tab_widget.setEnabled(False)
         self.progress_container.show()
         self.cancel_btn.setEnabled(True)
@@ -415,10 +190,8 @@ class YoutubeTab(QWidget):
         )
 
         if not save_path:
-            self.video_download_btn.setEnabled(True)
-            self.audio_download_btn.setEnabled(True)
-            self.video_url_input.setEnabled(True)
-            self.audio_url_input.setEnabled(True)
+            self.video_tab.set_enabled(True)
+            self.audio_tab.set_enabled(True)
             self.tab_widget.setEnabled(True)
             self.progress_container.hide()
             return
@@ -460,10 +233,8 @@ class YoutubeTab(QWidget):
 
     @pyqtSlot(str, str)
     def finalize_download(self, result, title):
-        self.video_download_btn.setEnabled(True)
-        self.audio_download_btn.setEnabled(True)
-        self.video_url_input.setEnabled(True)
-        self.audio_url_input.setEnabled(True)
+        self.video_tab.set_enabled(True)
+        self.audio_tab.set_enabled(True)
         self.tab_widget.setEnabled(True)
 
         if result == "SUCCESS":

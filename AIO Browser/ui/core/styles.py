@@ -1,89 +1,13 @@
 # styles.py
 from PyQt6.QtGui import QColor
-
-# Theme Definitions
-THEMES = {
-    "default": {
-        "name": "Midnight Purple",
-        "bg_primary": "#13111C",
-        "bg_secondary": "#0A090F",
-        "bg_card": "#1E1B2E",
-        "bg_card_hover": "#252238",
-        "accent_primary": "#8B5CF6",
-        "accent_secondary": "#A78BFA",
-        "accent_glow": "rgba(139, 92, 246, 0.25)",
-        "accent_red": "#F43F5E",
-        "accent_red_hover": "#E11D48",
-        "accent_green": "#10B981",
-        "accent_green_hover": "#059669",
-        "text_primary": "#FFFFFF",
-        "text_secondary": "#9CA3AF",
-        "text_muted": "#6B7280",
-        "border": "#2E2B3D",
-        "border_hover": "#4C4863",
-        "glossy_gradient_start": "#8B5CF6",
-        "glossy_gradient_end": "#6D28D9",
-        "glossy_shine": "rgba(255, 255, 255, 0.15)",
-    },
-    "black_gold": {
-        "name": "Luxury",
-        "bg_primary": "#040404",
-        "bg_secondary": "#000000",
-        "bg_card": "#0A0A0A",
-        "bg_card_hover": "#121212",
-        "accent_primary": "#D4AF37",
-        "accent_secondary": "#F9E076",
-        "accent_glow": "rgba(212, 175, 55, 0.4)",
-        "accent_red": "#991B1B",
-        "accent_red_hover": "#7F1D1D",
-        "accent_green": "#065F46",
-        "accent_green_hover": "#064E3B",
-        "text_primary": "#FFFFFF",
-        "text_secondary": "#F9E076",
-        "text_muted": "#8A6D1D",
-        "border": "#1A1A1A",
-        "border_hover": "#D4AF37",
-        "glossy_gradient_start": "#F9E076",
-        "glossy_gradient_end": "#996515",
-        "glossy_shine": "rgba(255, 255, 255, 0.6)",
-    },
-}
-
-# Current active theme (default)
-_current_theme = "default"
-
-
-def get_current_theme():
-    return _current_theme
-
-
-def set_current_theme(theme_name):
-    global _current_theme
-    if theme_name in THEMES:
-        _current_theme = theme_name
-        return True
-    return False
-
-
-def get_colors():
-    return THEMES.get(_current_theme, THEMES["default"])
-
-
-# For backward compatibility - create a copy, not a reference
-COLORS = dict(THEMES["default"])
-
-
-def update_colors():
-    global COLORS
-    # Update all keys in the COLORS dictionary with current theme
-    new_colors = get_colors()
-    # Remove keys that don't exist in new theme
-    for key in list(COLORS.keys()):
-        if key not in new_colors:
-            del COLORS[key]
-    # Update/add all keys from new theme
-    for key, value in new_colors.items():
-        COLORS[key] = value
+from ui.themes import (
+    THEMES,
+    get_current_theme,
+    set_current_theme,
+    get_colors,
+    COLORS,
+    update_colors,
+)
 
 
 def generate_stylesheet(theme_name=None):
