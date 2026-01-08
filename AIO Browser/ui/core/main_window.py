@@ -32,8 +32,8 @@ from ui.tabs.info_tab import InfoTab
 from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.search_tab import SearchTab
 from ui.tabs.settings_tab import SettingsTab
-from ui.tabs.youtube_tab import YoutubeTab
-from ui.tabs.monochrome_tab import MonochromeTab
+from ui.tabs.video_hub import VideoHub
+from ui.tabs.audio_hub import AudioHub
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -167,11 +167,11 @@ class GameSearchApp(QMainWindow):
         self.patcher_tab = PatcherTab(self)
         self.main_stack.addWidget(self.patcher_tab)
 
-        self.youtube_tab = YoutubeTab(self)
-        self.main_stack.addWidget(self.youtube_tab)
+        self.video_tab = VideoHub(self)
+        self.main_stack.addWidget(self.video_tab)
 
-        self.monochrome_tab = MonochromeTab(self)
-        self.main_stack.addWidget(self.monochrome_tab)
+        self.audio_tab = AudioHub(self)
+        self.main_stack.addWidget(self.audio_tab)
 
         self.info_tab = InfoTab(self)
         self.main_stack.addWidget(self.info_tab)

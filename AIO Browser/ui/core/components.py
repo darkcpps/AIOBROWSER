@@ -865,8 +865,8 @@ class ModernSidebar(QFrame):
         # Navigation
         self.add_nav_item("search", "🔍  Search")
         self.add_nav_item("patcher", "🛠  Patcher")
-        self.add_nav_item("youtube", "🎥  YouTube Downloader")
-        self.add_nav_item("monochrome", "🎧  Monochrome")
+        self.add_nav_item("video", "🎥  Video")
+        self.add_nav_item("audio", "🎧  Audio")
 
         layout.addStretch()
 
@@ -895,12 +895,12 @@ class ModernSidebar(QFrame):
         elif key == "patcher":
             self.parent.main_stack.setCurrentIndex(2)
             self.parent.page_title.setText("Steam Patcher")
-        elif key == "youtube":
+        elif key == "video":
             self.parent.main_stack.setCurrentIndex(3)
-            self.parent.page_title.setText("YouTube Downloader")
-        elif key == "monochrome":
+            self.parent.page_title.setText("Video")
+        elif key == "audio":
             self.parent.main_stack.setCurrentIndex(4)
-            self.parent.page_title.setText("Monochrome Downloader")
+            self.parent.page_title.setText("Audio")
         elif key == "info":
             self.parent.main_stack.setCurrentIndex(5)
             self.parent.page_title.setText("Information")

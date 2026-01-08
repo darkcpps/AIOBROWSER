@@ -34,8 +34,28 @@ class MonochromeAPIError(Exception):
 
 # Monochrome API Configuration
 MONOCHROME_API_BASE = "https://monochrome-api.samidy.com"
-# Fallback proxy (used when Monochrome cannot provide a stream)
-TIDAL_FALLBACK_BASE = "https://tidal-api.binimum.org"
+
+# Default fallbacks (used if no proxy file is present)
+DEFAULT_MONOCHROME_FALLBACKS = [
+    "https://tidal-api.binimum.org"
+]
+
+# Load fallback list from `monochrome_proxies.json` (optional)
+try:
+    _proxies_path = Path(__file__).resolve().parents[1] / "monochrome_proxies.json"
+    if _proxies_path.exists():
+        with open(_proxies_path, "r", encoding="utf-8") as _f:
+            _proxies = json.load(_f)
+            if isinstance(_proxies, list):
+                MONOCHROME_FALLBACKS = _proxies
+            else:
+                print("[MONOCHROME] monochrome_proxies.json must contain a JSON array; using defaults")
+                MONOCHROME_FALLBACKS = DEFAULT_MONOCHROME_FALLBACKS
+    else:
+        MONOCHROME_FALLBACKS = DEFAULT_MONOCHROME_FALLBACKS
+except Exception as e:
+    print(f"[MONOCHROME] Failed to load monochrome_proxies.json for fallbacks: {e}")
+    MONOCHROME_FALLBACKS = DEFAULT_MONOCHROME_FALLBACKS
 
 AudioQuality = Literal["LOW", "HIGH", "LOSSLESS", "HI_RES"]
 
@@ -58,7 +78,12 @@ class MonochromeAPI:
         print(f"[MONOCHROME] Request params: {params}")
 
         try:
-            response = self.session.get(url, params=params, timeout=30)
+            # Add explicit headers for compatibility with some proxies/APIs
+            headers = {
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Referer': 'https://monochrome-api.samidy.com/'
+            }
+            response = self.session.get(url, params=params, headers=headers, timeout=30)
             status = response.status_code
             text = response.text
             print(f"[MONOCHROME] Response status: {status}")
@@ -245,24 +270,39 @@ class MonochromeAPI:
         except MonochromeAPIError as primary_err:
             print(f"[MONOCHROME] Primary API failed: {primary_err}")
 
-            # Fallback: try the tidal proxy's /track/ endpoint which often provides stream info
-            try:
-                fallback_url = f"{TIDAL_FALLBACK_BASE}/track/"
-                print(f"[FALLBACK] Requesting fallback: {fallback_url} with params: {params}")
-                resp = self.session.get(fallback_url, params=params, timeout=30)
-                print(f"[FALLBACK] Response status: {resp.status_code}")
-                resp.raise_for_status()
-                fallback_data = resp.json()
-                print(f"[FALLBACK] Fallback returned data")
+            # Try configured fallback proxies (if Monochrome fails)
+            if not MONOCHROME_FALLBACKS:
+                raise MonochromeAPIError(f"Failed to obtain stream from Monochrome API: {primary_err}") from primary_err
 
-                # Normalize shape
-                if isinstance(fallback_data, dict) and "data" in fallback_data:
-                    return fallback_data.get("data")
-                return fallback_data
-            except Exception as fallback_err:
-                print(f"[FALLBACK] Fallback failed: {fallback_err}")
-                # Surface combined failure for debugging
-                raise Exception(f"Failed to obtain stream from Monochrome API: {primary_err}; Fallback also failed: {fallback_err}") from fallback_err
+            last_err = None
+            for fallback_base in MONOCHROME_FALLBACKS:
+                try:
+                    fallback_url = f"{fallback_base.rstrip('/')}/track/"
+                    print(f"[FALLBACK] Trying fallback: {fallback_url} with params: {params}")
+
+                    # Use headers similar to the primary requests for compatibility
+                    headers = {
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                        'Referer': 'https://monochrome-api.samidy.com/'
+                    }
+
+                    resp = self.session.get(fallback_url, params=params, headers=headers, timeout=30)
+                    print(f"[FALLBACK] Response status: {resp.status_code}")
+                    resp.raise_for_status()
+                    fallback_data = resp.json()
+                    print(f"[FALLBACK] Fallback returned data")
+
+                    # Normalize shape
+                    if isinstance(fallback_data, dict) and "data" in fallback_data:
+                        return fallback_data.get("data")
+                    return fallback_data
+                except Exception as fallback_err:
+                    print(f"[FALLBACK] Fallback {fallback_base} failed: {fallback_err}")
+                    last_err = fallback_err
+                    continue
+
+            # All fallbacks failed
+            raise Exception(f"Failed to obtain stream from Monochrome API: {primary_err}; All fallbacks failed: {last_err}") from last_err
 
         # Try common shapes - prefer 'data' key
         if isinstance(result, dict) and "data" in result:
