@@ -1,5 +1,8 @@
 import os
 import threading
+import sys
+import re
+import uuid
 from pathlib import Path
 
 from PyQt6.QtCore import *
@@ -122,7 +125,7 @@ class YoutubeTab(QWidget):
         self.status_label.setText("Stopping...")
         self.cancel_btn.setEnabled(False)
 
-    def start_download_flow(self, mode):
+    def start_download_flow(self, mode, url=None, quality=None):
         if not YOUTUBE_SUPPORTED:
             QMessageBox.critical(
                 self,
@@ -131,16 +134,32 @@ class YoutubeTab(QWidget):
             )
             return
 
-        # Get URL from the appropriate tab
+        # If URL/quality were not provided by the caller (older code paths), read from our internal tabs
+        source = "args" if url else "tab"
         if mode == "video":
-            url = self.video_tab.get_url()
-            quality = self.video_tab.get_quality()
+            if url is None:
+                url = self.video_tab.get_url()
+            if quality is None:
+                quality = self.video_tab.get_quality()
         else:  # audio
-            url = self.audio_tab.get_url()
-            quality = self.audio_tab.get_quality()
+            if url is None:
+                url = self.audio_tab.get_url()
+            if quality is None:
+                quality = self.audio_tab.get_quality()
 
-        if not url:
-            QMessageBox.warning(self, "Error", "Please enter a valid YouTube URL.")
+        # Normalize and validate URL/ID (more permissive)
+        url = (url or "").strip().strip('<>')
+        print(f"[YOUTUBE] start_download_flow received URL/ID (source={source}): {repr(url)}")
+        # If user supplied a raw 11-character video ID, convert it to a full YouTube URL
+        if re.match(r'^[A-Za-z0-9_-]{11}$', url):
+            url = f"https://www.youtube.com/watch?v={url}"
+        # Accept common YouTube URL formats (youtube.com or youtu.be) or fallback to trying download
+        if not (re.search(r'youtu\.be/|youtube(\.com)?|watch\?v=', url) or re.match(r'^[A-Za-z0-9_-]{11}$', url)):
+            QMessageBox.warning(
+                self,
+                "Error",
+                "Please enter a valid YouTube URL or video ID (e.g., https://youtu.be/ID or 11-character ID).",
+            )
             return
 
         # Prepare UI
@@ -182,8 +201,8 @@ class YoutubeTab(QWidget):
     def _prompt_save_location(self, url, mode, quality):
         # Select save directory
         initial_dir = self.main_app.settings_manager.get("default_download_path", "")
-        if not os.path.exists(initial_dir):
-            initial_dir = str(Path.home() / "Downloads")
+        if not initial_dir or not os.path.exists(initial_dir):
+            initial_dir = str(Path(sys.argv[0]).resolve().parent)
 
         save_path = QFileDialog.getExistingDirectory(
             self, "Select Save Folder", initial_dir
@@ -209,10 +228,27 @@ class YoutubeTab(QWidget):
             info = get_video_info(url)
             title = info["title"] if info else "YouTube Video"
 
+            # Create a download item in the main downloads page (main thread)
+            download_id = f"yt-{uuid.uuid4().hex[:8]}"
+            QTimer.singleShot(0, lambda: self.main_app.downloads_tab.add_download(download_id, title))
+
+            # Progress callback that updates both the local overlay and the global downloads page
+            def progress_callback(text, progress):
+                # Update overlay
+                self.update_progress(text, progress)
+                # Forward to downloads page via main app signal
+                try:
+                    self.main_app.download_status_updated.emit(download_id, text, progress)
+                except Exception:
+                    pass
+
             # 2. Start the actual download via downloader core
             result = self.downloader.download(
                 url, save_path, mode=mode, quality=quality
             )
+
+            # Ensure final status is forwarded to downloads UI
+            QTimer.singleShot(0, lambda: self.main_app.download_finished.emit(download_id, result, save_path))
 
             # 3. Handle result back on UI thread
             QMetaObject.invokeMethod(

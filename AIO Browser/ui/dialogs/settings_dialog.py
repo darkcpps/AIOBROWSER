@@ -1,5 +1,6 @@
 # settings.py
 import json
+import sys
 from pathlib import Path
 
 from PyQt6.QtCore import QObject, Qt, pyqtSignal
@@ -32,7 +33,7 @@ class SettingsManager(QObject):
     def load_settings(self):
         defaults = {
             "disable_splash": False,
-            "default_download_path": str(Path.home() / "Downloads"),
+            "default_download_path": str(Path(sys.argv[0]).resolve().parent),
             "goldberg_nickname": "AIOUser",
             "goldberg_language": "english",
         }

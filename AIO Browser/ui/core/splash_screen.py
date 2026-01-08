@@ -70,7 +70,7 @@ class SplashScreen(QWidget):
         content_layout.addStretch()
         
         # Version
-        version_label = QLabel("Early Access - V1")
+        version_label = QLabel("Alpha v0.1.1")
         version_label.setStyleSheet(f"font-size: 10px; color: {COLORS['text_secondary']};")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(version_label)

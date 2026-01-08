@@ -115,7 +115,8 @@ class AudioTab(QWidget):
         self.audio_download_btn = QPushButton("🚀  Start Download")
         self.audio_download_btn.setFixedHeight(50)
         self.audio_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.audio_download_btn.clicked.connect(lambda: self.parent.start_download_flow("audio"))
+        # Pass URL and quality from the visible tab to the helper to avoid hidden-tab mismatch
+        self.audio_download_btn.clicked.connect(lambda: self.parent.start_download_flow("audio", self.get_url(), self.get_quality()))
         audio_layout.addWidget(self.audio_download_btn)
         audio_layout.addStretch()
 

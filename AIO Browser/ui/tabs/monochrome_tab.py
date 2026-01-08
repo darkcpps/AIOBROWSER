@@ -4,6 +4,7 @@ UI for downloading high-quality music from Monochrome (FLAC up to 24-bit/192kHz)
 Powered by Monochrome API - monochrome-api.samidy.com
 """
 import threading
+import sys
 from pathlib import Path
 from typing import Optional, Dict, List
 
@@ -699,8 +700,8 @@ class MonochromeTab(QWidget):
         if not self.downloader:
             self.downloader = MonochromeDownloader(self.monochrome_api)
 
-        # Get download path from settings
-        download_path = self.parent.settings_manager.get("download_path", str(Path.home() / "Downloads"))
+        # Get download path from settings (default to exe dir)
+        download_path = self.parent.settings_manager.get("default_download_path", str(Path(sys.argv[0]).resolve().parent))
         monochrome_path = Path(download_path) / "Monochrome"
         monochrome_path.mkdir(parents=True, exist_ok=True)
 

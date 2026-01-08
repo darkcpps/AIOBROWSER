@@ -339,8 +339,8 @@ class GameSearchApp(QMainWindow):
             webbrowser.open(url)
             return
         initial_dir = self.settings_manager.get("default_download_path", "")
-        if not os.path.exists(initial_dir):
-            initial_dir = str(Path.home() / "Downloads")
+        if not initial_dir or not os.path.exists(initial_dir):
+            initial_dir = str(Path(sys.argv[0]).resolve().parent)
         save_path = QFileDialog.getExistingDirectory(
             self, "Select Download Folder", initial_dir
         )

@@ -483,9 +483,17 @@ class SettingsTab(QWidget):
             # Save theme preference
             self.settings_manager.update_setting("theme", theme_key)
 
-            # Restart application
+            # Restart application using Qt's detached process start for reliability on Windows/PyInstaller
+            from PyQt6.QtCore import QProcess
+            # Determine arguments for the detached process. In development we need to include the script path
+            if getattr(sys, "frozen", False):
+                args = sys.argv[1:]
+            else:
+                # Include the script (usually main_pyqt.py) when running via python interpreter
+                args = [sys.argv[0]] + sys.argv[1:]
+            # Start a detached copy of the executable with the arguments and current working dir
+            QProcess.startDetached(sys.executable, args, os.getcwd())
             QApplication.quit()
-            os.execl(sys.executable, sys.executable, *sys.argv)
 
     def refresh_theme(self):
         """Refresh all color references in the settings tab"""

@@ -117,7 +117,8 @@ class VideoTab(QWidget):
         self.video_download_btn = QPushButton("🚀  Start Download")
         self.video_download_btn.setFixedHeight(50)
         self.video_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.video_download_btn.clicked.connect(lambda: self.parent.start_download_flow("video"))
+        # Pass URL and quality from the visible tab to the helper to avoid hidden-tab mismatch
+        self.video_download_btn.clicked.connect(lambda: self.parent.start_download_flow("video", self.get_url(), self.get_quality()))
         video_layout.addWidget(self.video_download_btn)
         video_layout.addStretch()
 

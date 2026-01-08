@@ -1,7 +1,7 @@
 {
     "disable_splash": false,
-    "default_download_path": "C:/Users/marti/Downloads",
     "goldberg_nickname": "AIOUser",
     "goldberg_language": "english",
-    "theme": "default"
+    "theme": "default",
+    "default_download_path": "C:\\Users\\marti\\Documents\\GitHub\\AIOBROWSER\\AIO Browser"
 }
