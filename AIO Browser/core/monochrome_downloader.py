@@ -5,6 +5,7 @@ Supports searching and downloading from Tidal via Monochrome's API proxy
 """
 import requests
 import json
+import base64
 from pathlib import Path
 from typing import Optional, Dict, List, Any, Literal
 from mutagen.flac import FLAC
@@ -157,7 +158,7 @@ class MonochromeAPI:
                 if response.status_code == 200:
                     data = response.json()
                     print(f"[MONOCHROME] Successfully got stream URL from {endpoint_base}")
-                    return data
+                    return data.get("data", data)
 
             except Exception as e:
                 print(f"[MONOCHROME] Failed endpoint {endpoint_base}: {str(e)}")
@@ -241,9 +242,23 @@ class MonochromeDownloader:
             manifest = stream_data.get("manifest")
             print(f"[MONOCHROME] Manifest available: {manifest is not None}")
             if manifest:
-                urls = stream_data.get("urls", [])
-                print(f"[MONOCHROME] Found {len(urls)} URLs in manifest")
-                download_url = urls[0] if urls else None
+                try:
+                    # Try to decode manifest if it looks like base64 (Tidal BTS format)
+                    decoded_manifest = base64.b64decode(manifest).decode('utf-8')
+                    # Check if it is JSON
+                    if decoded_manifest.strip().startswith('{') and decoded_manifest.strip().endswith('}'):
+                        manifest_json = json.loads(decoded_manifest)
+                        if "urls" in manifest_json:
+                            urls = manifest_json["urls"]
+                            print(f"[MONOCHROME] Found {len(urls)} URLs in decoded manifest")
+                            download_url = urls[0] if urls else None
+                except Exception as e:
+                    print(f"[MONOCHROME] Failed to decode manifest: {e}")
+
+                if not download_url:
+                    urls = stream_data.get("urls", [])
+                    print(f"[MONOCHROME] Found {len(urls)} URLs in manifest")
+                    download_url = urls[0] if urls else None
 
         if not download_url:
             print(f"[MONOCHROME] ERROR: No download URL available")

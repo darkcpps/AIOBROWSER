@@ -465,7 +465,11 @@ class MonochromeTab(QWidget):
 
         # Parse results based on type
         if search_type == "s":  # Tracks
-            items = results.get("tracks", {}).get("items", [])
+            if "items" in results:
+                items = results.get("items", [])
+            else:
+                items = results.get("tracks", {}).get("items", [])
+
             for item in items:
                 artists = ", ".join([a["name"] for a in item.get("artists", [])])
                 album = item.get("album", {}).get("title", "Unknown Album")
