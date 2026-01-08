@@ -32,6 +32,7 @@ from ui.tabs.info_tab import InfoTab
 from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.search_tab import SearchTab
 from ui.tabs.settings_tab import SettingsTab
+from ui.tabs.youtube_tab import YoutubeTab
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -164,6 +165,9 @@ class GameSearchApp(QMainWindow):
 
         self.patcher_tab = PatcherTab(self)
         self.main_stack.addWidget(self.patcher_tab)
+
+        self.youtube_tab = YoutubeTab(self)
+        self.main_stack.addWidget(self.youtube_tab)
 
         self.info_tab = InfoTab(self)
         self.main_stack.addWidget(self.info_tab)

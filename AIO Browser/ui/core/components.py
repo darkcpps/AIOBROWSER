@@ -865,6 +865,7 @@ class ModernSidebar(QFrame):
         # Navigation
         self.add_nav_item("search", "🔍  Search")
         self.add_nav_item("patcher", "🛠  Patcher")
+        self.add_nav_item("youtube", "🎥  YouTube Downloader")
 
         layout.addStretch()
 
@@ -893,11 +894,14 @@ class ModernSidebar(QFrame):
         elif key == "patcher":
             self.parent.main_stack.setCurrentIndex(2)
             self.parent.page_title.setText("Steam Patcher")
-        elif key == "info":
+        elif key == "youtube":
             self.parent.main_stack.setCurrentIndex(3)
+            self.parent.page_title.setText("YouTube Downloader")
+        elif key == "info":
+            self.parent.main_stack.setCurrentIndex(4)
             self.parent.page_title.setText("Information")
         elif key == "settings":
-            self.parent.main_stack.setCurrentIndex(4)
+            self.parent.main_stack.setCurrentIndex(5)
             self.parent.page_title.setText("Settings")
 
     def set_active(self, key):

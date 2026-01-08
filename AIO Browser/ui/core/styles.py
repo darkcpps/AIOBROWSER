@@ -426,6 +426,7 @@ QComboBox QAbstractItemView {{
     selection-background-color: {colors["accent_primary"]};
     selection-color: white;
     padding: 5px;
+    outline: 0;
 }}
 
 QToolTip {{
