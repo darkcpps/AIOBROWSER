@@ -9,7 +9,6 @@ from ui.tabs.youtube_tab import YoutubeTab
 
 
 class AudioHub(QWidget):
-    """Top-level Audio hub containing audio-related subtabs (e.g., Monochrome)"""
 
     def __init__(self, main_app):
         super().__init__(main_app)
@@ -40,7 +39,7 @@ class AudioHub(QWidget):
 
         # Add Monochrome as an audio subtab
         self.monochrome_tab = MonochromeTab(self.main_app)
-        self.tab_widget.addTab(self.monochrome_tab, "Monochrome")
+        self.tab_widget.addTab(self.monochrome_tab, "Monochrome (FLAC)")
 
         main_layout.addWidget(self.tab_widget)
         self.setLayout(main_layout)

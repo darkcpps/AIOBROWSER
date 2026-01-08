@@ -47,12 +47,12 @@ class MonochromeTab(QWidget):
         layout.setSpacing(20)
 
         # Title
-        title = QLabel("🎧 Monochrome Downloader")
+        title = QLabel("🎧 Monochrome Downloader (FLAC) - WIP")
         title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_primary']};")
         layout.addWidget(title)
 
         # Info banner
-        info_banner = QLabel("✨ Download lossless music via Monochrome API • FLAC up to 24-bit/192kHz • No account required\n💡 Powered by monochrome-api.samidy.com")
+        info_banner = QLabel("✨ Download lossless music via Monochrome API • FLAC up to 24-bit/192kHz • No account required\n💡 Powered by monochrome-api.samidy.com\n Currently WIP and may not download some songs!")
         info_banner.setStyleSheet(f"""
             background-color: {COLORS['bg_secondary']};
             color: {COLORS['text_primary']};
