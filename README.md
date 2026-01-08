@@ -9,6 +9,8 @@ An all-in-one software solution designed to handle the complicated stuff, making
 - **Built-in Patching:** Easily apply the **Goldberg** emulator directly through the app (beginner-friendly).
 - **Modern GUI:** A clean, easy-to-navigate interface.
 - **Visuals:** Includes a custom splash screen on launch.
+- **Youtube Downloading** Download Youtube videos or audios
+- **Tidal FLACS** Download Tidal FLACS (Experimental)
 
 ## Known issues
 - This project is in early access and will be unstable (crashes, failed downloads, broken UI, etc.).
@@ -16,7 +18,6 @@ An all-in-one software solution designed to handle the complicated stuff, making
 
 ## Planned features
 - **Greenluma and Onlinefix Patcher** - Add games on steam and unlock DLC and Online.
-- **Video downloading:** YouTube videos, movies, series.
 - **Streaming videos:** Stream movies and series inside the app.
 - **Built-in BitTorrent:** Easier torrenting for beginners.
 - **Software downloads:** Install apps (not just games).
