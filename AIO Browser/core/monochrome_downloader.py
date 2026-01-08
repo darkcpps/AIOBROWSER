@@ -1,7 +1,7 @@
 """
 Monochrome Downloader Module
 Integrates with Monochrome API (monochrome-api.samidy.com) for music downloading
-Supports searching and downloading from Tidal via Monochrome's API proxy
+Supports searching and downloading via the Monochrome API
 """
 import requests
 import json
@@ -13,20 +13,29 @@ from mutagen.mp4 import MP4
 from mutagen.id3 import ID3, TIT2, TPE1, TALB, TPE2, TDRC, TRCK, TPOS, APIC
 
 
+class MonochromeAPIError(Exception):
+    """Raised for Monochrome API errors, includes optional status code and response text."""
+    def __init__(self, message: str, status_code: Optional[int] = None, response_text: Optional[str] = None):
+        super().__init__(message)
+        self.status_code = status_code
+        self.response_text = response_text
+
+    def __str__(self) -> str:
+        base = super().__str__()
+        parts = [base]
+        if self.status_code is not None:
+            parts.append(f"status={self.status_code}")
+        if self.response_text:
+            # keep response short for readability
+            snippet = (self.response_text[:200] + "...") if len(self.response_text) > 200 else self.response_text
+            parts.append(f"body={snippet}")
+        return " | ".join(parts)
+
+
 # Monochrome API Configuration
 MONOCHROME_API_BASE = "https://monochrome-api.samidy.com"
-
-# TIDAL API Mirrors (used by Monochrome)
-TIDAL_API_ENDPOINTS = [
-    "https://triton.squid.wtf",
-    "https://wolf.qqdl.site",
-    "https://maus.qqdl.site",
-    "https://vogel.qqdl.site",
-    "https://katze.qqdl.site",
-    "https://hund.qqdl.site",
-    "https://tidal.kinoplus.online",
-    "https://tidal-api.binimum.org",
-]
+# Fallback proxy (used when Monochrome cannot provide a stream)
+TIDAL_FALLBACK_BASE = "https://tidal-api.binimum.org"
 
 AudioQuality = Literal["LOW", "HIGH", "LOSSLESS", "HI_RES"]
 
@@ -36,7 +45,6 @@ class MonochromeAPI:
 
     def __init__(self):
         self.api_base = MONOCHROME_API_BASE
-        self.tidal_endpoints = TIDAL_API_ENDPOINTS.copy()
         print(f"[MONOCHROME] Initialized with API: {self.api_base}")
         self.session = requests.Session()
         self.session.headers.update({
@@ -51,14 +59,22 @@ class MonochromeAPI:
 
         try:
             response = self.session.get(url, params=params, timeout=30)
-            print(f"[MONOCHROME] Response status: {response.status_code}")
+            status = response.status_code
+            text = response.text
+            print(f"[MONOCHROME] Response status: {status}")
             response.raise_for_status()
             data = response.json()
             print(f"[MONOCHROME] Response received successfully")
             return data
+        except requests.exceptions.HTTPError as e:
+            resp = getattr(e, 'response', None) or locals().get('response', None)
+            status = resp.status_code if resp else None
+            text = resp.text if resp else None
+            print(f"[MONOCHROME] Request failed: {str(e)}; status: {status}; body: {text}")
+            raise MonochromeAPIError(f"API request failed: {str(e)}", status, text)
         except Exception as e:
             print(f"[MONOCHROME] Request failed: {str(e)}")
-            raise Exception(f"API request failed: {str(e)}")
+            raise MonochromeAPIError(f"API request failed: {str(e)}")
 
     def search(self, query: str, search_type: str = "al") -> Dict[str, Any]:
         """
@@ -73,6 +89,82 @@ class MonochromeAPI:
         # Monochrome returns structure: {"version": "2.2", "data": {...}}
         return result.get("data", {})
 
+    def _normalize_track(self, track: Dict[str, Any]) -> Dict[str, Any]:
+        """Normalize various track shapes returned by different APIs into a consistent form.
+
+        Ensures keys: id (str), title (str), artists (list of {name:str}), album (dict), duration (int)
+        """
+        if not isinstance(track, dict):
+            return track
+
+        # Helper to safely pull nested values
+        def _get(*keys):
+            for k in keys:
+                v = track.get(k)
+                if v:
+                    return v
+            # check nested wrappers
+            for wrapper in ("item", "track"):
+                if isinstance(track.get(wrapper), dict):
+                    for k in keys:
+                        v = track[wrapper].get(k)
+                        if v:
+                            return v
+            return None
+
+        # ID
+        track_id = _get("id", "uuid", "trackId")
+        if not track_id:
+            # attempt from nested wrapper
+            for wrapper in ("item", "track"):
+                if isinstance(track.get(wrapper), dict):
+                    track_id = track[wrapper].get("id") or track[wrapper].get("uuid")
+                    if track_id:
+                        break
+        if track_id:
+            track["id"] = str(track_id)
+
+        # Title
+        title = _get("title", "name")
+        if not title and isinstance(track.get("album"), dict):
+            title = track["album"].get("title")
+        track["title"] = title or (f"Track {track.get('id', '')}" if track.get('id') else "Unknown")
+
+        # Artists
+        artists = track.get("artists")
+        if not artists:
+            # look for common artist fields
+            a = _get("artist", "artistName")
+            if isinstance(a, list):
+                artists = a
+            elif isinstance(a, str):
+                artists = [{"name": a}]
+            elif isinstance(track.get("album"), dict):
+                album_artists = track["album"].get("artists")
+                if isinstance(album_artists, list) and album_artists:
+                    artists = album_artists
+        if not artists:
+            artists = [{"name": "Unknown Artist"}]
+        track["artists"] = artists
+
+        # Album
+        album = track.get("album") or _get("album", "albumName")
+        if isinstance(album, dict):
+            track["album"] = album
+        elif isinstance(album, str):
+            track["album"] = {"title": album}
+        else:
+            track.setdefault("album", {"title": "Unknown", "cover": None, "artists": artists})
+
+        # Duration
+        if not track.get("duration") and track.get("length"):
+            try:
+                track["duration"] = int(track["length"]) if track.get("length") else 0
+            except Exception:
+                track["duration"] = 0
+
+        return track
+
     def get_track(self, track_id: str) -> Dict[str, Any]:
         """Get track metadata"""
         print(f"[MONOCHROME] Fetching track: {track_id}")
@@ -82,6 +174,7 @@ class MonochromeAPI:
 
         # Return the data portion
         data = result.get("data", result)
+        data = self._normalize_track(data)
         print(f"[MONOCHROME] Track fetched: {data.get('title', 'Unknown')}")
         return data
 
@@ -101,7 +194,7 @@ class MonochromeAPI:
         for item_wrapper in raw_items:
             if item_wrapper.get("type") == "track":
                 track = item_wrapper.get("item", {})
-                tracks.append(track)
+                tracks.append(self._normalize_track(track))
 
         album_data["tracks"] = tracks
         print(f"[MONOCHROME] Found {len(tracks)} tracks in album")
@@ -123,7 +216,7 @@ class MonochromeAPI:
         for item_wrapper in raw_items:
             if item_wrapper.get("type") == "track":
                 track = item_wrapper.get("item", {})
-                tracks.append(track)
+                tracks.append(self._normalize_track(track))
 
         playlist_data["tracks"] = tracks
         print(f"[MONOCHROME] Found {len(tracks)} tracks in playlist")
@@ -141,37 +234,62 @@ class MonochromeAPI:
 
     def get_stream_url(self, track_id: str, quality: AudioQuality = "LOSSLESS") -> Dict[str, Any]:
         """
-        Get streaming URL for a track using Tidal API mirrors
+        Get streaming URL for a track via Monochrome API
         Quality options: LOW (AAC 96kbps), HIGH (AAC 320kbps), LOSSLESS (FLAC 16-bit/44.1kHz), HI_RES (FLAC 24-bit/96kHz+)
         """
         print(f"[MONOCHROME] Getting stream URL for track {track_id} with quality: {quality}")
 
-        # Try each Tidal endpoint until one works
-        for endpoint_base in self.tidal_endpoints:
+        params = {"id": track_id, "quality": quality}
+        try:
+            result = self._make_request("/stream/", params)
+        except MonochromeAPIError as primary_err:
+            print(f"[MONOCHROME] Primary API failed: {primary_err}")
+
+            # Fallback: try the tidal proxy's /track/ endpoint which often provides stream info
             try:
-                url = f"{endpoint_base}/track/"
-                params = {"id": track_id, "quality": quality}
+                fallback_url = f"{TIDAL_FALLBACK_BASE}/track/"
+                print(f"[FALLBACK] Requesting fallback: {fallback_url} with params: {params}")
+                resp = self.session.get(fallback_url, params=params, timeout=30)
+                print(f"[FALLBACK] Response status: {resp.status_code}")
+                resp.raise_for_status()
+                fallback_data = resp.json()
+                print(f"[FALLBACK] Fallback returned data")
 
-                print(f"[MONOCHROME] Trying endpoint: {endpoint_base}")
-                response = self.session.get(url, params=params, timeout=30)
+                # Normalize shape
+                if isinstance(fallback_data, dict) and "data" in fallback_data:
+                    return fallback_data.get("data")
+                return fallback_data
+            except Exception as fallback_err:
+                print(f"[FALLBACK] Fallback failed: {fallback_err}")
+                # Surface combined failure for debugging
+                raise Exception(f"Failed to obtain stream from Monochrome API: {primary_err}; Fallback also failed: {fallback_err}") from fallback_err
 
-                if response.status_code == 200:
-                    data = response.json()
-                    print(f"[MONOCHROME] Successfully got stream URL from {endpoint_base}")
-                    return data.get("data", data)
-
-            except Exception as e:
-                print(f"[MONOCHROME] Failed endpoint {endpoint_base}: {str(e)}")
-                continue
-
-        raise Exception("All Tidal API endpoints failed")
+        # Try common shapes - prefer 'data' key
+        if isinstance(result, dict) and "data" in result:
+            return result.get("data")
+        return result
 
     def get_cover_image(self, cover_id: str, size: int = 1280) -> bytes:
-        """Download cover image - size can be 160, 320, 640, 1280"""
-        url = f"https://resources.tidal.com/images/{cover_id.replace('-', '/')}/{size}x{size}.jpg"
-        response = self.session.get(url)
-        response.raise_for_status()
-        return response.content
+        """Download cover image via Monochrome API (returns raw bytes)"""
+        try:
+            params = {"id": cover_id, "size": size}
+            result = self._make_request("/cover/", params)
+
+            # If API returns an image URL
+            if isinstance(result, dict) and "url" in result:
+                url = result["url"]
+                r = self.session.get(url)
+                r.raise_for_status()
+                return r.content
+
+            # If API returns base64 data
+            if isinstance(result, dict) and "image_base64" in result:
+                return base64.b64decode(result["image_base64"])
+
+        except Exception as e:
+            print(f"[MONOCHROME] Failed to fetch cover image via API: {e}")
+
+        raise Exception("Failed to fetch cover image")
 
 
 class MonochromeDownloader:
@@ -213,8 +331,17 @@ class MonochromeDownloader:
         track_title = track_data.get("title", "Unknown")
         print(f"[MONOCHROME] Starting download for track: {track_title} (ID: {track_id})")
 
+        # Optional: verify track availability before requesting stream
+        try:
+            _ = self.api.get_track(track_id)
+        except MonochromeAPIError as e:
+            raise Exception(f"Track not available via Monochrome API: {e}") from e
+
         # Get stream URL
-        stream_data = self.api.get_stream_url(track_id, quality)
+        try:
+            stream_data = self.api.get_stream_url(track_id, quality)
+        except MonochromeAPIError as e:
+            raise Exception(f"Failed to obtain stream from Monochrome API: {e}") from e
 
         # Determine file extension based on quality
         if quality in ["LOW", "HIGH"]:
@@ -243,7 +370,7 @@ class MonochromeDownloader:
             print(f"[MONOCHROME] Manifest available: {manifest is not None}")
             if manifest:
                 try:
-                    # Try to decode manifest if it looks like base64 (Tidal BTS format)
+                    # Try to decode manifest if it looks like base64
                     decoded_manifest = base64.b64decode(manifest).decode('utf-8')
                     # Check if it is JSON
                     if decoded_manifest.strip().startswith('{') and decoded_manifest.strip().endswith('}'):
