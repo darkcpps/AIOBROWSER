@@ -59,18 +59,19 @@ class GameSearchApp(QMainWindow):
         self.download_status_updated.connect(self.update_download_status)
         self.download_finished.connect(self.on_download_finished)
 
-        self.initUI()
-
-        # Load saved theme and apply it properly
+        # Load saved theme and apply it BEFORE initUI
         saved_theme = self.settings_manager.get("theme", "default")
         if saved_theme in THEMES:
             set_current_theme(saved_theme)
-            # Update global colors
             from ui.core.styles import update_colors
-
             update_colors()
-            # Apply stylesheet
-            self.setStyleSheet(generate_stylesheet(saved_theme))
+            
+        # Apply initial stylesheet to the application
+        app = QApplication.instance()
+        if app:
+            app.setStyleSheet(generate_stylesheet(saved_theme if saved_theme in THEMES else "default"))
+
+        self.initUI()
 
         if not self.settings_manager.get("disable_splash", False):
             self.show_splash()
@@ -81,7 +82,6 @@ class GameSearchApp(QMainWindow):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
         self.setWindowTitle("🎮 AIO Browser")
         self.setGeometry(100, 100, 1100, 750)
-        self.setStyleSheet(STYLESHEET)
 
         # Initialize and style StatusBar
         status = self.statusBar()

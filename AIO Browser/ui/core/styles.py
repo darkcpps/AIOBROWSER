@@ -425,8 +425,39 @@ QComboBox QAbstractItemView {{
     border-radius: 8px;
     selection-background-color: {colors["accent_primary"]};
     selection-color: white;
-    padding: 5px;
+    padding: 4px;
     outline: 0;
+}}
+
+/* Specific fix for the popup container and rounding corners */
+QComboBox QAbstractItemView, 
+QComboBox QListView,
+QComboBox QFrame,
+QComboBox QAbstractScrollArea {{
+    background: {colors["bg_card"]};
+    border: 1px solid {colors["accent_primary"]};
+    border-radius: 8px;
+}}
+
+QComboBox QAbstractItemView::item {{
+    padding: 8px;
+    background-color: transparent;
+    color: {colors["text_primary"]};
+}}
+
+QComboBox QAbstractItemView::item:selected {{
+    background-color: {colors["accent_primary"]};
+    color: white;
+    border-radius: 4px;
+}}
+
+QListView {{
+    background-color: {colors["bg_card"]};
+    color: {colors["text_primary"]};
+    selection-background-color: {colors["accent_primary"]};
+    selection-color: white;
+    border: 1px solid {colors["border"]};
+    border-radius: 8px;
 }}
 
 QToolTip {{
