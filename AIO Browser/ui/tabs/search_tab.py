@@ -3,6 +3,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 from ui.tabs.search.direct_search import DirectSearchTab
+from ui.tabs.search.roms_search import RomsSearchTab
 from ui.tabs.search.torrent_search import TorrentSearchTab
 
 class SearchTab(QWidget):
@@ -31,5 +32,7 @@ class SearchTab(QWidget):
 
         self.search_tabs.addTab(self.direct_tab, "Direct")
         self.search_tabs.addTab(self.torrent_tab, "Torrent")
+        self.roms_tab = RomsSearchTab(self.main_app)
+        self.search_tabs.addTab(self.roms_tab, "ROMS")
         main_layout.addWidget(self.search_tabs)
         self.setLayout(main_layout)

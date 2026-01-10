@@ -1,6 +1,8 @@
 # Web scraping module. Implements searching for AnkerGames (Direct) and FitGirl Repacks (Torrents).
 import requests
 from bs4 import BeautifulSoup
+import json
+import html as html_lib
 import re
 from urllib.parse import quote, unquote
 
@@ -304,3 +306,108 @@ class AnkerClient:
         except Exception as e:
             print(f"[DEBUG] Resolution failed: {e}")
             return url, None
+
+
+# =========================================================================
+# AXEKIN MODULE (ROMS)
+# =========================================================================
+AXEKIN_BASE_URL = "https://www.axekin.com"
+
+
+def _parse_inertia_data_page(html_text):
+    """
+    Axekin is an Inertia app; the page payload is stored in a data-page attribute.
+    Returns a dict or None.
+    """
+    try:
+        match = re.search(r'data-page="([^"]+)"', html_text)
+        if not match:
+            return None
+        data = html_lib.unescape(match.group(1))
+        return json.loads(data)
+    except Exception as e:
+        print(f"[DEBUG] Axekin parse error: {e}")
+        return None
+
+
+def search_axekin(query, platform=None, page=1):
+    """
+    Scrapes Axekin ROM entries and returns a list of downloadable items.
+    Each returned item matches the UI's card shape:
+      {title, link, image, source, size, platforms, page_url}
+    """
+    clean_query = (query or "").strip()
+    if not clean_query:
+        return []
+
+    search_url = f"{AXEKIN_BASE_URL}/games?search={quote(clean_query)}&page={page}"
+    results = []
+    try:
+        resp = requests.get(search_url, headers=HEADERS, timeout=10)
+        if resp.status_code != 200:
+            return []
+
+        page_data = _parse_inertia_data_page(resp.text)
+        if not page_data:
+            return []
+
+        games = page_data.get("props", {}).get("data", []) or []
+        desired_platform = (platform or "").strip().lower()
+
+        for game in games:
+            name = (
+                game.get("name")
+                or game.get("alternativeName")
+                or game.get("slug")
+                or "Unknown"
+            )
+            slug = game.get("slug") or ""
+            platforms = game.get("platforms") or []
+            if desired_platform and desired_platform != "any":
+                platform_set = {str(p).lower() for p in platforms}
+                if desired_platform not in platform_set:
+                    continue
+
+            cover_url = None
+            cover = game.get("cover") or {}
+            if isinstance(cover, dict):
+                cover_url = cover.get("url")
+
+            file_size = game.get("fileSize")
+            download_links = game.get("downloadLinks") or []
+
+            source = "Axekin"
+            if platforms:
+                source += " • " + ", ".join(str(p).upper() for p in platforms)
+
+            page_url = (
+                f"{AXEKIN_BASE_URL}/games/{slug}"
+                if slug
+                else f"{AXEKIN_BASE_URL}/games?search={quote(name)}"
+            )
+
+            for dl in download_links:
+                if not isinstance(dl, dict):
+                    continue
+                link = dl.get("link")
+                if not link:
+                    continue
+                label = (dl.get("label") or "").strip()
+                title = name if not label else f"{name} ({label})"
+
+                results.append(
+                    {
+                        "title": title,
+                        "link": link,
+                        "image": cover_url,
+                        "source": source,
+                        "size": file_size,
+                        "platforms": platforms,
+                        "page_url": page_url,
+                    }
+                )
+
+    except Exception as e:
+        print(f"[DEBUG] Error Axekin: {e}")
+
+    return results

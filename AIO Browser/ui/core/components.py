@@ -17,6 +17,126 @@ from ui.core.styles import COLORS
 # =========================================================================
 # ANIMATED LOADING WIDGET WITH COOL EFFECTS
 # =========================================================================
+class InfoBanner(QFrame):
+    def __init__(
+        self,
+        title,
+        body_lines,
+        icon="💡",
+        accent_color=None,
+        parent=None,
+        object_name="InfoBanner",
+        compact=False,
+    ):
+        super().__init__(parent)
+        self.setObjectName(object_name)
+        self._title = title or ""
+        self._body_lines = body_lines or []
+        self._icon = icon or ""
+        self._accent_color = accent_color or COLORS.get("accent_primary")
+        self._compact = compact
+        self._build_ui()
+
+    def _sizes(self):
+        if self._compact:
+            return {
+                "pad_x": 12,
+                "pad_y": 10,
+                "spacing": 10,
+                "icon": 16,
+                "title": 13,
+                "body": 12,
+            }
+        return {
+            "pad_x": 14,
+            "pad_y": 12,
+            "spacing": 12,
+            "icon": 18,
+            "title": 15,
+            "body": 13,
+        }
+
+    def _build_ui(self):
+        sizes = self._sizes()
+        pad_x = sizes["pad_x"]
+        pad_y = sizes["pad_y"]
+        icon_size = sizes["icon"]
+        title_size = sizes["title"]
+        body_size = sizes["body"]
+
+        self.setStyleSheet(
+            f"""
+            QFrame#{self.objectName()} {{
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {COLORS.get('bg_secondary')},
+                    stop:1 {COLORS.get('bg_card', COLORS.get('bg_secondary'))});
+                border: 1px solid {COLORS.get('border')};
+                border-left: 4px solid {self._accent_color};
+                border-radius: 10px;
+            }}
+            """
+        )
+
+        layout = QHBoxLayout(self)
+        layout.setContentsMargins(pad_x, pad_y, pad_x, pad_y)
+        layout.setSpacing(sizes["spacing"])
+
+        self._icon_label = QLabel(self._icon)
+        self._icon_label.setStyleSheet(
+            f"""
+            font-size: {icon_size}px;
+            color: {COLORS.get('accent_primary')};
+            font-family: 'Segoe UI Emoji', 'Segoe UI Symbol', 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+            background: transparent;
+            """
+        )
+        self._icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
+        self._icon_label.setVisible(bool(self._icon))
+        layout.addWidget(self._icon_label)
+
+        self._text_label = QLabel(self._build_html(title_size, body_size))
+        self._text_label.setTextFormat(Qt.TextFormat.RichText)
+        self._text_label.setWordWrap(True)
+        self._text_label.setStyleSheet(
+            "font-family: 'Segoe UI Emoji', 'Segoe UI Symbol', 'Segoe UI', 'Roboto', 'Inter', sans-serif; background: transparent;"
+        )
+        layout.addWidget(self._text_label, 1)
+
+    def _build_html(self, title_size, body_size):
+        title_html = ""
+        if self._title:
+            title_html = (
+                f"<div style='font-size:{title_size}px; font-weight:700; color:{COLORS.get('text_primary')}'>"
+                f"{self._title}"
+                "</div>"
+            )
+
+        body_html_parts = []
+        for i, line in enumerate(self._body_lines):
+            margin_top = 2 if (title_html or i > 0) else 0
+            body_html_parts.append(
+                f"<div style='font-size:{body_size}px; color:{COLORS.get('text_secondary')}; margin-top:{margin_top}px;'>"
+                f"{line}"
+                "</div>"
+            )
+
+        return title_html + "".join(body_html_parts)
+
+    def set_content(self, title=None, body_lines=None, icon=None):
+        if title is not None:
+            self._title = title
+        if body_lines is not None:
+            self._body_lines = body_lines
+        if icon is not None:
+            self._icon = icon
+            self._icon_label.setText(self._icon)
+            self._icon_label.setVisible(bool(self._icon))
+        sizes = self._sizes()
+        self._text_label.setText(
+            self._build_html(sizes["title"], sizes["body"])
+        )
+
+
 class SpinnerWidget(QWidget):
     """Custom rotating spinner with smooth animation"""
 
@@ -482,6 +602,12 @@ class GameCardWidget(QFrame):
             btn_hover = COLORS["accent_secondary"]
             btn_icon = "📥"
             callback = self.start_direct_download
+        elif self.game_type == "roms":
+            btn_text = "Download"
+            btn_color = COLORS["accent_primary"]
+            btn_hover = COLORS["accent_secondary"]
+            btn_icon = "📥"
+            callback = self.start_rom_download
         else:
             has_magnet = self.game.get("magnet")
             btn_text = "Magnet Link" if has_magnet else "Visit Page"
@@ -587,6 +713,12 @@ class GameCardWidget(QFrame):
         # We'll use a signal or callback here usually, but for now we follow the existing pattern
         if hasattr(self.parent, "initiate_anker_download"):
             self.parent.initiate_anker_download(self.game)
+
+    def start_rom_download(self):
+        if hasattr(self.parent, "initiate_axekin_download"):
+            self.parent.initiate_axekin_download(self.game)
+        else:
+            webbrowser.open(self.game.get("page_url") or self.game.get("link", ""))
 
     def open_torrent_link(self):
         has_magnet = self.game.get("magnet")
@@ -863,10 +995,10 @@ class ModernSidebar(QFrame):
         self.setLayout(layout)
 
         # Navigation
-        self.add_nav_item("search", "🔍  Search")
+        self.add_nav_item("search", "🔍  Games")
         self.add_nav_item("patcher", "🛠  Patcher")
-        self.add_nav_item("video", "🎥  Video")
-        self.add_nav_item("audio", "🎧  Audio")
+        self.add_nav_item("downloader", "📦  Downloaders")
+        self.add_nav_item("streaming", "📡  Streaming")
 
         layout.addStretch()
 
@@ -895,12 +1027,12 @@ class ModernSidebar(QFrame):
         elif key == "patcher":
             self.parent.main_stack.setCurrentIndex(2)
             self.parent.page_title.setText("Steam Patcher")
-        elif key == "video":
+        elif key == "downloader":
             self.parent.main_stack.setCurrentIndex(3)
-            self.parent.page_title.setText("Video")
-        elif key == "audio":
+            self.parent.page_title.setText("Downloader")
+        elif key == "streaming":
             self.parent.main_stack.setCurrentIndex(4)
-            self.parent.page_title.setText("Audio")
+            self.parent.page_title.setText("Streaming")
         elif key == "info":
             self.parent.main_stack.setCurrentIndex(5)
             self.parent.page_title.setText("Information")

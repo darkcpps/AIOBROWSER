@@ -32,8 +32,8 @@ from ui.tabs.info_tab import InfoTab
 from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.search_tab import SearchTab
 from ui.tabs.settings_tab import SettingsTab
-from ui.tabs.video_hub import VideoHub
-from ui.tabs.audio_hub import AudioHub
+from ui.tabs.downloader_hub import DownloaderHub
+from ui.tabs.streaming_hub import StreamingHub
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -167,11 +167,11 @@ class GameSearchApp(QMainWindow):
         self.patcher_tab = PatcherTab(self)
         self.main_stack.addWidget(self.patcher_tab)
 
-        self.video_tab = VideoHub(self)
-        self.main_stack.addWidget(self.video_tab)
+        self.downloader_tab = DownloaderHub(self)
+        self.main_stack.addWidget(self.downloader_tab)
 
-        self.audio_tab = AudioHub(self)
-        self.main_stack.addWidget(self.audio_tab)
+        self.streaming_tab = StreamingHub(self)
+        self.main_stack.addWidget(self.streaming_tab)
 
         self.info_tab = InfoTab(self)
         self.main_stack.addWidget(self.info_tab)
@@ -302,6 +302,26 @@ class GameSearchApp(QMainWindow):
             ),
             daemon=True,
         ).start()
+
+    def initiate_axekin_download(self, item):
+        import uuid
+
+        try:
+            url = item.get("link") if isinstance(item, dict) else None
+            title = item.get("title") if isinstance(item, dict) else None
+        except Exception:
+            url = None
+            title = None
+
+        if not url:
+            return
+        if not title:
+            title = "ROM Download"
+
+        download_id = str(uuid.uuid4())
+        self.downloads_tab.add_download(download_id, title)
+        self.sidebar.set_active("downloads")
+        self.download_prompt_ready.emit(url, title, None, download_id)
 
     def process_anker_download_flow(self, game_url, game_title, anker, download_id):
         self.download_status_updated.emit(

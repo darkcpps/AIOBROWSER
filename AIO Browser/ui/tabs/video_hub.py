@@ -35,7 +35,7 @@ class VideoHub(QWidget):
 
         # Add YouTube Video subtab (uses the real downloader via the hidden helper)
         self.youtube_video_tab = VideoTab(self._yt_helper)
-        self.tab_widget.addTab(self.youtube_video_tab, "YouTube")
+        self.tab_widget.addTab(self.youtube_video_tab, "YouTube Downloader (Video)")
 
         main_layout.addWidget(self.tab_widget)
         self.setLayout(main_layout)

@@ -21,6 +21,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ui.core.components import InfoBanner
 from ui.core.styles import (
     COLORS,
     THEMES,
@@ -255,6 +256,18 @@ class SettingsTab(QWidget):
             color: {COLORS["text_primary"]};
         """)
         layout.addWidget(title)
+
+        layout.addWidget(
+            InfoBanner(
+                title="Quick info",
+                body_lines=[
+                    "Change themes, default download folder, and emulator identity settings here.",
+                ],
+                icon="⚙️",
+                object_name="SettingsInfoBanner",
+                compact=True,
+            )
+        )
 
         # ============ THEME SECTION ============
         theme_container = QWidget()

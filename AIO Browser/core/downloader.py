@@ -3,6 +3,87 @@ import requests
 import os
 import time
 import re
+from urllib.parse import urlparse, parse_qs, unquote
+
+
+def _extract_filename_from_content_disposition(content_disposition):
+    if not content_disposition:
+        return None
+
+    try:
+        fnames = re.findall(r'filename\*?=([^;]+)', content_disposition)
+        if not fnames:
+            return None
+        filename = fnames[0].strip().strip('"').strip("'")
+        if "UTF-8''" in filename:
+            filename = filename.split("UTF-8''")[-1]
+        filename = unquote(filename)
+        return filename or None
+    except Exception:
+        return None
+
+
+def _extract_filename_from_url(url):
+    if not url:
+        return None
+
+    try:
+        parsed = urlparse(url)
+        qs = parse_qs(parsed.query)
+
+        # S3/R2 style: response-content-disposition=attachment; filename="..."
+        for key in ("response-content-disposition", "content-disposition"):
+            val = qs.get(key, [None])[0]
+            fn = _extract_filename_from_content_disposition(val)
+            if fn:
+                return fn
+
+        # Common patterns
+        for key in ("filename", "file", "name"):
+            val = qs.get(key, [None])[0]
+            if val:
+                return unquote(val).strip().strip('"').strip("'") or None
+
+        # Path basename (if it looks like a file)
+        basename = os.path.basename(parsed.path or "")
+        if basename and "." in basename and len(basename) <= 180:
+            return unquote(basename)
+
+    except Exception:
+        pass
+
+    return None
+
+
+def _sanitize_filename(filename):
+    if not filename:
+        return filename
+
+    # Windows-invalid characters: <>:"/\|?* plus control chars
+    filename = re.sub(r'[\x00-\x1f<>:"/\\|?*]', "_", filename)
+    filename = filename.strip().strip(".")
+
+    # Avoid empty / reserved names
+    if not filename:
+        return "downloaded_file"
+
+    reserved = {
+        "CON",
+        "PRN",
+        "AUX",
+        "NUL",
+        *(f"COM{i}" for i in range(1, 10)),
+        *(f"LPT{i}" for i in range(1, 10)),
+    }
+    stem, ext = os.path.splitext(filename)
+    if stem.upper() in reserved:
+        filename = f"_{stem}{ext}"
+
+    # Keep within a reasonable limit
+    if len(filename) > 240:
+        filename = filename[:240]
+
+    return filename
 
 # =========================================================================
 # DOWNLOAD CORE ENGINE
@@ -49,19 +130,31 @@ def download_file(url, save_path, progress_callback, control_flags, session=None
             
             if os.path.isdir(save_path):
                 # Extract filename from headers
-                filename = "downloaded_file.zip" # fallback
-                cd = r.headers.get('Content-Disposition')
-                if cd:
-                    fnames = re.findall(r'filename\*?=([^;]+)', cd)
-                    if fnames:
-                        filename = fnames[0].strip().strip('"').strip("'")
-                        if "UTF-8''" in filename:
-                            filename = filename.split("UTF-8''")[-1]
+                filename = (
+                    _extract_filename_from_content_disposition(
+                        r.headers.get("Content-Disposition")
+                    )
+                    or _extract_filename_from_url(r.url)
+                    or _extract_filename_from_url(url)
+                    or "downloaded_file"
+                )
+                filename = _sanitize_filename(filename)
                 
-                # If still no valid filename found or fallback triggered, try URL
-                if filename == "downloaded_file.zip":
-                     if url.endswith(".rar"): filename = "game.rar"
-                     elif url.endswith(".zip"): filename = "game.zip"
+                # If still no extension, try to infer from URL or content-type
+                _, ext = os.path.splitext(filename)
+                if not ext:
+                    if r.url.lower().endswith(".rar") or url.lower().endswith(".rar"):
+                        filename += ".rar"
+                    elif r.url.lower().endswith(".7z") or url.lower().endswith(".7z"):
+                        filename += ".7z"
+                    elif r.url.lower().endswith(".zip") or url.lower().endswith(".zip"):
+                        filename += ".zip"
+                    elif "zip" in content_type:
+                        filename += ".zip"
+                    elif "rar" in content_type:
+                        filename += ".rar"
+                    elif "7z" in content_type:
+                        filename += ".7z"
 
                 final_path = os.path.join(save_path, filename)
                 progress_callback(f"Saving as: {filename}", 0.0)

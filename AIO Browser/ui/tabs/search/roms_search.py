@@ -1,4 +1,4 @@
-# ui/search/torrent_search.py
+# ui/search/roms_search.py
 import threading
 
 from core import scraper
@@ -10,12 +10,13 @@ from ui.core.components import GameCardWidget, InfoBanner, LoadingWidget
 from ui.core.styles import COLORS
 
 
-class TorrentSearchTab(QWidget):
+class RomsSearchTab(QWidget):
     results_ready = pyqtSignal(list)
 
     def __init__(self, main_app):
         super().__init__()
         self.main_app = main_app
+        self.raw_results = []
         self.results = []
         self.current_page = 0
         self.page_size = 5
@@ -31,12 +32,12 @@ class TorrentSearchTab(QWidget):
 
         layout.addWidget(
             InfoBanner(
-                title="Torrent Search",
+                title="ROMS (Axekin)",
                 body_lines=[
-                    "Search for torrent/FitGirl repacks. You may need a torrent client to download.",
+                    "Search Axekin for ROM downloads. Pick a console to filter results, then click Download to add it to Downloads.",
                 ],
-                icon="🧲",
-                object_name="TorrentSearchInfoBanner",
+                icon="🕹️",
+                object_name="RomsSearchInfoBanner",
                 compact=True,
             )
         )
@@ -51,13 +52,23 @@ class TorrentSearchTab(QWidget):
         sb_layout.setSpacing(10)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Search for torrent/fitgirl repacks...")
+        self.search_input.setPlaceholderText("Search for ROMs...")
         self.search_input.setFixedHeight(45)
         self.search_input.setStyleSheet(
             "border: none; background: transparent; padding: 0 15px; font-size: 16px;"
         )
         self.search_input.returnPressed.connect(self.start_search)
         sb_layout.addWidget(self.search_input, 1)
+
+        self.console_combo = QComboBox()
+        self.console_combo.setFixedHeight(45)
+        self.console_combo.setMinimumWidth(170)
+        self.console_combo.setStyleSheet(
+            f"border: none; background: transparent; padding: 0 10px; font-size: 14px; color: {COLORS['text_primary']};"
+        )
+        self.console_combo.addItem("Any Console", "any")
+        self.console_combo.currentIndexChanged.connect(self.apply_platform_filter)
+        sb_layout.addWidget(self.console_combo)
 
         self.search_btn = QPushButton("Search")
         self.search_btn.setFixedSize(100, 40)
@@ -155,7 +166,7 @@ class TorrentSearchTab(QWidget):
         threading.Thread(target=self.perform_search, args=(query,), daemon=True).start()
 
     def perform_search(self, query):
-        results = scraper.search_fitgirl(query)
+        results = scraper.search_axekin(query)
         self.results_ready.emit(results)
 
     @pyqtSlot(list)
@@ -167,7 +178,49 @@ class TorrentSearchTab(QWidget):
         self.search_btn.setEnabled(True)
         self.search_btn.setText("Search")
         self.stop_glow()
-        self.results = results
+
+        self.raw_results = results or []
+        self.update_console_options_from_results()
+        self.apply_platform_filter()
+
+    def update_console_options_from_results(self):
+        platforms = set()
+        for item in self.raw_results:
+            for p in item.get("platforms") or []:
+                platforms.add(str(p).lower())
+
+        if not platforms:
+            return
+
+        current_data = self.console_combo.currentData()
+        existing = {self.console_combo.itemData(i) for i in range(self.console_combo.count())}
+
+        self.console_combo.blockSignals(True)
+        try:
+            for p in sorted(platforms):
+                if p not in existing:
+                    self.console_combo.addItem(p.upper(), p)
+
+            # Restore selection if possible
+            if current_data in {self.console_combo.itemData(i) for i in range(self.console_combo.count())}:
+                idx = next(
+                    (i for i in range(self.console_combo.count()) if self.console_combo.itemData(i) == current_data),
+                    0,
+                )
+                self.console_combo.setCurrentIndex(idx)
+        finally:
+            self.console_combo.blockSignals(False)
+
+    def apply_platform_filter(self):
+        desired = (self.console_combo.currentData() or "any").lower()
+        if desired == "any":
+            self.results = list(self.raw_results)
+        else:
+            self.results = [
+                item
+                for item in self.raw_results
+                if desired in {str(p).lower() for p in (item.get("platforms") or [])}
+            ]
         self.current_page = 0
         self.render_page()
 
@@ -176,6 +229,7 @@ class TorrentSearchTab(QWidget):
         start = self.current_page * self.page_size
         end = start + self.page_size
         page_results = self.results[start:end]
+
         if not page_results:
             empty = QLabel("No results found.")
             empty.setStyleSheet(
@@ -184,9 +238,11 @@ class TorrentSearchTab(QWidget):
             empty.setAlignment(Qt.AlignmentFlag.AlignCenter)
             self.results_layout.addWidget(empty)
             return
-        for i, game in enumerate(page_results):
-            card = GameCardWidget(game, "torrent", self.main_app, delay=i * 100)
+
+        for i, item in enumerate(page_results):
+            card = GameCardWidget(item, "roms", self.main_app, delay=i * 100)
             self.results_layout.addWidget(card)
+
         if hasattr(self.main_app, "create_pagination_controls"):
             self.main_app.create_pagination_controls(
                 self.results_layout,
@@ -200,3 +256,4 @@ class TorrentSearchTab(QWidget):
         self.current_page = new_page
         self.render_page()
         self.scroll.verticalScrollBar().setValue(0)
+

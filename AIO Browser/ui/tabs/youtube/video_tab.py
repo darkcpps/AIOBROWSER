@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 from ui.core.styles import get_colors
+from ui.core.components import InfoBanner
 
 
 class VideoTab(QWidget):
@@ -25,9 +26,15 @@ class VideoTab(QWidget):
         )
         video_title_layout.addWidget(video_title)
 
-        video_subtitle = QLabel("Download YouTube videos in your preferred quality.")
-        video_subtitle.setStyleSheet(f"font-size: 14px; color: {colors['text_secondary']};")
-        video_title_layout.addWidget(video_subtitle)
+        video_title_layout.addWidget(
+            InfoBanner(
+                title="",
+                body_lines=["Download YouTube videos in your preferred quality."],
+                icon="💡",
+                object_name="YouTubeVideoInfoBanner",
+                compact=True,
+            )
+        )
         video_header.addLayout(video_title_layout)
         video_header.addStretch()
         video_layout.addLayout(video_header)

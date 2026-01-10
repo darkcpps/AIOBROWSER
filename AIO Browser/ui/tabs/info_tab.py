@@ -2,6 +2,7 @@
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
+from ui.core.components import InfoBanner
 from ui.core.styles import COLORS
 
 class InfoTab(QWidget):
@@ -27,15 +28,26 @@ class InfoTab(QWidget):
             "<ul>"
             "<li><b>Game Search:</b> Find and download games from various sources.</li>"
             "<li><b>Steam Patcher:</b> Apply the Goldberg Emulator to your installed Steam games to play them without the Steam client running.</li>"
-            "<li><b>CreamAPI Patcher:</b> Unlock DLCs for your Steam games.</li>"
             "<li><b>Downloads Manager:</b> Keep track of your game downloads.</li>"
-            "</ul><br>"
-            "<b>Disclaimer:</b> This software is for educational purposes only. Please support game developers by purchasing the games you enjoy."
+            "</ul>"
         )
         description.setStyleSheet(
             f"font-size: 14px; color: {COLORS['text_secondary']}; line-height: 1.5;"
         )
         description.setWordWrap(True)
         layout.addWidget(description)
+
+        layout.addWidget(
+            InfoBanner(
+                title="Disclaimer",
+                body_lines=[
+                    "This software is for educational purposes only. Please support game developers by purchasing the games you enjoy.",
+                ],
+                icon="⚠️",
+                accent_color=COLORS.get("accent_red", COLORS["accent_primary"]),
+                object_name="InfoDisclaimerBanner",
+                compact=True,
+            )
+        )
 
         self.setLayout(layout)

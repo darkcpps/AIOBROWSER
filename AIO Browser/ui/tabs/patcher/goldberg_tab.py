@@ -89,9 +89,12 @@ class GoldbergTab(QWidget):
         self.info_frame.setVisible(False)
         self.info_frame.setStyleSheet(f"""
             QFrame {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 {COLORS["bg_secondary"]}, stop:1 {COLORS["bg_primary"]});
-                border: 1px solid {COLORS["accent_primary"]};
-                border-radius: 12px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                    stop:0 {COLORS["bg_secondary"]},
+                    stop:1 {COLORS.get("bg_card", COLORS["bg_secondary"])});
+                border: 1px solid {COLORS["border"]};
+                border-left: 4px solid {COLORS["accent_primary"]};
+                border-radius: 10px;
             }}
         """)
         if_layout = QVBoxLayout(self.info_frame)

@@ -1,6 +1,7 @@
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import *
 from ui.core.styles import get_colors
+from ui.core.components import InfoBanner
 
 
 class AudioTab(QWidget):
@@ -25,9 +26,15 @@ class AudioTab(QWidget):
         )
         audio_title_layout.addWidget(audio_title)
 
-        audio_subtitle = QLabel("Extract high-quality MP3 audio from YouTube videos.")
-        audio_subtitle.setStyleSheet(f"font-size: 14px; color: {colors['text_secondary']};")
-        audio_title_layout.addWidget(audio_subtitle)
+        audio_title_layout.addWidget(
+            InfoBanner(
+                title="",
+                body_lines=["Extract high-quality MP3 audio from YouTube videos."],
+                icon="💡",
+                object_name="YouTubeAudioInfoBanner",
+                compact=True,
+            )
+        )
         audio_header.addLayout(audio_title_layout)
         audio_header.addStretch()
         audio_layout.addLayout(audio_header)

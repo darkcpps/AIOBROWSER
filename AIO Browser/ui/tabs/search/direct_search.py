@@ -6,7 +6,7 @@ from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
-from ui.core.components import GameCardWidget, LoadingWidget
+from ui.core.components import GameCardWidget, InfoBanner, LoadingWidget
 from ui.core.styles import COLORS
 
 
@@ -29,6 +29,18 @@ class DirectSearchTab(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(12)
+
+        layout.addWidget(
+            InfoBanner(
+                title="Direct Search",
+                body_lines=[
+                    "Search for direct download games. Use specific titles/keywords for better matches.",
+                ],
+                icon="🔎",
+                object_name="DirectSearchInfoBanner",
+                compact=True,
+            )
+        )
 
         self.search_bar = QFrame()
         self.search_bar.setFixedHeight(60)

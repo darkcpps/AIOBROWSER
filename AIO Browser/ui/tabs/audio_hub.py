@@ -35,11 +35,11 @@ class AudioHub(QWidget):
 
         # Add YouTube Audio subtab (uses the real downloader via the hidden helper)
         self.youtube_audio_tab = AudioTab(self._yt_helper)
-        self.tab_widget.addTab(self.youtube_audio_tab, "YouTube (Audio)")
+        self.tab_widget.addTab(self.youtube_audio_tab, "YouTube Audio Download")
 
         # Add Monochrome as an audio subtab
         self.monochrome_tab = MonochromeTab(self.main_app)
-        self.tab_widget.addTab(self.monochrome_tab, "Monochrome (FLAC)")
+        self.tab_widget.addTab(self.monochrome_tab, "Monochrome")
 
         main_layout.addWidget(self.tab_widget)
         self.setLayout(main_layout)

@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from ui.core.components import InfoBanner
 from ui.core.styles import COLORS
 
 
@@ -206,6 +207,18 @@ class DownloadsPage(QWidget):
             f"font-size: 24px; font-weight: 800; color: {COLORS['text_primary']};"
         )
         layout.addWidget(header)
+
+        layout.addWidget(
+            InfoBanner(
+                title="Downloads",
+                body_lines=[
+                    "Downloads started in other tabs show up here. Use the controls on each card to pause/stop/remove.",
+                ],
+                icon="⬇️",
+                object_name="DownloadsInfoBanner",
+                compact=True,
+            )
+        )
 
         # Scroll Area
         self.scroll = QScrollArea()

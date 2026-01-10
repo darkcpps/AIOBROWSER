@@ -13,6 +13,7 @@ from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
 
 from core.monochrome_downloader import MonochromeAPI, MonochromeDownloader, MetadataHelper, AudioQuality
+from ui.core.components import InfoBanner
 from ui.core.styles import COLORS
 
 
@@ -53,16 +54,16 @@ class MonochromeTab(QWidget):
         layout.addWidget(title)
 
         # Info banner
-        info_banner = QLabel("✨ Download lossless music via Monochrome API • FLAC up to 24-bit/192kHz • No account required\n💡 Powered by monochrome-api.samidy.com\n Currently WIP and may not download some songs!")
-        info_banner.setStyleSheet(f"""
-            background-color: {COLORS['bg_secondary']};
-            color: {COLORS['text_primary']};
-            padding: 12px;
-            border-radius: 8px;
-            border-left: 4px solid {COLORS['accent_primary']};
-            font-size: 11px;
-        """)
-        info_banner.setWordWrap(True)
+        info_banner = InfoBanner(
+            title="Download lossless music via Monochrome API",
+            body_lines=[
+                "FLAC up to 24-bit/192kHz • No account required",
+                f"Powered by <span style='color:{COLORS.get('accent_primary')}'>monochrome-api.samidy.com</span>",
+                "Currently WIP and may not download some songs!",
+            ],
+            icon="✨",
+            object_name="MonochromeInfoBanner",
+        )
         layout.addWidget(info_banner)
 
         # Search Section
@@ -253,10 +254,15 @@ class MonochromeTab(QWidget):
         quality_layout.addStretch()
         layout.addLayout(quality_layout)
 
-        # Quality info label
-        self.quality_info_label = QLabel("💡 LOSSLESS quality recommended for best audio quality")
-        self.quality_info_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 11px; margin-top: 5px;")
-        layout.addWidget(self.quality_info_label)
+        # Quality info banner
+        self.quality_info_banner = InfoBanner(
+            title="",
+            body_lines=["LOSSLESS quality recommended for best audio quality"],
+            icon="💡",
+            object_name="MonochromeQualityInfoBanner",
+            compact=True,
+        )
+        layout.addWidget(self.quality_info_banner)
 
         group.setLayout(layout)
         return group
@@ -406,14 +412,14 @@ class MonochromeTab(QWidget):
         """Set download quality"""
         self.download_quality = quality
 
-        # Update info label
+        # Update info banner
         info_texts = {
-            "LOW": "💡 Small file size, good for mobile devices",
-            "HIGH": "💡 High quality AAC, good balance of size and quality",
-            "LOSSLESS": "💡 CD quality FLAC, recommended for most users",
-            "HI_RES": "💡 Studio quality FLAC, largest file size"
+            "LOW": "Small file size, good for mobile devices",
+            "HIGH": "High quality AAC, good balance of size and quality",
+            "LOSSLESS": "CD quality FLAC, recommended for most users",
+            "HI_RES": "Studio quality FLAC, largest file size",
         }
-        self.quality_info_label.setText(info_texts.get(quality, ""))
+        self.quality_info_banner.set_content(body_lines=[info_texts.get(quality, "")])
 
     def search_monochrome(self):
         """Search Monochrome catalog"""
