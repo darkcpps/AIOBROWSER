@@ -1,0 +1,23 @@
+# themes/aurora_borealis.py
+AURORA_BOREALIS = {
+    "name": "Aurora Borealis",
+    "bg_primary": "#070A12",
+    "bg_secondary": "#040611",
+    "bg_card": "#0C1224",
+    "bg_card_hover": "#111A33",
+    "accent_primary": "#22D3EE",
+    "accent_secondary": "#34D399",
+    "accent_glow": "rgba(34, 211, 238, 0.22)",
+    "accent_red": "#FB7185",
+    "accent_red_hover": "#F43F5E",
+    "accent_green": "#22C55E",
+    "accent_green_hover": "#16A34A",
+    "text_primary": "#F8FAFC",
+    "text_secondary": "#A7B3C6",
+    "text_muted": "#6B7A93",
+    "border": "#1B2746",
+    "border_hover": "#22D3EE",
+    "glossy_gradient_start": "#22D3EE",
+    "glossy_gradient_end": "#0EA5E9",
+    "glossy_shine": "rgba(255, 255, 255, 0.12)",
+}

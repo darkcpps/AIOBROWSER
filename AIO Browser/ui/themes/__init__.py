@@ -1,9 +1,11 @@
 # themes/__init__.py
 from .midnight_purple import MIDNIGHT_PURPLE
 from .black_gold import BLACK_GOLD
+from .aurora_borealis import AURORA_BOREALIS
 
 THEMES = {
     "default": MIDNIGHT_PURPLE,
+    "aurora_borealis": AURORA_BOREALIS,
     "black_gold": BLACK_GOLD,
 }
 

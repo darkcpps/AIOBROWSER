@@ -37,6 +37,27 @@ class ThemePreviewCard(QFrame):
 
     clicked = pyqtSignal(str)
 
+    class _ElidedLabel(QLabel):
+        def __init__(self, text="", parent=None):
+            self._full_text = ""
+            super().__init__("", parent)
+            self.setText(text or "")
+
+        def setText(self, text):
+            self._full_text = text or ""
+            self._update_elide()
+
+        def resizeEvent(self, event):
+            super().resizeEvent(event)
+            self._update_elide()
+
+        def _update_elide(self):
+            fm = self.fontMetrics()
+            elided = fm.elidedText(
+                self._full_text, Qt.TextElideMode.ElideRight, max(0, self.width())
+            )
+            QLabel.setText(self, elided)
+
     def __init__(self, theme_key, theme_data, is_selected=False, parent=None):
         super().__init__(parent)
         self.theme_key = theme_key
@@ -120,10 +141,14 @@ class ThemePreviewCard(QFrame):
 
         label_layout = QHBoxLayout(self.label_frame)
         label_layout.setContentsMargins(10, 8, 10, 8)
+        label_layout.setSpacing(8)
 
-        self.name_label = QLabel(self.theme_data["name"])
+        self.name_label = self._ElidedLabel(self.theme_data["name"])
+        self.name_label.setSizePolicy(
+            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
+        )
         self.update_name_style()
-        label_layout.addWidget(self.name_label)
+        label_layout.addWidget(self.name_label, 1)
 
         self.check_label = QLabel("✓")
         self.check_label.setStyleSheet(f"""
@@ -133,7 +158,7 @@ class ThemePreviewCard(QFrame):
             background: transparent;
         """)
         self.check_label.setVisible(self.is_selected)
-        label_layout.addWidget(self.check_label)
+        label_layout.addWidget(self.check_label, 0, Qt.AlignmentFlag.AlignRight)
 
         layout.addWidget(self.label_frame)
 

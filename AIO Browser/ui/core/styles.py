@@ -20,7 +20,7 @@ def generate_stylesheet(theme_name=None):
     # Add white gloss overlay and premium particle simulation for black_gold theme
     gloss_overlay = ""
     if theme_name == "black_gold" or (
-        not theme_name and _current_theme == "black_gold"
+        not theme_name and get_current_theme() == "black_gold"
     ):
         gloss_overlay = f"""
 QWidget#ContentArea, QFrame#Card {{
@@ -38,18 +38,18 @@ QLabel#ParticleBackground {{
 
     # Define theme-specific component styles
     if theme_name == "black_gold" or (
-        not theme_name and _current_theme == "black_gold"
+        not theme_name and get_current_theme() == "black_gold"
     ):
         # Luxury specific styles
         btn_style = f"""
 QPushButton {{
+    background-color: {colors["accent_primary"]};
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["accent_secondary"]},
-        stop:0.2 rgba(255, 255, 255, 0.9),
-        stop:0.4 {colors["accent_primary"]},
-        stop:0.5 {colors["glossy_gradient_end"]},
+        stop:0 rgba(255, 255, 255, 0.18),
+        stop:0.08 {colors["accent_primary"]},
+        stop:0.55 {colors["glossy_gradient_end"]},
         stop:1 #4D3308);
-    color: #000000;
+    color: {colors["text_primary"]};
     border: 1px solid rgba(255, 255, 255, 0.5);
     padding: 8px 15px;
     border-radius: 8px;
@@ -58,14 +58,14 @@ QPushButton {{
 }}
 
 QPushButton:hover {{
+    background-color: {colors["accent_secondary"]};
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.3),
+        stop:0 rgba(255, 255, 255, 0.30),
         stop:0.1 {colors["accent_secondary"]},
-        stop:0.5 {colors["accent_secondary"]},
-        stop:0.9 {colors["glossy_gradient_start"]},
-        stop:1 {colors["glossy_gradient_start"]});
+        stop:0.55 {colors["accent_primary"]},
+        stop:1 {colors["glossy_gradient_end"]});
     border: 1px solid {colors["accent_secondary"]};
-    color: #000000;
+    color: #0B0B0B;
 }}
 """
         progress_chunk_style = f"""

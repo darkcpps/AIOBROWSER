@@ -28,6 +28,7 @@ from ui.core.styles import (
 from ui.core.titlebar import CustomTitleBar
 from ui.dialogs.settings_dialog import SettingsManager
 from ui.tabs.downloads_page import DownloadsPage
+from ui.tabs.emulators_tab import EmulatorsTab
 from ui.tabs.info_tab import InfoTab
 from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.search_tab import SearchTab
@@ -172,6 +173,9 @@ class GameSearchApp(QMainWindow):
 
         self.streaming_tab = StreamingHub(self)
         self.main_stack.addWidget(self.streaming_tab)
+
+        self.emulators_tab = EmulatorsTab(self)
+        self.main_stack.addWidget(self.emulators_tab)
 
         self.info_tab = InfoTab(self)
         self.main_stack.addWidget(self.info_tab)
