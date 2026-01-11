@@ -155,34 +155,38 @@ class SpinnerWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        try:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        # Center point
-        center_x, center_y = self.width() // 2, self.height() // 2
+            # Center point
+            center_x, center_y = self.width() // 2, self.height() // 2
 
-        # Draw rotating arc with solid color
-        pen = QPen(
-            QColor(COLORS["accent_primary"]),
-            4,
-            Qt.PenStyle.SolidLine,
-            Qt.PenCapStyle.RoundCap,
-        )
-        painter.setPen(pen)
-        # Rotate the arc itself by changing the start angle
-        start_angle = self.angle * 16  # Qt uses 1/16th degree units
-        span_angle = 270 * 16  # 270 degrees arc
-        painter.drawArc(10, 10, 60, 60, start_angle, span_angle)
+            # Draw rotating arc with solid color
+            pen = QPen(
+                QColor(COLORS["accent_primary"]),
+                4,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+            painter.setPen(pen)
+            # Rotate the arc itself by changing the start angle
+            start_angle = self.angle * 16  # Qt uses 1/16th degree units
+            span_angle = 270 * 16  # 270 degrees arc
+            painter.drawArc(10, 10, 60, 60, start_angle, span_angle)
 
-        # Draw a second arc with secondary color for gradient effect
-        pen2 = QPen(
-            QColor(COLORS["accent_secondary"]),
-            4,
-            Qt.PenStyle.SolidLine,
-            Qt.PenCapStyle.RoundCap,
-        )
-        painter.setPen(pen2)
-        painter.drawArc(10, 10, 60, 60, start_angle + 200 * 16, 70 * 16)
+            # Draw a second arc with secondary color for gradient effect
+            pen2 = QPen(
+                QColor(COLORS["accent_secondary"]),
+                4,
+                Qt.PenStyle.SolidLine,
+                Qt.PenCapStyle.RoundCap,
+            )
+            painter.setPen(pen2)
+            painter.drawArc(10, 10, 60, 60, start_angle + 200 * 16, 70 * 16)
+            painter.end()
+        except Exception:
+            pass
 
     def stop(self):
         self.timer.stop()
@@ -231,15 +235,19 @@ class ParticleWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        try:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
-        for p in self.particles:
-            color = QColor(COLORS["accent_primary"])
-            color.setAlpha(max(0, min(255, int(p["opacity"]))))
-            painter.setBrush(QBrush(color))
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(int(p["x"]), int(p["y"]), p["size"], p["size"])
+            for p in self.particles:
+                color = QColor(COLORS["accent_primary"])
+                color.setAlpha(max(0, min(255, int(p["opacity"]))))
+                painter.setBrush(QBrush(color))
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawEllipse(int(p["x"]), int(p["y"]), p["size"], p["size"])
+            painter.end()
+        except Exception:
+            pass
 
     def stop(self):
         self.timer.stop()
@@ -905,48 +913,51 @@ class GoldParticleBackground(QWidget):
         self.update()
 
     def paintEvent(self, event):
-        painter = QPainter(self)
-        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        from ui.core.styles import get_colors
+        try:
+            painter = QPainter(self)
+            painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+            from ui.core.styles import get_colors
 
-        colors = get_colors()
-        gold_color = QColor(colors.get("accent_secondary", "#F9E076"))
-        white_sparkle = QColor("#FFFFFF")
+            colors = get_colors()
+            gold_color = QColor(colors.get("accent_secondary", "#F9E076"))
+            white_sparkle = QColor("#FFFFFF")
 
-        for p in self.particles:
-            x, y = p["x"] * self.width(), p["y"] * self.height()
+            for p in self.particles:
+                x, y = p["x"] * self.width(), p["y"] * self.height()
 
-            # Calculate pulsing opacity for sparkle effect
-            dynamic_opacity = p["opacity"] * (0.5 + 0.5 * math.sin(p["pulse"]))
+                # Calculate pulsing opacity for sparkle effect
+                dynamic_opacity = p["opacity"] * (0.5 + 0.5 * math.sin(p["pulse"]))
 
-            # Draw core diamond sparkle
-            painter.setOpacity(dynamic_opacity)
+                # Draw core diamond sparkle
+                painter.setOpacity(dynamic_opacity)
 
-            # Glow effect
-            rad = QRadialGradient(QPointF(x, y), p["size"] * 4)
-            c_gold = QColor(gold_color)
-            c_gold.setAlphaF(0.4)
-            rad.setColorAt(0, c_gold)
-            rad.setColorAt(1, Qt.GlobalColor.transparent)
-            painter.setBrush(rad)
-            painter.setPen(Qt.PenStyle.NoPen)
-            painter.drawEllipse(QPointF(x, y), p["size"] * 4, p["size"] * 4)
+                # Glow effect
+                rad = QRadialGradient(QPointF(x, y), p["size"] * 4)
+                c_gold = QColor(gold_color)
+                c_gold.setAlphaF(0.4)
+                rad.setColorAt(0, c_gold)
+                rad.setColorAt(1, Qt.GlobalColor.transparent)
+                painter.setBrush(rad)
+                painter.setPen(Qt.PenStyle.NoPen)
+                painter.drawEllipse(QPointF(x, y), p["size"] * 4, p["size"] * 4)
 
-            # Center bright point
-            painter.setOpacity(dynamic_opacity * 1.5)
-            painter.setBrush(white_sparkle)
-            painter.drawEllipse(QPointF(x, y), p["size"], p["size"])
+                # Center bright point
+                painter.setOpacity(dynamic_opacity * 1.5)
+                painter.setBrush(white_sparkle)
+                painter.drawEllipse(QPointF(x, y), p["size"], p["size"])
 
-            # Optional cross-flare for "Diamond" look
-            if p["pulse"] % 6.28 > 5.8:
-                painter.setPen(QPen(white_sparkle, 0.5))
-                painter.drawLine(
-                    QPointF(x - p["size"] * 3, y), QPointF(x + p["size"] * 3, y)
-                )
-                painter.drawLine(
-                    QPointF(x, y - p["size"] * 3), QPointF(x, y + p["size"] * 3)
-                )
-
+                # Optional cross-flare for "Diamond" look
+                if p["pulse"] % 6.28 > 5.8:
+                    painter.setPen(QPen(white_sparkle, 0.5))
+                    painter.drawLine(
+                        QPointF(x - p["size"] * 3, y), QPointF(x + p["size"] * 3, y)
+                    )
+                    painter.drawLine(
+                        QPointF(x, y - p["size"] * 3), QPointF(x, y + p["size"] * 3)
+                    )
+            painter.end()
+        except Exception:
+            pass
 
 class ModernSidebar(QFrame):
     def __init__(self, parent=None):
