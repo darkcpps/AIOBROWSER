@@ -1,5 +1,6 @@
 # gui_pyqt.py
 # PyQt6 Graphical User Interface refactored
+import importlib
 import os
 import sys
 import threading
@@ -7,7 +8,6 @@ import time
 import webbrowser
 from pathlib import Path
 
-from core import downloader, scraper
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -20,7 +20,6 @@ from ui.core.components import (
 from ui.core.splash_screen import SplashScreen
 from ui.core.styles import (
     COLORS,
-    STYLESHEET,
     THEMES,
     generate_stylesheet,
     set_current_theme,
@@ -28,13 +27,7 @@ from ui.core.styles import (
 from ui.core.titlebar import CustomTitleBar
 from ui.dialogs.settings_dialog import SettingsManager
 from ui.tabs.downloads_page import DownloadsPage
-from ui.tabs.emulators_tab import EmulatorsTab
-from ui.tabs.info_tab import InfoTab
-from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.search_tab import SearchTab
-from ui.tabs.settings_tab import SettingsTab
-from ui.tabs.downloader_hub import DownloaderHub
-from ui.tabs.streaming_hub import StreamingHub
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -55,6 +48,8 @@ class GameSearchApp(QMainWindow):
         super().__init__()
         self.settings_manager = SettingsManager()
         self.image_cache = {}
+        self._tab_factories = {}
+        self._animations_enabled_once = False
 
         # Connect Signals
         self.download_prompt_ready.connect(self.prompt_download)
@@ -79,6 +74,48 @@ class GameSearchApp(QMainWindow):
             self.show_splash()
         else:
             self.show_main_interface()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if self._animations_enabled_once:
+            return
+        self._animations_enabled_once = True
+        if hasattr(self, "main_stack"):
+            QTimer.singleShot(0, lambda: self.main_stack.enable_animations(True))
+
+    def ensure_tab(self, key: str):
+        attr = f"{key}_tab"
+        tab = getattr(self, attr, None)
+        if tab is not None:
+            return tab
+
+        factory = self._tab_factories.get(key)
+        if factory is None:
+            return None
+
+        tab = factory()
+        setattr(self, attr, tab)
+        self.main_stack.addWidget(tab)
+        return tab
+
+    def navigate_to(self, key: str):
+        tab = self.ensure_tab(key)
+        if tab is None:
+            return
+        self.main_stack.setCurrentWidget(tab)
+
+        title = {
+            "search": "Search",
+            "downloads": "Downloads",
+            "patcher": "Steam Patcher",
+            "downloader": "Downloader",
+            "streaming": "Streaming",
+            "emulators": "Emulators",
+            "info": "Information",
+            "settings": "Settings",
+        }.get(key)
+        if title and hasattr(self, "page_title"):
+            self.page_title.setText(title)
 
     def initUI(self):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
@@ -158,30 +195,39 @@ class GameSearchApp(QMainWindow):
         # Main Stack
         self.main_stack = AnimatedStackedWidget()
 
-        # Tabs
+        # Tabs (build the minimum for instant startup)
         self.search_tab = SearchTab(self)
         self.main_stack.addWidget(self.search_tab)
 
         self.downloads_tab = DownloadsPage(self)
         self.main_stack.addWidget(self.downloads_tab)
 
-        self.patcher_tab = PatcherTab(self)
-        self.main_stack.addWidget(self.patcher_tab)
+        # Lazily created tabs (instantiate on demand when sidebar is clicked)
+        self.patcher_tab = None
+        self.downloader_tab = None
+        self.streaming_tab = None
+        self.emulators_tab = None
+        self.info_tab = None
+        self.settings_tab = None
 
-        self.downloader_tab = DownloaderHub(self)
-        self.main_stack.addWidget(self.downloader_tab)
-
-        self.streaming_tab = StreamingHub(self)
-        self.main_stack.addWidget(self.streaming_tab)
-
-        self.emulators_tab = EmulatorsTab(self)
-        self.main_stack.addWidget(self.emulators_tab)
-
-        self.info_tab = InfoTab(self)
-        self.main_stack.addWidget(self.info_tab)
-
-        self.settings_tab = SettingsTab(self.settings_manager, self)
-        self.main_stack.addWidget(self.settings_tab)
+        self._tab_factories = {
+            "patcher": lambda: importlib.import_module(
+                "ui.tabs.patcher_tab"
+            ).PatcherTab(self),
+            "downloader": lambda: importlib.import_module(
+                "ui.tabs.downloader_hub"
+            ).DownloaderHub(self),
+            "streaming": lambda: importlib.import_module(
+                "ui.tabs.streaming_hub"
+            ).StreamingHub(self),
+            "emulators": lambda: importlib.import_module(
+                "ui.tabs.emulators_tab"
+            ).EmulatorsTab(self),
+            "info": lambda: importlib.import_module("ui.tabs.info_tab").InfoTab(self),
+            "settings": lambda: importlib.import_module(
+                "ui.tabs.settings_tab"
+            ).SettingsTab(self.settings_manager, self),
+        }
 
         content_layout.addWidget(self.main_stack)
         self.content_container.setLayout(content_layout)
@@ -511,6 +557,8 @@ class GameSearchApp(QMainWindow):
                 self.download_status_updated.emit(download_id, text, progress)
 
             def run_download():
+                from core import downloader as core_downloader
+
                 self.download_status_updated.emit(
                     download_id, "⏳ Preparing download...", 0
                 )
@@ -519,7 +567,7 @@ class GameSearchApp(QMainWindow):
                     del session.headers["Referer"]
                 if session and "X-Requested-With" in session.headers:
                     del session.headers["X-Requested-With"]
-                result = downloader.download_file(
+                result = core_downloader.download_file(
                     url,
                     save_path,
                     progress_callback,
@@ -564,6 +612,9 @@ class GameSearchApp(QMainWindow):
 
 
 def main():
+    # Required when QtWebEngineWidgets may be imported later (Streaming tab).
+    QCoreApplication.setAttribute(Qt.ApplicationAttribute.AA_ShareOpenGLContexts, True)
+
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
     window = GameSearchApp()

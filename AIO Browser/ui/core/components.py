@@ -769,60 +769,73 @@ class GameCardWidget(QFrame):
 class AnimatedStackedWidget(QStackedWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.p_opacity = 1.0
-        self.anim = QPropertyAnimation(self, b"opacity")
-        self.anim.setDuration(400)
-        self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.opacity_effect = None
+        self.animations_enabled = False  # enable after first show
 
-    @pyqtProperty(float)
-    def opacity(self):
-        return self.p_opacity
+        self._effect = None
+        self._anim = None
+        self._target_index = None
 
-    @opacity.setter
-    def opacity(self, value):
-        self.p_opacity = value
-        if self.opacity_effect:
-            self.opacity_effect.setOpacity(value)
+    def enable_animations(self, enabled=True):
+        self.animations_enabled = enabled
+        if enabled and self._effect is None:
+            self._effect = QGraphicsOpacityEffect(self)
+            self._effect.setOpacity(1.0)
+            self.setGraphicsEffect(self._effect)
+
+            self._anim = QPropertyAnimation(self._effect, b"opacity", self)
+            self._anim.setDuration(220)
+            self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
 
     def setCurrentIndex(self, index):
         if index == self.currentIndex():
             return
-        self.anim.stop()
-        if self.graphicsEffect():
-            self.setGraphicsEffect(None)
-        self.opacity_effect = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity_effect)
-        self.anim.setStartValue(1.0)
-        self.anim.setEndValue(0.0)
 
-        def on_fade_in_done():
-            self.setGraphicsEffect(None)
-            self.opacity_effect = None
+        # If we’re not ready to animate (startup / hidden), just switch instantly.
+        if (
+            (not self.animations_enabled)
+            or (not self.isVisible())
+            or (self._anim is None)
+            or (self._effect is None)
+        ):
+            if self._anim is not None:
+                self._anim.stop()
+            if self._effect is not None:
+                self._effect.setOpacity(1.0)
+            super().setCurrentIndex(index)
+            return
+
+        # If an animation is running, just remember the last requested index.
+        if self._anim.state() == QAbstractAnimation.State.Running:
+            self._target_index = index
+            return
+
+        self._target_index = index
+
+        # Fade out
+        self._anim.stop()
+        self._anim.setStartValue(1.0)
+        self._anim.setEndValue(0.0)
+
+        def after_fade_out():
             try:
-                self.anim.finished.disconnect()
-            except:
+                self._anim.finished.disconnect(after_fade_out)
+            except Exception:
                 pass
 
-        def on_fade_out():
-            super(AnimatedStackedWidget, self).setCurrentIndex(index)
-            self.opacity_effect = QGraphicsOpacityEffect(self)
-            self.setGraphicsEffect(self.opacity_effect)
-            try:
-                self.anim.finished.disconnect()
-            except:
-                pass
-            self.anim.setStartValue(0.0)
-            self.anim.setEndValue(1.0)
-            self.anim.finished.connect(on_fade_in_done)
-            self.anim.start()
+            super(AnimatedStackedWidget, self).setCurrentIndex(self._target_index)
+
+            # Fade in
+            self._anim.setStartValue(0.0)
+            self._anim.setEndValue(1.0)
+            self._anim.start()
 
         try:
-            self.anim.finished.disconnect()
-        except:
+            self._anim.finished.disconnect()
+        except Exception:
             pass
-        self.anim.finished.connect(on_fade_out)
-        self.anim.start()
+
+        self._anim.finished.connect(after_fade_out)
+        self._anim.start()
 
 
 class SidebarButton(QPushButton):
@@ -1069,6 +1082,11 @@ class ModernSidebar(QFrame):
         for k, b in self.buttons.items():
             b.setChecked(k == key)
             b.update_style()
+
+        # Prefer main-window navigation which may lazily create tabs.
+        if hasattr(self.parent, "navigate_to"):
+            self.parent.navigate_to(key)
+            return
 
         if key == "search":
             self.parent.main_stack.setCurrentIndex(0)
