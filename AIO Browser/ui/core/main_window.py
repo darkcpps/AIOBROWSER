@@ -96,7 +96,7 @@ class GameSearchApp(QMainWindow):
 
     def transition_to_main(self):
         self.show_main_interface()
-        self.show()
+        self.showMaximized()
 
     def show_main_interface(self):
         central = QWidget()
@@ -436,7 +436,7 @@ def main():
     y = (screen.height() - window.height()) // 2
     window.move(x, y)
     if window.settings_manager.get("disable_splash", False):
-        window.show()
+        window.showMaximized()
     sys.exit(app.exec())
 
 
