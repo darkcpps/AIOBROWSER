@@ -18,6 +18,7 @@ from PyQt6.QtWidgets import (
     QPushButton,
     QVBoxLayout,
     QWidget,
+    QScrollArea,
 )
 
 from ui.core.components import InfoBanner
@@ -223,10 +224,32 @@ class SettingsTab(QWidget):
         self.initUI()
 
     def initUI(self):
-        layout = QVBoxLayout()
+        # Create a scroll area to handle overflow on smaller or maximised screens
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.setSpacing(0)
+
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroll_area.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+        self.scroll_area.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
+
+        # Style the scroll bar to be unobtrusive if possible, or reliance on glbal sheet
+        # Make the scroll area transparent
+        self.scroll_area.setStyleSheet("QScrollArea { background: transparent; }")
+
+        self.content_widget = QWidget()
+        self.content_widget.setObjectName("SettingsContent")
+        self.content_widget.setStyleSheet("QWidget#SettingsContent { background: transparent; }")
+        
+        layout = QVBoxLayout(self.content_widget)
         layout.setContentsMargins(40, 40, 40, 40)
         layout.setSpacing(30)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
+        
+        self.scroll_area.setWidget(self.content_widget)
+        main_layout.addWidget(self.scroll_area)
 
         # Header
         title = QLabel("Settings")
@@ -282,24 +305,19 @@ class SettingsTab(QWidget):
 
         current_theme = self.settings_manager.get("theme", "default")
 
-        first_card_height = 0
+        # We want to iterate themes. 
+        # Calculate size to ensure no cut-off if possible, relying on layout
         for theme_key, theme_data in THEMES.items():
             card = ThemePreviewCard(
                 theme_key, theme_data, is_selected=(theme_key == current_theme)
             )
-            if not first_card_height:
-                first_card_height = card.height()
             card.clicked.connect(self.on_theme_selected)
             self.theme_cards[theme_key] = card
             themes_grid.addWidget(card)
 
         themes_grid.addStretch()
 
-        if first_card_height:
-            m = themes_grid.contentsMargins()
-            self.themes_frame.setMinimumHeight(
-                first_card_height + m.top() + m.bottom() + 24
-            )
+        # Removed setMinimumHeight. Let the layout dictate height.
         theme_layout.addWidget(self.themes_frame)
 
         layout.addWidget(theme_container)
@@ -445,7 +463,6 @@ class SettingsTab(QWidget):
         # Add stretch at end
         layout.addStretch()
 
-        self.setLayout(layout)
         self.load_ui_state()
 
     def load_ui_state(self):
@@ -505,44 +522,47 @@ class SettingsTab(QWidget):
         theme_key = get_current_theme()
 
         # Update section titles and containers
-        for i in range(self.layout().count()):
-            item = self.layout().itemAt(i)
-            if item and item.widget():
-                widget = item.widget()
-                # Find all QLabel widgets that are section titles
-                if hasattr(widget, "findChildren"):
-                    for label in widget.findChildren(QLabel):
-                        text = label.text()
-                        if text in [
-                            "APPEARANCE",
-                            "GENERAL",
-                            "DOWNLOADS",
-                            "EMULATOR IDENTITY",
-                        ]:
-                            label.setStyleSheet(
-                                f"color: {colors['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
-                            )
-                        elif text in [
-                            "Choose a theme for the application",
-                            "Default Download Directory",
-                            "Nickname",
-                            "Language",
-                        ]:
-                            label.setStyleSheet(
-                                f"color: {colors['text_secondary']}; font-size: 14px;"
-                            )
+        # Use content_widget layout
+        content_layout = self.content_widget.layout()
+        if content_layout:
+            for i in range(content_layout.count()):
+                item = content_layout.itemAt(i)
+                if item and item.widget():
+                    widget = item.widget()
+                    # Find all QLabel widgets that are section titles
+                    if hasattr(widget, "findChildren"):
+                        for label in widget.findChildren(QLabel):
+                            text = label.text()
+                            if text in [
+                                "APPEARANCE",
+                                "GENERAL",
+                                "DOWNLOADS",
+                                "EMULATOR IDENTITY",
+                            ]:
+                                label.setStyleSheet(
+                                    f"color: {colors['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+                                )
+                            elif text in [
+                                "Choose a theme for the application",
+                                "Default Download Directory",
+                                "Nickname",
+                                "Language",
+                            ]:
+                                label.setStyleSheet(
+                                    f"color: {colors['text_secondary']}; font-size: 14px;"
+                                )
 
-        # Update the main settings title
-        for i in range(self.layout().count()):
-            item = self.layout().itemAt(i)
-            if item and item.widget() and isinstance(item.widget(), QLabel):
-                if item.widget().text() == "Settings":
-                    item.widget().setStyleSheet(f"""
-                        font-size: 28px;
-                        font-weight: 900;
-                        color: {colors["text_primary"]};
-                    """)
-                    break
+            # Update the main settings title
+            for i in range(content_layout.count()):
+                item = content_layout.itemAt(i)
+                if item and item.widget() and isinstance(item.widget(), QLabel):
+                    if item.widget().text() == "Settings":
+                        item.widget().setStyleSheet(f"""
+                            font-size: 28px;
+                            font-weight: 900;
+                            color: {colors["text_primary"]};
+                        """)
+                        break
 
         # Update specific containers
         if hasattr(self, "themes_frame"):
