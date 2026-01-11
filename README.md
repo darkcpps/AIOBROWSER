@@ -11,14 +11,15 @@ An all-in-one software solution designed to handle the complicated stuff, making
 - **Visuals:** Includes a custom splash screen on launch.
 - **Youtube Downloading** Download Youtube videos or audios
 - **Tidal FLACS** Download Tidal FLACS (Experimental)
-
+- **Video Streaming:** Stream videos directly in-app
+- **ROMS & Emulators:** Browse and download ROMs and emulators
+  
 ## Known issues
 - This project is in early access and will be unstable (crashes, failed downloads, broken UI, etc.).
 - Bugs are expected. If you find one, please report it in GitHub Issues.
 
 ## Planned features
 - **Greenluma and Onlinefix Patcher** - Add games on steam and unlock DLC and Online.
-- **Streaming videos:** Stream movies and series inside the app.
 - **Built-in BitTorrent:** Easier torrenting for beginners.
 - **Software downloads:** Install apps (not just games).
 - **More download servers:** More sources for faster downloads and more game results.
