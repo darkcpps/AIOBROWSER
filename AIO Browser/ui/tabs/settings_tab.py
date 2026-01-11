@@ -16,7 +16,6 @@ from PyQt6.QtWidgets import (
     QLineEdit,
     QMessageBox,
     QPushButton,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
@@ -37,27 +36,6 @@ class ThemePreviewCard(QFrame):
 
     clicked = pyqtSignal(str)
 
-    class _ElidedLabel(QLabel):
-        def __init__(self, text="", parent=None):
-            self._full_text = ""
-            super().__init__("", parent)
-            self.setText(text or "")
-
-        def setText(self, text):
-            self._full_text = text or ""
-            self._update_elide()
-
-        def resizeEvent(self, event):
-            super().resizeEvent(event)
-            self._update_elide()
-
-        def _update_elide(self):
-            fm = self.fontMetrics()
-            elided = fm.elidedText(
-                self._full_text, Qt.TextElideMode.ElideRight, max(0, self.width())
-            )
-            QLabel.setText(self, elided)
-
     def __init__(self, theme_key, theme_data, is_selected=False, parent=None):
         super().__init__(parent)
         self.theme_key = theme_key
@@ -70,7 +48,6 @@ class ThemePreviewCard(QFrame):
         # Store references to widgets that need updates
         self.preview_frame = None
         self.label_frame = None
-        self.name_label = None
         self.check_label = None
 
         self.initUI()
@@ -143,12 +120,8 @@ class ThemePreviewCard(QFrame):
         label_layout.setContentsMargins(10, 8, 10, 8)
         label_layout.setSpacing(8)
 
-        self.name_label = self._ElidedLabel(self.theme_data["name"])
-        self.name_label.setSizePolicy(
-            QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Preferred
-        )
-        self.update_name_style()
-        label_layout.addWidget(self.name_label, 1)
+        # Hide theme names in the UI; keep only the selection checkmark.
+        label_layout.addStretch(1)
 
         self.check_label = QLabel("✓")
         self.check_label.setStyleSheet(f"""
@@ -225,23 +198,6 @@ class ThemePreviewCard(QFrame):
                 }}
             """)
 
-    def update_name_style(self):
-        if self.name_label:
-            color = (
-                self.theme_data["accent_primary"]
-                if self.is_selected
-                else self.theme_data["text_primary"]
-            )
-            if self.theme_key == "black_gold" and not self.is_selected:
-                color = self.theme_data["text_secondary"]
-
-            self.name_label.setStyleSheet(f"""
-                color: {color};
-                font-size: 13px;
-                font-weight: {"bold" if self.is_selected else "normal"};
-                background: transparent;
-            """)
-
     def mousePressEvent(self, event):
         self.clicked.emit(self.theme_key)
         super().mousePressEvent(event)
@@ -252,7 +208,6 @@ class ThemePreviewCard(QFrame):
         self.update_main_style()
         self.update_preview_style()
         self.update_label_style()
-        self.update_name_style()
         if self.check_label:
             self.check_label.setVisible(self.is_selected)
 
@@ -322,20 +277,29 @@ class SettingsTab(QWidget):
             }}
         """)
         themes_grid = QHBoxLayout(self.themes_frame)
-        themes_grid.setContentsMargins(20, 20, 20, 20)
+        themes_grid.setContentsMargins(20, 20, 20, 40)
         themes_grid.setSpacing(20)
 
         current_theme = self.settings_manager.get("theme", "default")
 
+        first_card_height = 0
         for theme_key, theme_data in THEMES.items():
             card = ThemePreviewCard(
                 theme_key, theme_data, is_selected=(theme_key == current_theme)
             )
+            if not first_card_height:
+                first_card_height = card.height()
             card.clicked.connect(self.on_theme_selected)
             self.theme_cards[theme_key] = card
             themes_grid.addWidget(card)
 
         themes_grid.addStretch()
+
+        if first_card_height:
+            m = themes_grid.contentsMargins()
+            self.themes_frame.setMinimumHeight(
+                first_card_height + m.top() + m.bottom() + 24
+            )
         theme_layout.addWidget(self.themes_frame)
 
         layout.addWidget(theme_container)
