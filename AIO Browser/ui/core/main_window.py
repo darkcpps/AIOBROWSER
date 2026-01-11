@@ -327,6 +327,142 @@ class GameSearchApp(QMainWindow):
         self.sidebar.set_active("downloads")
         self.download_prompt_ready.emit(url, title, None, download_id)
 
+    def initiate_torrent_download(self, magnet_link, title):
+        """Start a BitTorrent download directly from a magnet link."""
+        if not self.settings_manager.get("enable_bittorrent", False):
+            QMessageBox.information(
+                self,
+                "BitTorrent Disabled",
+                "Enable the BitTorrent client in Settings to download magnet links.",
+            )
+            return
+
+        from core.bittorrent_downloader import download_torrent, is_available
+
+        if not is_available():
+            QMessageBox.warning(
+                self,
+                "libtorrent Not Installed",
+                "The BitTorrent client requires the Python package 'libtorrent'.",
+            )
+            return
+
+        initial_dir = self.settings_manager.get("default_download_path", "")
+        if not initial_dir or not os.path.exists(initial_dir):
+            initial_dir = str(Path(sys.argv[0]).resolve().parent)
+        save_path = QFileDialog.getExistingDirectory(
+            self, "Select Download Folder", initial_dir
+        )
+        if not save_path:
+            return
+
+        import uuid
+
+        download_id = str(uuid.uuid4())
+        self.downloads_tab.add_download(download_id, title)
+        self.sidebar.set_active("downloads")
+        item_widget = self.downloads_tab.items.get(download_id)
+
+        def progress_callback(text, progress):
+            self.download_status_updated.emit(download_id, text, progress)
+
+        def run_torrent():
+            result = download_torrent(
+                magnet_link,
+                save_path,
+                progress_callback,
+                item_widget.control_flags
+                if item_widget
+                else {"paused": False, "stopped": False},
+            )
+            self.download_finished.emit(download_id, result, save_path)
+
+        threading.Thread(target=run_torrent, daemon=True).start()
+
+    def prompt_torrent_download(self):
+        if not self.settings_manager.get("enable_bittorrent", False):
+            QMessageBox.information(
+                self,
+                "BitTorrent Disabled",
+                "Enable the BitTorrent client in Settings to download magnet links.",
+            )
+            return
+
+        from core.bittorrent_downloader import download_torrent, is_available
+
+        if not is_available():
+            QMessageBox.warning(
+                self,
+                "libtorrent Not Installed",
+                "The BitTorrent client requires the Python package 'libtorrent'.",
+            )
+            return
+
+        chooser = QMessageBox(self)
+        chooser.setWindowTitle("Add Torrent")
+        chooser.setText("How would you like to add a torrent?")
+        magnet_btn = chooser.addButton("Magnet link", QMessageBox.ButtonRole.AcceptRole)
+        file_btn = chooser.addButton(".torrent file", QMessageBox.ButtonRole.ActionRole)
+        cancel_btn = chooser.addButton(QMessageBox.StandardButton.Cancel)
+        chooser.exec()
+
+        clicked = chooser.clickedButton()
+        if clicked == cancel_btn or clicked is None:
+            return
+
+        source = ""
+        title = "Torrent Download"
+        if clicked == magnet_btn:
+            link, ok = QInputDialog.getText(
+                self, "Add Magnet Link", "Paste Magnet Link:"
+            )
+            if not ok or not link:
+                return
+            source = link.strip()
+            title = "Magnet Download"
+        elif clicked == file_btn:
+            file_name, _ = QFileDialog.getOpenFileName(
+                self, "Select Torrent", "", "Torrent Files (*.torrent)"
+            )
+            if not file_name:
+                return
+            source = file_name
+            title = os.path.basename(file_name)
+        else:
+            return
+
+        initial_dir = self.settings_manager.get("default_download_path", "")
+        if not initial_dir or not os.path.exists(initial_dir):
+            initial_dir = str(Path(sys.argv[0]).resolve().parent)
+        save_path = QFileDialog.getExistingDirectory(
+            self, "Select Download Folder", initial_dir
+        )
+        if not save_path:
+            return
+
+        import uuid
+
+        download_id = str(uuid.uuid4())
+        self.downloads_tab.add_download(download_id, title)
+        self.sidebar.set_active("downloads")
+        item_widget = self.downloads_tab.items.get(download_id)
+
+        def progress_callback(text, progress):
+            self.download_status_updated.emit(download_id, text, progress)
+
+        def run_torrent():
+            result = download_torrent(
+                source,
+                save_path,
+                progress_callback,
+                item_widget.control_flags
+                if item_widget
+                else {"paused": False, "stopped": False},
+            )
+            self.download_finished.emit(download_id, result, save_path)
+
+        threading.Thread(target=run_torrent, daemon=True).start()
+
     def process_anker_download_flow(self, game_url, game_title, anker, download_id):
         self.download_status_updated.emit(
             download_id, "🔗 Fetching direct link...", 0.1

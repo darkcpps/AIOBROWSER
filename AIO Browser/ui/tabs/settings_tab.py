@@ -2,6 +2,7 @@
 import os
 import sys
 
+from core.bittorrent_downloader import is_available as bittorrent_is_available
 from PyQt6.QtCore import Qt, pyqtSignal
 from PyQt6.QtGui import QColor
 from PyQt6.QtWidgets import (
@@ -400,6 +401,18 @@ class SettingsTab(QWidget):
         path_box_layout.addWidget(browse_btn)
 
         down_layout.addWidget(self.path_box)
+
+        self.bittorrent_checkbox = QCheckBox("Enable BitTorrent client (magnet links)")
+        self.bittorrent_checkbox.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.bittorrent_checkbox.stateChanged.connect(self.on_bittorrent_changed)
+        if not bittorrent_is_available():
+            self.bittorrent_checkbox.setText(
+                "Enable BitTorrent client (requires libtorrent)"
+            )
+            self.bittorrent_checkbox.setToolTip(
+                "libtorrent is not installed; downloads will be unavailable until it is."
+            )
+        down_layout.addWidget(self.bittorrent_checkbox)
         layout.addWidget(down_container)
 
         # Separator
@@ -469,6 +482,10 @@ class SettingsTab(QWidget):
         if self.settings_manager.get("disable_splash", False):
             self.splash_checkbox.setChecked(True)
 
+        self.bittorrent_checkbox.setChecked(
+            bool(self.settings_manager.get("enable_bittorrent", False))
+        )
+
         # Load saved theme
         saved_theme = self.settings_manager.get("theme", "default")
         if saved_theme in THEMES:
@@ -477,6 +494,11 @@ class SettingsTab(QWidget):
     def on_splash_changed(self, state):
         self.settings_manager.update_setting(
             "disable_splash", state == Qt.CheckState.Checked.value
+        )
+
+    def on_bittorrent_changed(self, state):
+        self.settings_manager.update_setting(
+            "enable_bittorrent", state == Qt.CheckState.Checked.value
         )
 
     def on_theme_selected(self, theme_key):

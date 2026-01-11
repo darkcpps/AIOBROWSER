@@ -722,8 +722,20 @@ class GameCardWidget(QFrame):
 
     def open_torrent_link(self):
         has_magnet = self.game.get("magnet")
-        url = self.game["magnet"] if has_magnet else self.game["link"]
-        webbrowser.open(url)
+        
+        if has_magnet:
+            # Use the BitTorrent downloader from main app
+            magnet_link = self.game["magnet"]
+            title = self.game.get("title", "Torrent Download")
+            if hasattr(self.parent, "initiate_torrent_download"):
+                self.parent.initiate_torrent_download(magnet_link, title)
+            else:
+                # Fallback to browser if parent method not available
+                webbrowser.open(magnet_link)
+        else:
+            # Visit the page for non-magnet links
+            url = self.game.get("link", "")
+            webbrowser.open(url)
 
 
 # =========================================================================

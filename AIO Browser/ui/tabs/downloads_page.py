@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
+from core.bittorrent_downloader import is_available as bittorrent_is_available
 from ui.core.components import InfoBanner
 from ui.core.styles import COLORS
 
@@ -193,8 +194,15 @@ class DownloadItemWidget(QFrame):
 class DownloadsPage(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.main_app = parent
         self.initUI()
         self.items = {}
+
+        if getattr(self.main_app, "settings_manager", None):
+            self.main_app.settings_manager.settings_changed.connect(
+                lambda _settings: self.refresh_torrent_button_state()
+            )
+        self.refresh_torrent_button_state()
 
     def initUI(self):
         layout = QVBoxLayout(self)
@@ -202,11 +210,39 @@ class DownloadsPage(QWidget):
         layout.setSpacing(20)
 
         # Header
+        header_row = QHBoxLayout()
         header = QLabel("Active Downloads")
         header.setStyleSheet(
             f"font-size: 24px; font-weight: 800; color: {COLORS['text_primary']};"
         )
-        layout.addWidget(header)
+        header_row.addWidget(header, 1)
+
+        self.add_torrent_btn = QPushButton("Add Torrent")
+        self.add_torrent_btn.setFixedHeight(36)
+        self.add_torrent_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.add_torrent_btn.setStyleSheet(
+            f"""
+            QPushButton {{
+                background-color: {COLORS["bg_card"]};
+                border: 1px solid {COLORS["border"]};
+                border-radius: 10px;
+                padding: 8px 14px;
+                color: {COLORS["text_primary"]};
+                font-weight: 600;
+            }}
+            QPushButton:hover {{
+                border: 1px solid {COLORS["accent_primary"]};
+            }}
+            QPushButton:disabled {{
+                color: {COLORS["text_muted"]};
+                border: 1px solid {COLORS["border"]};
+            }}
+            """
+        )
+        self.add_torrent_btn.clicked.connect(self.on_add_torrent_clicked)
+        header_row.addWidget(self.add_torrent_btn, 0, Qt.AlignmentFlag.AlignRight)
+
+        layout.addLayout(header_row)
 
         layout.addWidget(
             InfoBanner(
@@ -241,6 +277,28 @@ class DownloadsPage(QWidget):
         )
         self.empty_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.container_layout.addWidget(self.empty_label)
+
+    def refresh_torrent_button_state(self):
+        enabled_setting = False
+        if getattr(self.main_app, "settings_manager", None):
+            enabled_setting = bool(
+                self.main_app.settings_manager.get("enable_bittorrent", False)
+            )
+
+        available = bittorrent_is_available()
+        enabled = enabled_setting and hasattr(self.main_app, "prompt_torrent_download")
+        self.add_torrent_btn.setEnabled(enabled)
+
+        if not available:
+            self.add_torrent_btn.setToolTip("Requires libtorrent")
+        elif not enabled_setting:
+            self.add_torrent_btn.setToolTip("Enable BitTorrent in Settings")
+        else:
+            self.add_torrent_btn.setToolTip("")
+
+    def on_add_torrent_clicked(self):
+        if self.main_app and hasattr(self.main_app, "prompt_torrent_download"):
+            self.main_app.prompt_torrent_download()
 
     def add_download(self, download_id, title):
         if self.empty_label.isVisible():

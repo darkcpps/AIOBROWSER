@@ -34,6 +34,7 @@ class SettingsManager(QObject):
         defaults = {
             "disable_splash": False,
             "default_download_path": str(Path(sys.argv[0]).resolve().parent),
+            "enable_bittorrent": False,
             "goldberg_nickname": "AIOUser",
             "goldberg_language": "english",
         }
