@@ -1,7 +1,6 @@
 # splash_screen.py
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication, QGraphicsDropShadowEffect
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel, QApplication
 from PyQt6.QtCore import Qt, QTimer
-from PyQt6.QtGui import QColor
 from ui.core.styles import COLORS
 
 class SplashScreen(QWidget):
@@ -35,20 +34,12 @@ class SplashScreen(QWidget):
             }}
         """)
         
-        # 4. Shadow
-        shadow = QGraphicsDropShadowEffect(self)
-        shadow.setBlurRadius(30)
-        shadow.setColor(QColor(0, 0, 0, 180))
-        shadow.setXOffset(0)
-        shadow.setYOffset(5)
-        self.main_container.setGraphicsEffect(shadow)
-        
-        # 5. Content Layout (inside container)
+        # 4. Content Layout (inside container)
         content_layout = QVBoxLayout(self.main_container)
         content_layout.setContentsMargins(40, 40, 40, 40)
         content_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        # 6. UI Elements
+        # 5. UI Elements
         # Icon
         icon_label = QLabel("🎮")
         icon_label.setStyleSheet(f"font-size: 72px; color: {COLORS['accent_primary']};")
@@ -77,7 +68,7 @@ class SplashScreen(QWidget):
         
         outer_layout.addWidget(self.main_container)
         
-        # 7. Position & Show
+        # 6. Position & Show
         screen = QApplication.primaryScreen().geometry()
         self.move((screen.width() - self.width()) // 2, (screen.height() - self.height()) // 2)
         

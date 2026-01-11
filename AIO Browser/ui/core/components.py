@@ -146,21 +146,19 @@ class SpinnerWidget(QWidget):
         self.setFixedSize(80, 80)
 
         # Animation timer
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.rotate)
-        self.timer.start(16)  # ~60 FPS
 
     def rotate(self):
         self.angle = (self.angle + 6) % 360
         self.update()
 
     def paintEvent(self, event):
+        painter = QPainter(self)
+        if not painter.isActive():
+            return
         try:
-            painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-
-            # Center point
-            center_x, center_y = self.width() // 2, self.height() // 2
 
             # Draw rotating arc with solid color
             pen = QPen(
@@ -184,12 +182,21 @@ class SpinnerWidget(QWidget):
             )
             painter.setPen(pen2)
             painter.drawArc(10, 10, 60, 60, start_angle + 200 * 16, 70 * 16)
+        finally:
             painter.end()
-        except Exception:
-            pass
 
     def stop(self):
         self.timer.stop()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self.timer.isActive():
+            QTimer.singleShot(0, lambda: self.timer.start(16))  # ~60 FPS
+
+    def hideEvent(self, event):
+        if self.timer.isActive():
+            self.timer.stop()
+        super().hideEvent(event)
 
 
 class ParticleWidget(QWidget):
@@ -201,9 +208,8 @@ class ParticleWidget(QWidget):
         self.init_particles()
 
         # Animation timer
-        self.timer = QTimer()
+        self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_particles)
-        self.timer.start(30)  # ~33 FPS
 
     def init_particles(self):
         for _ in range(15):
@@ -235,8 +241,10 @@ class ParticleWidget(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        painter = QPainter(self)
+        if not painter.isActive():
+            return
         try:
-            painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
 
             for p in self.particles:
@@ -245,12 +253,21 @@ class ParticleWidget(QWidget):
                 painter.setBrush(QBrush(color))
                 painter.setPen(Qt.PenStyle.NoPen)
                 painter.drawEllipse(int(p["x"]), int(p["y"]), p["size"], p["size"])
+        finally:
             painter.end()
-        except Exception:
-            pass
 
     def stop(self):
         self.timer.stop()
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self.timer.isActive():
+            QTimer.singleShot(0, lambda: self.timer.start(30))  # ~33 FPS
+
+    def hideEvent(self, event):
+        if self.timer.isActive():
+            self.timer.stop()
+        super().hideEvent(event)
 
 
 class LoadingWidget(QWidget):
@@ -894,7 +911,17 @@ class GoldParticleBackground(QWidget):
             )
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_particles)
-        self.timer.start(16)  # 60 FPS for smoother motion
+        # Start only when visible (reduces CPU + avoids Qt painter warnings during startup/offscreen build)
+
+    def showEvent(self, event):
+        super().showEvent(event)
+        if not self.timer.isActive():
+            QTimer.singleShot(0, lambda: self.timer.start(33))  # ~30 FPS
+
+    def hideEvent(self, event):
+        if self.timer.isActive():
+            self.timer.stop()
+        super().hideEvent(event)
 
     def update_particles(self):
         for p in self.particles:
@@ -913,8 +940,10 @@ class GoldParticleBackground(QWidget):
         self.update()
 
     def paintEvent(self, event):
+        painter = QPainter(self)
+        if not painter.isActive():
+            return
         try:
-            painter = QPainter(self)
             painter.setRenderHint(QPainter.RenderHint.Antialiasing)
             from ui.core.styles import get_colors
 
@@ -955,9 +984,8 @@ class GoldParticleBackground(QWidget):
                     painter.drawLine(
                         QPointF(x, y - p["size"] * 3), QPointF(x, y + p["size"] * 3)
                     )
+        finally:
             painter.end()
-        except Exception:
-            pass
 
 class ModernSidebar(QFrame):
     def __init__(self, parent=None):
