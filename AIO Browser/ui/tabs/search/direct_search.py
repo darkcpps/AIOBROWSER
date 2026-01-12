@@ -54,9 +54,6 @@ class DirectSearchTab(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search for direct download games...")
         self.search_input.setFixedHeight(45)
-        self.search_input.setStyleSheet(
-            "border: none; background: transparent; padding: 0 15px; font-size: 16px;"
-        )
         self.search_input.returnPressed.connect(self.start_search)
         sb_layout.addWidget(self.search_input, 1)
 
@@ -84,6 +81,8 @@ class DirectSearchTab(QWidget):
         self.glow_effect = QGraphicsDropShadowEffect()
 
     def animate_glow(self):
+        if not self.isVisible():
+            return
         self.glow_value += self.glow_direction * 5
         if self.glow_value >= 100:
             self.glow_value = 100
@@ -91,17 +90,11 @@ class DirectSearchTab(QWidget):
         elif self.glow_value <= 0:
             self.glow_value = 0
             self.glow_direction = 1
+
         glow_intensity = self.glow_value / 100.0
-
         c = QColor(COLORS["accent_primary"])
-        border_color = (
-            f"rgba({c.red()}, {c.green()}, {c.blue()}, {0.3 + glow_intensity * 0.7})"
-        )
-
         shadow_blur = 10 + int(glow_intensity * 20)
-        self.search_bar.setStyleSheet(
-            f"background-color: {COLORS['bg_secondary']}; border: 2px solid {border_color}; border-radius: 12px;"
-        )
+
         if self.glow_effect:
             try:
                 self.glow_effect.setBlurRadius(shadow_blur)
@@ -112,8 +105,7 @@ class DirectSearchTab(QWidget):
                 )
                 self.glow_effect.setOffset(0, 0)
             except:
-                self.glow_effect = QGraphicsDropShadowEffect()
-                self.search_bar.setGraphicsEffect(self.glow_effect)
+                pass
 
     def start_glow(self):
         self.glow_value = 0

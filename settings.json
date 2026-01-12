@@ -3,5 +3,6 @@
     "default_download_path": "C:\\Users\\marti\\Documents\\GitHub\\AIOBROWSER\\AIO Browser",
     "goldberg_nickname": "AIOUser",
     "goldberg_language": "english",
-    "theme": "aurora_borealis"
+    "theme": "aurora_borealis",
+    "enable_bittorrent": false
 }

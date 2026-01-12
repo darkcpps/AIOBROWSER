@@ -8,6 +8,7 @@ from PyQt6.QtWidgets import *
 
 from ui.core.components import GameCardWidget, InfoBanner, LoadingWidget
 from ui.core.styles import COLORS
+from core import emulators
 
 
 class RomsSearchTab(QWidget):
@@ -54,19 +55,18 @@ class RomsSearchTab(QWidget):
         self.search_input = QLineEdit()
         self.search_input.setPlaceholderText("Search for ROMs...")
         self.search_input.setFixedHeight(45)
-        self.search_input.setStyleSheet(
-            "border: none; background: transparent; padding: 0 15px; font-size: 16px;"
-        )
         self.search_input.returnPressed.connect(self.start_search)
         sb_layout.addWidget(self.search_input, 1)
 
         self.console_combo = QComboBox()
         self.console_combo.setFixedHeight(45)
-        self.console_combo.setMinimumWidth(170)
-        self.console_combo.setStyleSheet(
-            f"border: none; background: transparent; padding: 0 10px; font-size: 14px; color: {COLORS['text_primary']};"
-        )
+        self.console_combo.setMinimumWidth(185)
         self.console_combo.addItem("Any Console", "any")
+
+        # Pre-populate with platforms from emulators module for a better UI experience
+        for key in sorted(emulators.PLATFORM_TO_EMULATORS.keys()):
+            self.console_combo.addItem(emulators.get_platform_display_name(key), key.lower())
+
         self.console_combo.currentIndexChanged.connect(self.apply_platform_filter)
         sb_layout.addWidget(self.console_combo)
 
@@ -94,6 +94,8 @@ class RomsSearchTab(QWidget):
         self.glow_effect = QGraphicsDropShadowEffect()
 
     def animate_glow(self):
+        if not self.isVisible():
+            return
         self.glow_value += self.glow_direction * 5
         if self.glow_value >= 100:
             self.glow_value = 100
@@ -101,15 +103,11 @@ class RomsSearchTab(QWidget):
         elif self.glow_value <= 0:
             self.glow_value = 0
             self.glow_direction = 1
+
         glow_intensity = self.glow_value / 100.0
         c = QColor(COLORS["accent_primary"])
-        border_color = (
-            f"rgba({c.red()}, {c.green()}, {c.blue()}, {0.3 + glow_intensity * 0.7})"
-        )
         shadow_blur = 10 + int(glow_intensity * 20)
-        self.search_bar.setStyleSheet(
-            f"background-color: {COLORS['bg_secondary']}; border: 2px solid {border_color}; border-radius: 12px;"
-        )
+
         if self.glow_effect:
             try:
                 self.glow_effect.setBlurRadius(shadow_blur)
@@ -120,8 +118,7 @@ class RomsSearchTab(QWidget):
                 )
                 self.glow_effect.setOffset(0, 0)
             except:
-                self.glow_effect = QGraphicsDropShadowEffect()
-                self.search_bar.setGraphicsEffect(self.glow_effect)
+                pass
 
     def start_glow(self):
         self.glow_value = 0
