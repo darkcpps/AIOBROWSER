@@ -15,7 +15,9 @@ def ensure_goldberg_files(tools_dir):
     extract_path = tools_path / "goldberg_emu"
     
     # Check if already exists
-    if extract_path.exists() and (extract_path / "steam_api64.dll").exists():
+    if extract_path.exists() and (
+        (extract_path / "steam_api64.dll").exists() or (extract_path / "steam_api.dll").exists()
+    ):
         return extract_path
     
     extract_path.mkdir(parents=True, exist_ok=True)

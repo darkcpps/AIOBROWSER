@@ -69,7 +69,8 @@ class YoutubeDownloader:
         # Explicitly point to local ffmpeg if it exists in the tools folder
         base_dir = Path(__file__).parent.parent.absolute()
         ffmpeg_dir = base_dir / "tools" / "ffmpeg"
-        ffmpeg_location = str(ffmpeg_dir) if ffmpeg_dir.exists() else None
+        ffmpeg_exe = ffmpeg_dir / ("ffmpeg.exe" if os.name == "nt" else "ffmpeg")
+        ffmpeg_location = str(ffmpeg_dir) if ffmpeg_exe.exists() else None
 
         ydl_opts = {
             "progress_hooks": [self._progress_hook],
