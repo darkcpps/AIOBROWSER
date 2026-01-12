@@ -30,16 +30,7 @@ def download_torrent(
     flags = control_flags or {"paused": False, "stopped": False}
 
     try:
-        # Create a basic libtorrent session
-        ses = lt.session()
-        
-        # Add DHT bootstrap nodes for peer discovery
-        try:
-            ses.add_dht_node(("dht.transmissionbt.com", 6881))
-            ses.add_dht_node(("router.bittorrent.com", 6881))
-        except Exception:
-            pass
-        
+        ses = lt.session({"listen_interfaces": "0.0.0.0:6881"})
         params: dict = {"save_path": save_path}
 
         if (source or "").startswith("magnet:?"):
@@ -51,7 +42,6 @@ def download_torrent(
             handle = ses.add_torrent(params)
 
         was_paused = False
-        peer_reconnect_timer = 0
 
         while True:
             if flags.get("stopped", False):
@@ -69,20 +59,12 @@ def download_torrent(
                 except Exception:
                     pass
                 was_paused = True
-                peer_reconnect_timer = 0
             elif not paused and was_paused:
                 try:
                     handle.resume()
                 except Exception:
                     pass
                 was_paused = False
-                peer_reconnect_timer = 0
-                # Force DHT refresh on resume
-                try:
-                    ses.add_dht_node(("dht.transmissionbt.com", 6881))
-                    ses.add_dht_node(("router.bittorrent.com", 6881))
-                except Exception:
-                    pass
 
             if paused:
                 current = 0.0
@@ -107,16 +89,6 @@ def download_torrent(
             state = getattr(s, "state", "")
             state_str = getattr(state, "name", None) or str(state)
 
-            # Periodically refresh peer connections if peer count is low
-            peer_reconnect_timer += poll_interval_s
-            if peers < 3 and peer_reconnect_timer > 10:
-                try:
-                    ses.add_dht_node(("dht.transmissionbt.com", 6881))
-                    ses.add_dht_node(("router.bittorrent.com", 6881))
-                except Exception:
-                    pass
-                peer_reconnect_timer = 0
-
             progress_callback(
                 f"{state_str} | Peers: {peers} | {download_rate_kb:.1f} kB/s",
                 progress,
@@ -127,9 +99,6 @@ def download_torrent(
 
             time.sleep(poll_interval_s)
     except Exception as exc:
-        import traceback
-        error_msg = f"Error: {exc}\n{traceback.format_exc()}"
-        print(error_msg)  # Print to console for debugging
         progress_callback(f"Error: {exc}", 0.0)
         return "ERROR"
 
