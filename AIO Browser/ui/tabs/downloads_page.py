@@ -157,8 +157,8 @@ class DownloadItemWidget(QFrame):
         else:
             # First click stops it
             self.stop_download()
-            # Change icon to a "bin" or just keep X for second click
-            self.stop_btn.setText("🗑")
+            # Change icon to a "bin"
+            self.stop_btn.setText("🗑️")
             self.setEnabled(True)  # Re-enable so they can click the trash icon
             self.pause_btn.hide()
 
@@ -180,7 +180,7 @@ class DownloadItemWidget(QFrame):
         elif "Stopped" in status_msg or "⏹" in status_msg:
             self.status_label.setText("Stopped")
             self.control_flags["stopped"] = True
-            self.stop_btn.setText("🗑")
+            self.stop_btn.setText("🗑️")
             self.pause_btn.hide()
         elif self.control_flags["paused"]:
             self.status_label.setText("Paused")
@@ -313,6 +313,9 @@ class DownloadsPage(QWidget):
     def remove_download_by_widget(self, widget, download_id):
         if download_id in self.items:
             del self.items[download_id]
+        
+        # Explicitly remove from layout before deleting
+        self.container_layout.removeWidget(widget)
         widget.deleteLater()
 
         # Check if empty

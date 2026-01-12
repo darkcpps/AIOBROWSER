@@ -608,9 +608,15 @@ class GameCardWidget(QFrame):
             btn_hover = COLORS["accent_secondary"]
             btn_icon = "📥"
             callback = self.start_rom_download
+        elif self.game_type == "software":
+            btn_text = "Download"
+            btn_color = COLORS["accent_primary"]
+            btn_hover = COLORS["accent_secondary"]
+            btn_icon = "📥"
+            callback = self.open_torrent_link  # Will be overridden in adobe_tab.py
         else:
             has_magnet = self.game.get("magnet")
-            btn_text = "Magnet Link" if has_magnet else "Visit Page"
+            btn_text = "Magnet Link" if has_magnet else "Download"
             btn_color = COLORS["accent_green"]
             btn_hover = COLORS["accent_green_hover"]
             btn_icon = "🧲" if has_magnet else "🔗"
@@ -1008,9 +1014,9 @@ class ModernSidebar(QFrame):
 
         # Navigation
         self.add_nav_item("search", "🔍  Games")
+        self.add_nav_item("software", "💿  Software")
         self.add_nav_item("patcher", "🛠  Patcher")
         self.add_nav_item("downloader", "📦  Downloaders")
-        self.add_nav_item("streaming", "📡  Streaming")
         self.add_nav_item("emulators", "🎮  Emulators")
 
         layout.addStretch()
@@ -1034,6 +1040,9 @@ class ModernSidebar(QFrame):
         if key == "search":
             self.parent.main_stack.setCurrentIndex(0)
             self.parent.page_title.setText("Search")
+        elif key == "software":
+            self.parent.main_stack.setCurrentIndex(7)  # Software tab sits at index 7
+            self.parent.page_title.setText("Software")
         elif key == "downloads":
             self.parent.main_stack.setCurrentIndex(1)
             self.parent.page_title.setText("Downloads")
@@ -1043,17 +1052,14 @@ class ModernSidebar(QFrame):
         elif key == "downloader":
             self.parent.main_stack.setCurrentIndex(3)
             self.parent.page_title.setText("Downloader")
-        elif key == "streaming":
-            self.parent.main_stack.setCurrentIndex(4)
-            self.parent.page_title.setText("Streaming")
         elif key == "emulators":
-            self.parent.main_stack.setCurrentIndex(5)
+            self.parent.main_stack.setCurrentIndex(4)
             self.parent.page_title.setText("Emulators")
         elif key == "info":
-            self.parent.main_stack.setCurrentIndex(6)
+            self.parent.main_stack.setCurrentIndex(5)
             self.parent.page_title.setText("Information")
         elif key == "settings":
-            self.parent.main_stack.setCurrentIndex(7)
+            self.parent.main_stack.setCurrentIndex(6)
             self.parent.page_title.setText("Settings")
 
     def set_active(self, key):

@@ -411,3 +411,117 @@ def search_axekin(query, platform=None, page=1):
         print(f"[DEBUG] Error Axekin: {e}")
 
     return results
+
+# =========================================================================
+# MONKRUS MODULE (ADOBE SOFTWARE)
+# =========================================================================
+def search_monkrus(query):
+    """
+    Scrapes Monkrus search results.
+    Each result is contained in a div.post, with a meta[itemprop="image_url"] tag for the thumbnail.
+    """
+    clean_query = quote(query.strip())
+    search_url = f"https://w17.monkrus.ws/search?q={clean_query}"
+    results = []
+    
+    try:
+        resp = requests.get(search_url, headers=HEADERS, timeout=10)
+        if resp.status_code == 200:
+            soup = BeautifulSoup(resp.text, 'html.parser')
+            # Each result is contained in a div.post element
+            posts = soup.find_all('div', class_='post')
+            
+            for post in posts:
+                # Find the title and link from h2.post-title a
+                h2 = post.find('h2', class_='post-title')
+                if not h2:
+                    continue
+                    
+                a = h2.find('a')
+                if not a or not a.get('href'):
+                    continue
+                    
+                title = a.text.strip()
+                link = a['href']
+                
+                if not link.startswith('http'):
+                    link = "https://w17.monkrus.ws" + link
+                
+                # Extract image from meta[itemprop="image_url"] tag
+                image_url = None
+                meta_img = post.find('meta', attrs={'itemprop': 'image_url'})
+                if meta_img and meta_img.get('content'):
+                    image_url = meta_img['content']
+                else:
+                    # Fallback: try to find img in post-body
+                    post_body = post.find('div', class_='post-body')
+                    if post_body:
+                        img = post_body.find('img')
+                        if img:
+                            image_url = img.get('src')
+                    
+                results.append({
+                    "title": title,
+                    "link": link,
+                    "image": image_url,
+                    "source": "Monkrus"
+                })
+    except Exception as e:
+        print(f"[DEBUG] Monkrus Search Error: {e}")
+        
+    return results
+
+def resolve_monkrus_to_torrent(monkrus_url):
+    """
+    Resolves a Monkrus page to the final .torrent link on Uztracker.
+    """
+    print(f"[DEBUG] Resolving Monkrus URL: {monkrus_url}")
+    try:
+        # 1. Fetch Monkrus page
+        print("[DEBUG] Fetching Monkrus page...")
+        resp = requests.get(monkrus_url, headers=HEADERS, timeout=10)
+        if resp.status_code != 200:
+            print(f"[DEBUG] Error: Failed to fetch Monkrus page (Status: {resp.status_code})")
+            return None, f"Failed to fetch Monkrus page (Status: {resp.status_code})"
+            
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        
+        # 2. Find Uztracker link
+        print("[DEBUG] Finding Uztracker link in Monkrus page content...")
+        uz_link_tag = soup.find('a', href=lambda h: h and 'uztracker.net' in h)
+        if not uz_link_tag:
+            print("[DEBUG] Error: Uztracker link not found. Available links:")
+            # Log some links for debugging if not found
+            for a in soup.find_all('a', href=True)[:10]:
+                print(f"  - {a['href']}")
+            return None, "Uztracker link not found on Monkrus page. Try a different version (2025/2026)"
+            
+        uz_url = uz_link_tag['href']
+        print(f"[DEBUG] Found Uztracker URL: {uz_url}")
+        
+        # 3. Fetch Uztracker page
+        print("[DEBUG] Fetching Uztracker page...")
+        resp_uz = requests.get(uz_url, headers=HEADERS, timeout=10)
+        if resp_uz.status_code != 200:
+            print(f"[DEBUG] Error: Failed to fetch Uztracker page (Status: {resp_uz.status_code})")
+            return None, f"Failed to fetch Uztracker page (Status: {resp_uz.status_code})"
+            
+        soup_uz = BeautifulSoup(resp_uz.text, 'html.parser')
+        
+        # 4. Find .torrent download link
+        print("[DEBUG] Searching for '.torrent' download link on Uztracker...")
+        dl_tag = soup_uz.find('a', class_='dw-dl') or soup_uz.find('a', href=lambda h: h and h.startswith('dl.php?id='))
+        
+        if dl_tag and dl_tag.get('href'):
+            final_dl = dl_tag['href']
+            if not final_dl.startswith('http'):
+                final_dl = "https://uztracker.net/" + final_dl
+            print(f"[DEBUG] Success! Found .torrent URL: {final_dl}")
+            return final_dl, None
+            
+        print("[DEBUG] Error: No download link found with class 'dw-dl' or 'dl.php' pattern.")
+        return None, "Torrent download link not found on Uztracker"
+        
+    except Exception as e:
+        print(f"[DEBUG] Critical Exception in resolution: {str(e)}")
+        return None, str(e)
