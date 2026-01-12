@@ -1008,6 +1008,7 @@ class ModernSidebar(QFrame):
 
         # Navigation
         self.add_nav_item("search", "🔍  Games")
+        self.add_nav_item("software", "💿  Software")
         self.add_nav_item("patcher", "🛠  Patcher")
         self.add_nav_item("downloader", "📦  Downloaders")
         self.add_nav_item("streaming", "📡  Streaming")
@@ -1034,6 +1035,9 @@ class ModernSidebar(QFrame):
         if key == "search":
             self.parent.main_stack.setCurrentIndex(0)
             self.parent.page_title.setText("Search")
+        elif key == "software":
+            self.parent.main_stack.setCurrentIndex(8)  # We'll add it as index 8
+            self.parent.page_title.setText("Software")
         elif key == "downloads":
             self.parent.main_stack.setCurrentIndex(1)
             self.parent.page_title.setText("Downloads")

@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 import webbrowser
+import requests
 from pathlib import Path
 
 from core import downloader, scraper
@@ -35,6 +36,7 @@ from ui.tabs.search_tab import SearchTab
 from ui.tabs.settings_tab import SettingsTab
 from ui.tabs.downloader_hub import DownloaderHub
 from ui.tabs.streaming_hub import StreamingHub
+from ui.tabs.software_tab import SoftwareTab
 
 # =========================================================================
 # MAIN APPLICATION WINDOW
@@ -182,6 +184,9 @@ class GameSearchApp(QMainWindow):
 
         self.settings_tab = SettingsTab(self.settings_manager, self)
         self.main_stack.addWidget(self.settings_tab)
+
+        self.software_tab = SoftwareTab(self)
+        self.main_stack.addWidget(self.software_tab)
 
         content_layout.addWidget(self.main_stack)
         self.content_container.setLayout(content_layout)
@@ -460,6 +465,88 @@ class GameSearchApp(QMainWindow):
                 else {"paused": False, "stopped": False},
             )
             self.download_finished.emit(download_id, result, save_path)
+
+        threading.Thread(target=run_torrent, daemon=True).start()
+
+    def initiate_monkrus_download(self, item):
+        """Starts the multi-step resolution for Monkrus software."""
+        print(f"[DEBUG] Initiating Monkrus Download for: {item['title']}")
+        import uuid
+        download_id = str(uuid.uuid4())
+        self.downloads_tab.add_download(download_id, item["title"])
+        self.sidebar.set_active("downloads")
+
+        def run_resolution():
+            print(f"[DEBUG] [{download_id}] Thread started for resolution")
+            self.download_status_updated.emit(download_id, "🔗 Finding tracker link...", 0.1)
+            final_torrent_url, error = scraper.resolve_monkrus_to_torrent(item["link"])
+            
+            if error or not final_torrent_url:
+                print(f"[DEBUG] [{download_id}] Resolution failed: {error}")
+                self.download_status_updated.emit(download_id, f"❌ Error: {error or 'Link not found'}", 0)
+                return
+            
+            print(f"[DEBUG] [{download_id}] Torrent URL resolved: {final_torrent_url}")
+            self.download_status_updated.emit(download_id, "📥 Downloading .torrent...", 0.4)
+            
+            try:
+                # 1. Download the .torrent file to a temporary location
+                import tempfile
+                temp_dir = tempfile.gettempdir()
+                torrent_file_path = os.path.join(temp_dir, f"{download_id}.torrent")
+                
+                print(f"[DEBUG] [{download_id}] Saving temp torrent file to: {torrent_file_path}")
+                resp = requests.get(final_torrent_url, headers=scraper.HEADERS, stream=True)
+                with open(torrent_file_path, "wb") as f:
+                    for chunk in resp.iter_content(chunk_size=8192):
+                        f.write(chunk)
+                
+                print(f"[DEBUG] [{download_id}] .torrent file downloaded successfully.")
+                self.download_status_updated.emit(download_id, "📁 Select save folder...", 0.6)
+                
+                # 2. Ask user for save directory
+                QMetaObject.invokeMethod(self, "_finish_monkrus_on_main_thread", 
+                                       Qt.ConnectionType.QueuedConnection, 
+                                       Q_ARG(str, torrent_file_path),
+                                       Q_ARG(str, item["title"]),
+                                       Q_ARG(str, download_id))
+                                       
+            except Exception as e:
+                print(f"[DEBUG] [{download_id}] Exception during .torrent download: {str(e)}")
+                self.download_status_updated.emit(download_id, f"❌ Download Error: {str(e)}", 0)
+
+        threading.Thread(target=run_resolution, daemon=True).start()
+
+    @pyqtSlot(str, str, str)
+    def _finish_monkrus_on_main_thread(self, torrent_path, title, download_id):
+        print(f"[DEBUG] [{download_id}] UI Prompt triggered for save folder.")
+        initial_dir = self.settings_manager.get("default_download_path", "")
+        # ... remainder preserved ...
+        if not initial_dir or not os.path.exists(initial_dir):
+            initial_dir = str(Path(sys.argv[0]).resolve().parent)
+            
+        save_path = QFileDialog.getExistingDirectory(self, "Select Download Folder", initial_dir)
+        if not save_path:
+            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            return
+
+        from core.bittorrent_downloader import download_torrent
+        item_widget = self.downloads_tab.items.get(download_id)
+
+        def progress_callback(text, progress):
+            self.download_status_updated.emit(download_id, text, progress)
+
+        def run_torrent():
+            result = download_torrent(
+                torrent_path,
+                save_path,
+                progress_callback,
+                item_widget.control_flags if item_widget else {"paused": False, "stopped": False}
+            )
+            self.download_finished.emit(download_id, result, save_path)
+            # Cleanup temp torrent file
+            try: os.remove(torrent_path)
+            except: pass
 
         threading.Thread(target=run_torrent, daemon=True).start()
 
