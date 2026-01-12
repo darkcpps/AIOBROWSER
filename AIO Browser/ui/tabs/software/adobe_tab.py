@@ -21,13 +21,23 @@ class AdobeTab(QWidget):
 
         # Search Bar Area
         search_container = QFrame()
-        search_container.setFixedHeight(120)
+        search_container.setFixedHeight(180)
         search_container.setStyleSheet(f"background-color: {COLORS['bg_primary']}; border-bottom: 1px solid {COLORS['border']};")
         search_layout = QVBoxLayout(search_container)
         search_layout.setContentsMargins(30, 20, 30, 20)
         search_layout.setSpacing(15)
 
-        # Input Row
+        # 1. Info Banner (Placed at top of header)
+        info = InfoBanner(
+            "Monkrus Adobe Collection",
+            ["Search for any Adobe product. All downloads are torrents via Uztracker."],
+            icon="🎨",
+            accent_color="#FF0000",
+            compact=True
+        )
+        search_layout.addWidget(info)
+
+        # 2. Input Row (Search bar)
         input_row = QHBoxLayout()
         input_row.setSpacing(15)
 
@@ -67,17 +77,8 @@ class AdobeTab(QWidget):
         """)
         self.search_btn.clicked.connect(self.perform_search)
         input_row.addWidget(self.search_btn)
+        
         search_layout.addLayout(input_row)
-
-        # Info Banner
-        info = InfoBanner(
-            "Monkrus Adobe Collection",
-            ["Search for any Adobe product. All downloads are torrents via Uztracker."],
-            icon="🎨",
-            accent_color="#FF0000",
-            compact=True
-        )
-        search_layout.addWidget(info)
         layout.addWidget(search_container)
 
         # Content Area

@@ -418,6 +418,7 @@ def search_axekin(query, platform=None, page=1):
 def search_monkrus(query):
     """
     Scrapes Monkrus search results.
+    Each result is contained in a div.post, with a meta[itemprop="image_url"] tag for the thumbnail.
     """
     clean_query = quote(query.strip())
     search_url = f"https://w17.monkrus.ws/search?q={clean_query}"
@@ -427,24 +428,44 @@ def search_monkrus(query):
         resp = requests.get(search_url, headers=HEADERS, timeout=10)
         if resp.status_code == 200:
             soup = BeautifulSoup(resp.text, 'html.parser')
-            # Each result is in an <article> or similar, following the subagent findings
-            # Browsing shows h2 class="post-title" containing the link
-            articles = soup.find_all('h2', class_='post-title')
-            for h2 in articles:
-                a = h2.find('a')
-                if a and a.get('href'):
-                    title = a.text.strip()
-                    link = a['href']
+            # Each result is contained in a div.post element
+            posts = soup.find_all('div', class_='post')
+            
+            for post in posts:
+                # Find the title and link from h2.post-title a
+                h2 = post.find('h2', class_='post-title')
+                if not h2:
+                    continue
                     
-                    if not link.startswith('http'):
-                        link = "https://w17.monkrus.ws" + link
-                        
-                    results.append({
-                        "title": title,
-                        "link": link,
-                        "image": None, # Images are usually inside the post, fetching results doesn't always show them easily without extra requests
-                        "source": "Monkrus"
-                    })
+                a = h2.find('a')
+                if not a or not a.get('href'):
+                    continue
+                    
+                title = a.text.strip()
+                link = a['href']
+                
+                if not link.startswith('http'):
+                    link = "https://w17.monkrus.ws" + link
+                
+                # Extract image from meta[itemprop="image_url"] tag
+                image_url = None
+                meta_img = post.find('meta', attrs={'itemprop': 'image_url'})
+                if meta_img and meta_img.get('content'):
+                    image_url = meta_img['content']
+                else:
+                    # Fallback: try to find img in post-body
+                    post_body = post.find('div', class_='post-body')
+                    if post_body:
+                        img = post_body.find('img')
+                        if img:
+                            image_url = img.get('src')
+                    
+                results.append({
+                    "title": title,
+                    "link": link,
+                    "image": image_url,
+                    "source": "Monkrus"
+                })
     except Exception as e:
         print(f"[DEBUG] Monkrus Search Error: {e}")
         
@@ -473,7 +494,7 @@ def resolve_monkrus_to_torrent(monkrus_url):
             # Log some links for debugging if not found
             for a in soup.find_all('a', href=True)[:10]:
                 print(f"  - {a['href']}")
-            return None, "Uztracker link not found on Monkrus page"
+            return None, "Uztracker link not found on Monkrus page. Try a different version (2025/2026)"
             
         uz_url = uz_link_tag['href']
         print(f"[DEBUG] Found Uztracker URL: {uz_url}")

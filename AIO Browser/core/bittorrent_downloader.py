@@ -30,7 +30,7 @@ def download_torrent(
     flags = control_flags or {"paused": False, "stopped": False}
 
     try:
-        ses = lt.session({"listen_interfaces": "0.0.0.0:6881"})
+        ses = lt.session({"listen_interfaces": "0.0.0.0:0"})
         params: dict = {"save_path": save_path}
 
         if (source or "").startswith("magnet:?"):
@@ -46,10 +46,11 @@ def download_torrent(
         while True:
             if flags.get("stopped", False):
                 try:
-                    ses.remove_torrent(handle)
+                    # Pass delete_files to remove downloaded data from disk
+                    ses.remove_torrent(handle, lt.session.delete_files)
                 except Exception:
                     pass
-                progress_callback("Stopped", 0.0)
+                progress_callback("Stopped & Deleted", 0.0)
                 return "STOPPED"
 
             paused = flags.get("paused", False)

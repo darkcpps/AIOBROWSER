@@ -608,9 +608,15 @@ class GameCardWidget(QFrame):
             btn_hover = COLORS["accent_secondary"]
             btn_icon = "📥"
             callback = self.start_rom_download
+        elif self.game_type == "software":
+            btn_text = "Download"
+            btn_color = COLORS["accent_primary"]
+            btn_hover = COLORS["accent_secondary"]
+            btn_icon = "📥"
+            callback = self.open_torrent_link  # Will be overridden in adobe_tab.py
         else:
             has_magnet = self.game.get("magnet")
-            btn_text = "Magnet Link" if has_magnet else "Visit Page"
+            btn_text = "Magnet Link" if has_magnet else "Download"
             btn_color = COLORS["accent_green"]
             btn_hover = COLORS["accent_green_hover"]
             btn_icon = "🧲" if has_magnet else "🔗"
