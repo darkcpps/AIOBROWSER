@@ -13,6 +13,8 @@ An all-in-one software solution designed to handle the complicated stuff, making
 - **Tidal FLACS** Download Tidal FLACS (Experimental)
 - **Video Streaming:** Stream videos directly in-app
 - **ROMS & Emulators:** Browse and download ROMs and emulators
+- **Built-in BitTorrent:** Easier torrenting for beginners.
+- **Software downloads:** Install apps.
   
 ## Known issues
 - This project is in early access and will be unstable (crashes, failed downloads, broken UI, etc.).
@@ -20,8 +22,6 @@ An all-in-one software solution designed to handle the complicated stuff, making
 
 ## Planned features
 - **Greenluma and Onlinefix Patcher** - Add games on steam and unlock DLC and Online.
-- **Built-in BitTorrent:** Easier torrenting for beginners.
-- **Software downloads:** Install apps (not just games).
 - **More download servers:** More sources for faster downloads and more game results.
 - **Optional Installations** Make most features optional for user experience and the user gets to choose what they want to install.
 
