@@ -35,7 +35,6 @@ from ui.tabs.patcher_tab import PatcherTab
 from ui.tabs.search_tab import SearchTab
 from ui.tabs.settings_tab import SettingsTab
 from ui.tabs.downloader_hub import DownloaderHub
-from ui.tabs.streaming_hub import StreamingHub
 from ui.tabs.software_tab import SoftwareTab
 
 # =========================================================================
@@ -172,9 +171,6 @@ class GameSearchApp(QMainWindow):
 
         self.downloader_tab = DownloaderHub(self)
         self.main_stack.addWidget(self.downloader_tab)
-
-        self.streaming_tab = StreamingHub(self)
-        self.main_stack.addWidget(self.streaming_tab)
 
         self.emulators_tab = EmulatorsTab(self)
         self.main_stack.addWidget(self.emulators_tab)

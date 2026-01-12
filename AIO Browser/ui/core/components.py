@@ -1017,7 +1017,6 @@ class ModernSidebar(QFrame):
         self.add_nav_item("software", "💿  Software")
         self.add_nav_item("patcher", "🛠  Patcher")
         self.add_nav_item("downloader", "📦  Downloaders")
-        self.add_nav_item("streaming", "📡  Streaming")
         self.add_nav_item("emulators", "🎮  Emulators")
 
         layout.addStretch()
@@ -1042,7 +1041,7 @@ class ModernSidebar(QFrame):
             self.parent.main_stack.setCurrentIndex(0)
             self.parent.page_title.setText("Search")
         elif key == "software":
-            self.parent.main_stack.setCurrentIndex(8)  # We'll add it as index 8
+            self.parent.main_stack.setCurrentIndex(7)  # Software tab sits at index 7
             self.parent.page_title.setText("Software")
         elif key == "downloads":
             self.parent.main_stack.setCurrentIndex(1)
@@ -1053,17 +1052,14 @@ class ModernSidebar(QFrame):
         elif key == "downloader":
             self.parent.main_stack.setCurrentIndex(3)
             self.parent.page_title.setText("Downloader")
-        elif key == "streaming":
-            self.parent.main_stack.setCurrentIndex(4)
-            self.parent.page_title.setText("Streaming")
         elif key == "emulators":
-            self.parent.main_stack.setCurrentIndex(5)
+            self.parent.main_stack.setCurrentIndex(4)
             self.parent.page_title.setText("Emulators")
         elif key == "info":
-            self.parent.main_stack.setCurrentIndex(6)
+            self.parent.main_stack.setCurrentIndex(5)
             self.parent.page_title.setText("Information")
         elif key == "settings":
-            self.parent.main_stack.setCurrentIndex(7)
+            self.parent.main_stack.setCurrentIndex(6)
             self.parent.page_title.setText("Settings")
 
     def set_active(self, key):
