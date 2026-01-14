@@ -342,7 +342,7 @@ class GameSearchApp(QMainWindow):
             )
             return
 
-        from core.bittorrent_downloader import download_torrent, is_available
+        from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
 
         if not is_available():
             QMessageBox.warning(
@@ -350,6 +350,16 @@ class GameSearchApp(QMainWindow):
                 "libtorrent Not Installed",
                 "The BitTorrent client requires the Python package 'libtorrent'.",
             )
+            return
+
+        file_entries = self._prompt_torrent_file_selection(
+            magnet_link, title, list_torrent_files=list_torrent_files
+        )
+        if file_entries is None:
+            return
+
+        selected_indices = self._prompt_torrent_file_choices(title, file_entries)
+        if not selected_indices:
             return
 
         initial_dir = self.settings_manager.get("default_download_path", "")
@@ -379,6 +389,7 @@ class GameSearchApp(QMainWindow):
                 item_widget.control_flags
                 if item_widget
                 else {"paused": False, "stopped": False},
+                selected_file_indices=selected_indices,
             )
             self.download_finished.emit(download_id, result, save_path)
 
@@ -393,7 +404,7 @@ class GameSearchApp(QMainWindow):
             )
             return
 
-        from core.bittorrent_downloader import download_torrent, is_available
+        from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
 
         if not is_available():
             QMessageBox.warning(
@@ -436,6 +447,16 @@ class GameSearchApp(QMainWindow):
         else:
             return
 
+        file_entries = self._prompt_torrent_file_selection(
+            source, title, list_torrent_files=list_torrent_files
+        )
+        if file_entries is None:
+            return
+
+        selected_indices = self._prompt_torrent_file_choices(title, file_entries)
+        if not selected_indices:
+            return
+
         initial_dir = self.settings_manager.get("default_download_path", "")
         if not initial_dir or not os.path.exists(initial_dir):
             initial_dir = str(Path(sys.argv[0]).resolve().parent)
@@ -463,6 +484,7 @@ class GameSearchApp(QMainWindow):
                 item_widget.control_flags
                 if item_widget
                 else {"paused": False, "stopped": False},
+                selected_file_indices=selected_indices,
             )
             self.download_finished.emit(download_id, result, save_path)
 
@@ -525,12 +547,37 @@ class GameSearchApp(QMainWindow):
         if not initial_dir or not os.path.exists(initial_dir):
             initial_dir = str(Path(sys.argv[0]).resolve().parent)
             
+        from core.bittorrent_downloader import download_torrent, list_torrent_files
+
+        file_entries = self._prompt_torrent_file_selection(
+            torrent_path, title, list_torrent_files=list_torrent_files
+        )
+        if file_entries is None:
+            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            try:
+                os.remove(torrent_path)
+            except Exception:
+                pass
+            return
+
+        selected_indices = self._prompt_torrent_file_choices(title, file_entries)
+        if not selected_indices:
+            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            try:
+                os.remove(torrent_path)
+            except Exception:
+                pass
+            return
+
         save_path = QFileDialog.getExistingDirectory(self, "Select Download Folder", initial_dir)
         if not save_path:
             self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            try:
+                os.remove(torrent_path)
+            except Exception:
+                pass
             return
 
-        from core.bittorrent_downloader import download_torrent
         item_widget = self.downloads_tab.items.get(download_id)
 
         def progress_callback(text, progress):
@@ -541,7 +588,8 @@ class GameSearchApp(QMainWindow):
                 torrent_path,
                 save_path,
                 progress_callback,
-                item_widget.control_flags if item_widget else {"paused": False, "stopped": False}
+                item_widget.control_flags if item_widget else {"paused": False, "stopped": False},
+                selected_file_indices=selected_indices,
             )
             self.download_finished.emit(download_id, result, save_path)
             # Cleanup temp torrent file
@@ -549,6 +597,97 @@ class GameSearchApp(QMainWindow):
             except: pass
 
         threading.Thread(target=run_torrent, daemon=True).start()
+
+    def _prompt_torrent_file_choices(self, title: str, file_entries: list[dict]) -> list[int] | None:
+        from ui.dialogs.torrent_file_selector_dialog import TorrentFileSelectorDialog
+
+        dlg = TorrentFileSelectorDialog(title, file_entries, parent=self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return None
+        selected = dlg.selected_file_indices()
+        return selected or None
+
+    def _prompt_torrent_file_selection(
+        self,
+        source: str,
+        title: str,
+        list_torrent_files,
+    ) -> list[dict] | None:
+        progress = QProgressDialog("Loading torrent metadata...", "Cancel", 0, 0, self)
+        progress.setWindowTitle("Preparing Torrent")
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.show()
+
+        cancel_flags = {"stopped": False}
+
+        loop = QEventLoop(self)
+        result: dict = {"files": None, "error": None}
+
+        def on_cancel():
+            cancel_flags["stopped"] = True
+            try:
+                progress.setLabelText("Cancelling...")
+            except Exception:
+                pass
+            loop.quit()
+
+        progress.canceled.connect(on_cancel)
+
+        def status(text: str):
+            try:
+                QMetaObject.invokeMethod(
+                    progress,
+                    "setLabelText",
+                    Qt.ConnectionType.QueuedConnection,
+                    Q_ARG(str, text),
+                )
+            except Exception:
+                pass
+
+        def worker():
+            try:
+                files = list_torrent_files(
+                    source,
+                    status_callback=status,
+                    cancel_flags=cancel_flags,
+                )
+                result["files"] = files
+            except Exception as exc:
+                if cancel_flags.get("stopped", False) and str(exc).lower().startswith("cancel"):
+                    result["files"] = None
+                else:
+                    result["error"] = str(exc)
+            finally:
+                try:
+                    QMetaObject.invokeMethod(loop, "quit", Qt.ConnectionType.QueuedConnection)
+                except Exception:
+                    pass
+
+        threading.Thread(target=worker, daemon=True).start()
+        loop.exec()
+
+        try:
+            progress.close()
+        except Exception:
+            pass
+
+        if cancel_flags.get("stopped", False) and result.get("files") is None:
+            return None
+
+        error = result.get("error")
+        if error:
+            QMessageBox.warning(self, "Torrent Metadata Error", error)
+            return None
+
+        files = result.get("files") or []
+        if not files:
+            QMessageBox.warning(self, "Torrent Metadata Error", "No files found in torrent metadata.")
+            return None
+
+        return files
 
     def process_anker_download_flow(self, game_url, game_title, anker, download_id):
         self.download_status_updated.emit(
