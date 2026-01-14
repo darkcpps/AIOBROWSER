@@ -32,7 +32,8 @@ from ui.tabs.downloads_page import DownloadsPage
 from ui.tabs.emulators_tab import EmulatorsTab
 from ui.tabs.info_tab import InfoTab
 from ui.tabs.patcher_tab import PatcherTab
-from ui.tabs.search_tab import SearchTab
+from ui.tabs.games_tab import GamesTab
+from ui.tabs.search_main_tab import SearchMainTab
 from ui.tabs.settings_tab import SettingsTab
 from ui.tabs.downloader_hub import DownloaderHub
 from ui.tabs.software_tab import SoftwareTab
@@ -147,7 +148,7 @@ class GameSearchApp(QMainWindow):
         )
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(30, 0, 30, 0)
-        self.page_title = QLabel("Search")
+        self.page_title = QLabel("Games")
         self.page_title.setStyleSheet(
             f"font-size: 20px; font-weight: 800; color: {COLORS['text_primary']};"
         )
@@ -160,8 +161,8 @@ class GameSearchApp(QMainWindow):
         self.main_stack = AnimatedStackedWidget()
 
         # Tabs
-        self.search_tab = SearchTab(self)
-        self.main_stack.addWidget(self.search_tab)
+        self.games_tab = GamesTab(self)
+        self.main_stack.addWidget(self.games_tab)
 
         self.downloads_tab = DownloadsPage(self)
         self.main_stack.addWidget(self.downloads_tab)
@@ -184,6 +185,9 @@ class GameSearchApp(QMainWindow):
         self.software_tab = SoftwareTab(self)
         self.main_stack.addWidget(self.software_tab)
 
+        self.search_tab = SearchMainTab(self)
+        self.main_stack.addWidget(self.search_tab)
+
         content_layout.addWidget(self.main_stack)
         self.content_container.setLayout(content_layout)
         body_layout.addWidget(self.content_container)
@@ -191,7 +195,7 @@ class GameSearchApp(QMainWindow):
         main_layout.addLayout(body_layout)
         central.setLayout(main_layout)
 
-        self.sidebar.set_active("search")
+        self.sidebar.set_active("games")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -302,7 +306,7 @@ class GameSearchApp(QMainWindow):
             args=(
                 game["link"],
                 game["title"],
-                self.search_tab.direct_tab.anker_client,
+                self.games_tab.direct_tab.anker_client,
                 download_id,
             ),
             daemon=True,

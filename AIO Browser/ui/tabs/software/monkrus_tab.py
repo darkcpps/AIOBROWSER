@@ -1,4 +1,4 @@
-# adobe_tab.py
+# monkrus_tab.py
 import threading
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
@@ -7,7 +7,7 @@ from core import scraper
 from ui.core.styles import COLORS
 from ui.core.components import LoadingWidget, GameCardWidget, InfoBanner
 
-class AdobeTab(QWidget):
+class MonkrusTab(QWidget):
     def __init__(self, main_app):
         super().__init__()
         self.main_app = main_app
@@ -29,11 +29,14 @@ class AdobeTab(QWidget):
 
         # 1. Info Banner (Placed at top of header)
         info = InfoBanner(
-            "Monkrus Adobe Collection",
-            ["Search for any Adobe product. All downloads are torrents via Uztracker."],
-            icon="🎨",
-            accent_color="#FF0000",
-            compact=True
+            "Monkrus ✅",
+            [
+                "Search for Adobe apps via Monkrus. All downloads are torrents via Uztracker.",
+                "Download speeds will vary based on seeders.",
+            ],
+            icon="✅",
+            accent_color=COLORS.get("accent_green", "#22C55E"),
+            compact=True,
         )
         search_layout.addWidget(info)
 
@@ -42,7 +45,9 @@ class AdobeTab(QWidget):
         input_row.setSpacing(15)
 
         self.search_input = QLineEdit()
-        self.search_input.setPlaceholderText("Search Adobe Software (e.g. Photoshop, Premiere)...")
+        self.search_input.setPlaceholderText(
+            "Search Monkrus (e.g. Photoshop, Premiere)..."
+        )
         self.search_input.setFixedHeight(45)
         self.search_input.setStyleSheet(f"""
             QLineEdit {{

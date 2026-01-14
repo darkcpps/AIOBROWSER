@@ -2,7 +2,8 @@
     "disable_splash": false,
     "goldberg_nickname": "AIOUser",
     "goldberg_language": "english",
-    "theme": "aurora_borealis",
+    "theme": "default",
     "default_download_path": "C:\\Users\\marti\\Documents\\GitHub\\AIOBROWSER\\AIO Browser",
-    "enable_bittorrent": true
+    "enable_bittorrent": true,
+    "knaben_warning_acknowledged": false
 }

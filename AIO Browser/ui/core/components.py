@@ -576,7 +576,15 @@ class GameCardWidget(QFrame):
         badge_layout = QHBoxLayout()
         badge_layout.setSpacing(10)
 
-        source_label = QLabel(f"📍 {self.game.get('source', 'Unknown')}")
+        source = self.game.get("source", "Unknown")
+        if str(source).lower() == "monkrus":
+            source_text = f"✅ {source}"
+        elif str(source).lower() == "knaben":
+            source_text = f"⚠️ {source}"
+        else:
+            source_text = f"📍 {source}"
+
+        source_label = QLabel(source_text)
         source_label.setStyleSheet(
             f"color: {COLORS['text_secondary']}; font-size: 11px; font-weight: 500; background-color: transparent;"
         )
@@ -588,6 +596,13 @@ class GameCardWidget(QFrame):
                 f"color: {COLORS['text_secondary']}; font-size: 11px; font-weight: 500; background-color: transparent;"
             )
             badge_layout.addWidget(size_label)
+
+        if self.game.get("seeders") is not None:
+            seeders_label = QLabel(f"🌱 {self.game['seeders']}")
+            seeders_label.setStyleSheet(
+                f"color: {COLORS['text_secondary']}; font-size: 11px; font-weight: 500; background-color: transparent;"
+            )
+            badge_layout.addWidget(seeders_label)
 
         badge_layout.addStretch()
         info_layout.addLayout(badge_layout)
@@ -613,7 +628,7 @@ class GameCardWidget(QFrame):
             btn_color = COLORS["accent_primary"]
             btn_hover = COLORS["accent_secondary"]
             btn_icon = "📥"
-            callback = self.open_torrent_link  # Will be overridden in adobe_tab.py
+            callback = self.open_torrent_link  # Will be overridden in monkrus_tab.py
         else:
             has_magnet = self.game.get("magnet")
             btn_text = "Magnet Link" if has_magnet else "Download"
@@ -1013,7 +1028,8 @@ class ModernSidebar(QFrame):
         self.setLayout(layout)
 
         # Navigation
-        self.add_nav_item("search", "🔍  Games")
+        self.add_nav_item("games", "🎮  Games")
+        self.add_nav_item("search", "🔎  Search")
         self.add_nav_item("software", "💿  Software")
         self.add_nav_item("patcher", "🛠  Patcher")
         self.add_nav_item("downloader", "📦  Downloaders")
@@ -1037,8 +1053,11 @@ class ModernSidebar(QFrame):
             b.setChecked(k == key)
             b.update_style()
 
-        if key == "search":
+        if key == "games":
             self.parent.main_stack.setCurrentIndex(0)
+            self.parent.page_title.setText("Games")
+        elif key == "search":
+            self.parent.main_stack.setCurrentIndex(8)
             self.parent.page_title.setText("Search")
         elif key == "software":
             self.parent.main_stack.setCurrentIndex(7)  # Software tab sits at index 7
