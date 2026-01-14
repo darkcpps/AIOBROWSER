@@ -142,18 +142,19 @@ class GameSearchApp(QMainWindow):
         # Header
         self.header = QFrame()
         self.header.setObjectName("Header")
-        self.header.setFixedHeight(70)
+        self.header.setFixedHeight(80)
         self.header.setStyleSheet(
             f"QFrame#Header {{ background-color: {COLORS['bg_primary']}; border-bottom: 1px solid {COLORS['border']}; }}"
         )
         header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(30, 0, 30, 0)
+        header_layout.setContentsMargins(40, 0, 40, 0)
         self.page_title = QLabel("Games")
         self.page_title.setStyleSheet(
-            f"font-size: 20px; font-weight: 800; color: {COLORS['text_primary']};"
+            f"font-size: 26px; font-weight: 1000; color: {COLORS['text_primary']}; letter-spacing: -0.5px;"
         )
         header_layout.addWidget(self.page_title)
         header_layout.addStretch()
+        
         self.header.setLayout(header_layout)
         content_layout.addWidget(self.header)
 

@@ -4,5 +4,6 @@
     "goldberg_nickname": "AIOUser",
     "goldberg_language": "english",
     "theme": "aurora_borealis",
-    "enable_bittorrent": false
+    "enable_bittorrent": false,
+    "knaben_warning_acknowledged": false
 }

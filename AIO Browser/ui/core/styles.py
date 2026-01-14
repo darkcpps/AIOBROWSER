@@ -141,7 +141,7 @@ QCheckBox::indicator:checked {{
 QMainWindow, QDialog, QWidget {{
     background-color: {colors["bg_primary"]};
     color: {colors["text_primary"]};
-    font-family: 'Segoe UI', 'Roboto', 'Inter', sans-serif;
+    font-family: 'Outfit', 'Inter', 'Segoe UI', sans-serif;
 }}
 {gloss_overlay}
 
@@ -153,58 +153,63 @@ QTabWidget::pane {{
 QTabBar::tab {{
     background-color: transparent;
     color: {colors["text_secondary"]};
-    padding: 12px 25px;
-    margin-right: 5px;
-    border-bottom: 2px solid transparent;
-    font-weight: 500;
+    padding: 14px 28px;
+    margin-right: 8px;
+    border-bottom: 3px solid transparent;
+    font-weight: 600;
     font-size: 14px;
+    letter-spacing: 0.5px;
 }}
 
 QTabBar::tab:selected {{
     color: {colors["accent_primary"]};
-    border-bottom: 2px solid {colors["accent_primary"]};
-    font-weight: bold;
-    background-color: transparent;
+    border-bottom: 3px solid {colors["accent_primary"]};
+    font-weight: 800;
+    background-color: rgba(255, 255, 255, 0.03);
 }}
 
 QTabBar::tab:hover:!selected {{
     color: {colors["text_primary"]};
-    background-color: {colors["bg_secondary"]};
-    border-radius: 8px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border-radius: 10px 10px 0 0;
 }}
 
 {btn_style}
 
 QPushButton:pressed {{
+    padding-top: 10px;
+    padding-bottom: 6px;
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
         stop:0 {colors["glossy_gradient_end"]},
-        stop:1 {colors["glossy_gradient_start"]});
+        stop:1 {colors["accent_primary"]});
 }}
 
 QPushButton:disabled {{
-    background-color: {colors["border"]};
+    background-color: {colors["bg_secondary"]};
     color: {colors["text_muted"]};
-    border: none;
+    border: 1px solid {colors["border"]};
+    opacity: 0.5;
 }}
 
 QLineEdit {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_secondary"]},
-        stop:0.1 {colors["bg_card"]},
-        stop:1 {colors["bg_secondary"]});
+    background: {colors["bg_card"]};
     color: {colors["text_primary"]};
     border: 1px solid {colors["border"]};
-    border-radius: 10px;
-    padding: 12px;
+    border-radius: 12px;
+    padding: 14px 18px;
     font-size: 14px;
+    selection-background-color: {colors["accent_primary"]};
+}}
+
+QLineEdit:hover {{
+    border: 1px solid {colors["border_hover"]};
+    background: {colors["bg_card_hover"]};
 }}
 
 QLineEdit:focus {{
     border: 2px solid {colors["accent_primary"]};
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_card"]},
-        stop:0.1 {colors["bg_card_hover"]},
-        stop:1 {colors["bg_card"]});
+    background: {colors["bg_secondary"]};
+    outline: none;
 }}
 
 QScrollArea {{
@@ -213,45 +218,38 @@ QScrollArea {{
 }}
 
 QScrollBar:vertical {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 transparent,
-        stop:0.5 {colors["bg_secondary"]},
-        stop:1 transparent);
-    width: 10px;
-    margin: 0px;
-    border-radius: 5px;
+    background: transparent;
+    width: 8px;
+    margin: 4px;
+    border-radius: 4px;
 }}
 
 QScrollBar::handle:vertical {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 {colors["accent_primary"]},
-        stop:0.5 {colors["accent_secondary"]},
-        stop:1 {colors["accent_primary"]});
-    border-radius: 5px;
+    background: {colors["text_muted"]};
+    border-radius: 4px;
     min-height: 40px;
+    opacity: 0.5;
 }}
 
 QScrollBar::handle:vertical:hover {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 {colors["accent_secondary"]},
-        stop:0.5 {colors["accent_primary"]},
-        stop:1 {colors["accent_secondary"]});
+    background: {colors["accent_primary"]};
 }}
 
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
     height: 0px;
+    background: transparent;
 }}
 
 QProgressBar {{
     border: 1px solid {colors["border"]};
-    border-radius: 10px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_secondary"]},
-        stop:0.5 {colors["bg_card"]},
-        stop:1 {colors["bg_secondary"]});
+    border-radius: 8px;
+    background: {colors["bg_secondary"]};
     text-align: center;
-    color: transparent;
-    height: 10px;
+    color: white;
+    font-weight: bold;
+    font-size: 11px;
+    height: 12px;
 }}
 
 {progress_chunk_style}
@@ -263,62 +261,51 @@ QLabel {{
 
 QFrame#Card {{
     background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.05),
-        stop:0.05 {colors["bg_card_hover"]},
-        stop:0.1 {colors["bg_card"]},
-        stop:0.9 {colors["bg_card"]},
-        stop:0.95 {colors["bg_secondary"]},
-        stop:1 rgba(0, 0, 0, 0.8));
-    border-radius: 12px;
+        stop:0 {colors["bg_card"]},
+        stop:1 {colors["bg_secondary"]});
+    border-radius: 16px;
     border: 1px solid {colors["border"]};
 }}
 
 QFrame#Card:hover {{
     border: 1px solid {colors["accent_primary"]};
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_card_hover"]},
-        stop:0.1 {colors["bg_card_hover"]},
-        stop:0.9 {colors["bg_card"]},
-        stop:1 {colors["bg_card"]});
+    background: {colors["bg_card_hover"]};
 }}
 
 QCheckBox {{
     color: {colors["text_primary"]};
-    spacing: 10px;
+    spacing: 12px;
+    font-weight: 500;
 }}
 
 QCheckBox::indicator {{
     width: 22px;
     height: 22px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: 2px solid {colors["border"]};
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_card"]},
-        stop:0.5 {colors["bg_secondary"]},
-        stop:1 {colors["bg_card"]});
+    background: {colors["bg_card"]};
 }}
 
 {checkbox_checked_style}
 
 QCheckBox::indicator:hover {{
     border-color: {colors["accent_primary"]};
+    background: {colors["bg_card_hover"]};
 }}
 
 QComboBox {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_card_hover"]},
-        stop:0.5 {colors["bg_card"]},
-        stop:1 {colors["bg_secondary"]});
+    background: {colors["bg_card"]};
     color: {colors["text_primary"]};
     border: 1px solid {colors["border"]};
-    border-radius: 8px;
-    padding: 10px 15px;
+    border-radius: 10px;
+    padding: 10px 18px;
     font-size: 14px;
     min-width: 150px;
 }}
 
 QComboBox:hover {{
     border: 1px solid {colors["accent_primary"]};
+    background: {colors["bg_card_hover"]};
 }}
 
 QComboBox:focus {{
@@ -328,51 +315,40 @@ QComboBox:focus {{
 QComboBox::drop-down {{
     subcontrol-origin: padding;
     subcontrol-position: top right;
-    width: 30px;
+    width: 35px;
     border-left: 1px solid {colors["border"]};
-    border-top-right-radius: 8px;
-    border-bottom-right-radius: 8px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
+    border-top-right-radius: 10px;
+    border-bottom-right-radius: 10px;
+    background: transparent;
 }}
 
 QComboBox::down-arrow {{
-    width: 12px;
-    height: 12px;
+    image: none;
+    border-top: 5px solid {colors["text_secondary"]};
+    border-left: 5px solid transparent;
+    border-right: 5px solid transparent;
+    margin-top: 2px;
 }}
 
 QComboBox QAbstractItemView {{
     background-color: {colors["bg_card"]};
     color: {colors["text_primary"]};
     border: 1px solid {colors["accent_primary"]};
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: 8px;
     selection-background-color: {colors["accent_primary"]};
     selection-color: white;
-    padding: 4px;
     outline: 0;
 }}
 
-/* Specific fix for the popup container and rounding corners */
-QComboBox QAbstractItemView, 
-QComboBox QListView,
-QComboBox QFrame,
-QComboBox QAbstractScrollArea {{
-    background: {colors["bg_card"]};
-    border: 1px solid {colors["accent_primary"]};
-    border-radius: 8px;
-}}
-
 QComboBox QAbstractItemView::item {{
-    padding: 8px;
-    background-color: transparent;
-    color: {colors["text_primary"]};
+    padding: 10px;
+    border-radius: 6px;
 }}
 
 QComboBox QAbstractItemView::item:selected {{
     background-color: {colors["accent_primary"]};
     color: white;
-    border-radius: 4px;
 }}
 
 QListView {{
@@ -381,39 +357,28 @@ QListView {{
     selection-background-color: {colors["accent_primary"]};
     selection-color: white;
     border: 1px solid {colors["border"]};
-    border-radius: 8px;
+    border-radius: 10px;
+    padding: 5px;
 }}
 
 QToolTip {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_card_hover"]},
-        stop:1 {colors["bg_card"]});
+    background: {colors["bg_secondary"]};
     color: {colors["text_primary"]};
     border: 1px solid {colors["accent_primary"]};
-    border-radius: 6px;
-    padding: 8px;
-    font-size: 12px;
+    border-radius: 8px;
+    padding: 10px;
+    font-size: 13px;
 }}
 
 /* Glossy Sidebar Style */
 QWidget#Sidebar {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 {colors["bg_secondary"]},
-        stop:0.01 rgba(255, 255, 255, 0.03),
-        stop:0.02 {colors["bg_card"]},
-        stop:0.98 {colors["bg_secondary"]},
-        stop:0.99 rgba(255, 255, 255, 0.02),
-        stop:1 {colors["border"]});
+    background: {colors["bg_secondary"]};
     border-right: 1px solid {colors["border"]};
 }}
 
 /* Glossy Header Style */
 QFrame#Header {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.05),
-        stop:0.1 {colors["bg_card"]},
-        stop:0.5 {colors["bg_primary"]},
-        stop:1 {colors["bg_secondary"]});
+    background: {colors["bg_primary"]};
     border-bottom: 1px solid {colors["border"]};
 }}
 
@@ -421,6 +386,7 @@ QStatusBar {{
     background-color: {colors["bg_secondary"]};
     color: {colors["text_secondary"]};
     border-top: 1px solid {colors["border"]};
+    font-size: 12px;
 }}
 
 QSizeGrip {{
