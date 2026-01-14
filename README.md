@@ -15,6 +15,7 @@ An all-in-one software solution designed to handle the complicated stuff, making
 - **ROMS & Emulators:** Browse and download ROMs and emulators
 - **Built-in BitTorrent:** Easier torrenting for beginners.
 - **Software downloads:** Install apps.
+- **Torrent Search Engine**
   
 ## Known issues
 - This project is in early access and will be unstable (crashes, failed downloads, broken UI, etc.).
