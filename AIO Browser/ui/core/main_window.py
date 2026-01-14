@@ -84,7 +84,7 @@ class GameSearchApp(QMainWindow):
 
     def initUI(self):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setWindowTitle("🎮 AIO Browser")
+        self.setWindowTitle("🎮 AIO Browser v0.1.3")
         self.setGeometry(100, 100, 1100, 750)
 
         # Initialize and style StatusBar

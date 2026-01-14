@@ -524,16 +524,26 @@ class SettingsTab(QWidget):
             # Save theme preference
             self.settings_manager.update_setting("theme", theme_key)
 
-            # Restart application using Qt's detached process start for reliability on Windows/PyInstaller
-            from PyQt6.QtCore import QProcess
-            # Determine arguments for the detached process. In development we need to include the script path
+            # Restart application cleanly.
+            # In PyInstaller one-file builds, we must clear certain environment variables 
+            # to ensure the child process doesn't try to use the parent's temporary 
+            # extraction directory, which causes the "Qt platform plugin" error.
+            import subprocess
+            
+            # Create a clean environment copy
+            clean_env = os.environ.copy()
+            vars_to_remove = ["QT_QPA_PLATFORM_PLUGIN_PATH", "PYTHONHOME", "PYTHONPATH"]
+            for var in vars_to_remove:
+                clean_env.pop(var, None)
+            
             if getattr(sys, "frozen", False):
-                args = sys.argv[1:]
+                # Launch the .exe directly
+                subprocess.Popen([sys.executable] + sys.argv[1:], env=clean_env, 
+                               creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS)
             else:
-                # Include the script (usually main_pyqt.py) when running via python interpreter
-                args = [sys.argv[0]] + sys.argv[1:]
-            # Start a detached copy of the executable with the arguments and current working dir
-            QProcess.startDetached(sys.executable, args, os.getcwd())
+                # Launch via python interpreter
+                subprocess.Popen([sys.executable, sys.argv[0]] + sys.argv[1:], env=clean_env)
+                
             QApplication.quit()
 
     def refresh_theme(self):
