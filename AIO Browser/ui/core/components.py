@@ -638,18 +638,20 @@ class GameCardWidget(QFrame):
             callback = self.open_torrent_link
 
         self.download_btn = QPushButton(f"{btn_icon}  {btn_text}")
-        self.download_btn.setFixedSize(150, 45)
+        self.download_btn.setFixedSize(160, 48)
         self.download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.download_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {btn_color};
                 color: white;
-                border-radius: 12px;
+                border-radius: 14px;
                 font-size: 13px;
-                font-weight: 700;
+                font-weight: 800;
+                border: 1px solid rgba(255, 255, 255, 0.1);
             }}
             QPushButton:hover {{
                 background-color: {btn_hover};
+                border: 1px solid rgba(255, 255, 255, 0.2);
             }}
         """)
         self.download_btn.clicked.connect(callback)
@@ -663,9 +665,11 @@ class GameCardWidget(QFrame):
 
     def enterEvent(self, event):
         if hasattr(self, "shadow") and self.graphicsEffect() == self.shadow:
-            self.shadow.setBlurRadius(30)
-            self.shadow.setColor(QColor(124, 58, 237, 40))  # Accent primary glow
-            self.shadow.setYOffset(8)
+            from ui.core.styles import get_colors
+            colors = get_colors()
+            self.shadow.setBlurRadius(40)
+            self.shadow.setColor(QColor(colors.get("accent_primary", "#7C3AED")))
+            self.shadow.setYOffset(10)
         super().enterEvent(event)
 
     def leaveEvent(self, event):
@@ -838,48 +842,49 @@ class SidebarButton(QPushButton):
         self.style().unpolish(self)
 
         colors = get_colors()
-        choice = "selected" if self.isChecked() else "normal"
-        styles = {
-            "normal": f"""
-                QPushButton {{
-                    background-color: transparent;
-                    color: {colors["text_secondary"]};
-                    border: none;
-                    text-align: left;
-                    padding-left: 20px;
-                    font-size: 14px;
-                    font-weight: 500;
-                    border-radius: 10px;
-                }}
-                QPushButton:hover {{
-                    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                        stop:0 transparent,
-                        stop:0.1 {colors["bg_card"]},
-                        stop:0.9 {colors["bg_card"]},
-                        stop:1 transparent);
-                    color: {colors["text_primary"]};
-                }}
-            """,
-            "selected": f"""
-                QPushButton {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {colors["accent_secondary"]},
-                        stop:0.1 {("#FFFFFF" if get_current_theme() == "black_gold" else colors["glossy_shine"])},
-                        stop:0.3 {colors["accent_secondary"]},
-                        stop:0.5 {colors["accent_primary"]},
-                        stop:0.8 {colors["glossy_gradient_end"]},
-                        stop:1 {("#4D3308" if get_current_theme() == "black_gold" else colors["bg_primary"])});
-                    color: {"#000000" if get_current_theme() == "black_gold" else "#FFFFFF"};
-                    border: 1px solid {("rgba(255, 255, 255, 0.8)" if get_current_theme() == "black_gold" else colors["accent_primary"])};
-                    text-align: left;
-                    padding-left: 20px;
-                    font-size: 14px;
-                    font-weight: 900;
-                    border-radius: 10px;
-                }}
-            """,
-        }
-        self.setStyleSheet(styles[choice])
+        is_black_gold = get_current_theme() == "black_gold"
+        
+        if self.isChecked():
+            bg_color = colors["accent_primary"]
+            text_color = "#000000" if is_black_gold else "#FFFFFF"
+            border = f"1px solid {colors['accent_secondary']}" if is_black_gold else "none"
+            font_weight = "800"
+            glow = f"0px 0px 15px {colors['accent_glow']}"
+        else:
+            bg_color = "transparent"
+            text_color = colors["text_secondary"]
+            border = "none"
+            font_weight = "500"
+            glow = "none"
+
+        self.setStyleSheet(f"""
+            QPushButton {{
+                background-color: {bg_color};
+                color: {text_color};
+                border: {border};
+                text-align: left;
+                padding-left: 20px;
+                font-size: 14px;
+                font-weight: {font_weight};
+                border-radius: 12px;
+                margin: 2px 8px;
+            }}
+            QPushButton:hover {{
+                background-color: {colors["bg_card_hover"] if not self.isChecked() else bg_color};
+                color: {colors["text_primary"] if not self.isChecked() else text_color};
+            }}
+        """)
+        
+        if self.isChecked():
+            shadow = QGraphicsDropShadowEffect(self)
+            shadow.setBlurRadius(15)
+            shadow.setXOffset(0)
+            shadow.setYOffset(0)
+            shadow.setColor(QColor(colors["accent_primary"]))
+            self.setGraphicsEffect(shadow)
+        else:
+            self.setGraphicsEffect(None)
+
         self.style().polish(self)
         self.update()
 
@@ -1004,26 +1009,45 @@ class ModernSidebar(QFrame):
         layout.setSpacing(10)
 
         # Logo / Brand
-        logo_label = QLabel("🎮  AIO BROWSER")
+        logo_container = QWidget()
+        logo_container.setObjectName("LogoContainer")
+        logo_container.setStyleSheet("background: transparent; margin-bottom: 20px;")
+        logo_layout = QVBoxLayout(logo_container)
+        logo_layout.setContentsMargins(0, 0, 0, 0)
+        logo_layout.setSpacing(5)
+
+        logo_label = QLabel("AIO")
         logo_label.setStyleSheet(f"""
-            font-size: 18px;
-            font-weight: 900;
-            color: {colors["accent_secondary"]};
-            margin-bottom: 30px;
-            letter-spacing: 1.5px;
+            font-size: 26px;
+            font-weight: 1000;
+            color: {colors["text_primary"]};
+            letter-spacing: 4px;
             background: transparent;
-            border-bottom: 2px solid {colors["accent_primary"]};
-            padding-bottom: 8px;
         """)
+        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        sub_logo = QLabel("B R O W S E R")
+        sub_logo.setStyleSheet(f"""
+            font-size: 14px;
+            font-weight: 400;
+            color: {colors["accent_primary"]};
+            letter-spacing: 5px;
+            background: transparent;
+            margin-top: -5px;
+        """)
+        sub_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        logo_layout.addWidget(logo_label)
+        logo_layout.addWidget(sub_logo)
+        
         if get_current_theme() == "black_gold":
             shadow = QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(20)
+            shadow.setBlurRadius(25)
             shadow.setColor(QColor(colors["accent_secondary"]))
             shadow.setOffset(0, 0)
-            logo_label.setGraphicsEffect(shadow)
+            logo_container.setGraphicsEffect(shadow)
 
-        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(logo_label)
+        layout.addWidget(logo_container)
 
         self.setLayout(layout)
 

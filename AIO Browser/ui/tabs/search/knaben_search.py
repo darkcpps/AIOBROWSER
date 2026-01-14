@@ -34,8 +34,9 @@ class KnabenSearchTab(QWidget):
         self._default_banner_body_lines = [
             "Search Knaben for torrents and download via magnet links.",
             "<b>Will show everything so be specific on your searches.</b>",
+            "<b style='color: #ff6b6b;'>⚠️ UNTRUSTED CONTENT - Only use if you know what you're doing.</b>",
         ]
-        self._default_banner_icon = "⚠️"
+        self._default_banner_icon = "🧲"
 
         self.banner = InfoBanner(
             title=self._default_banner_title,
@@ -146,7 +147,10 @@ class KnabenSearchTab(QWidget):
         settings_manager = getattr(self.main_app, "settings_manager", None)
         acknowledged = False
         if settings_manager is not None:
-            acknowledged = bool(settings_manager.get("knaben_warning_acknowledged", False))
+            acknowledged = bool(
+                settings_manager.get("knaben_warning_acknowledged", False)
+                or settings_manager.get("btdigg_warning_acknowledged", False)
+            )
 
         if acknowledged:
             self._warning_ack_session = True
@@ -169,7 +173,9 @@ class KnabenSearchTab(QWidget):
             return False
 
         if settings_manager is not None:
+            # Write both keys for backwards compatibility with older settings.json
             settings_manager.update_setting("knaben_warning_acknowledged", True)
+            settings_manager.update_setting("btdigg_warning_acknowledged", True)
         self._warning_ack_session = True
         return True
 

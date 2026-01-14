@@ -74,11 +74,13 @@ class CustomTitleBar(QWidget):
                 border-bottom: 1px solid {COLORS["border"]};
             }}
             QLabel#TitleLabel {{
-                color: {COLORS["text_primary"]};
-                font-weight: bold;
-                font-size: 13px;
+                color: {COLORS["text_secondary"]};
+                font-weight: 800;
+                font-size: 11px;
+                letter-spacing: 1px;
                 border: none;
                 background: transparent;
+                padding-left: 5px;
             }}
             QPushButton {{
                 background-color: transparent;
@@ -86,7 +88,7 @@ class CustomTitleBar(QWidget):
                 border: none;
                 border-radius: 0px;
                 font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
-                font-size: 16px;
+                font-size: 14px;
             }}
             QPushButton:hover {{
                 background-color: {COLORS["bg_card_hover"]};
@@ -102,10 +104,10 @@ class CustomTitleBar(QWidget):
                 border: none;
                 border-radius: 0px;
                 font-family: 'Segoe UI Symbol', 'Segoe UI', sans-serif;
-                font-size: 16px;
+                font-size: 14px;
             }}
             QPushButton:hover {{
-                background-color: {COLORS["accent_red"]};
+                background-color: #E81123;
                 color: white;
             }}
         """)
