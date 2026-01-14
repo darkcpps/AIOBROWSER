@@ -333,14 +333,29 @@ class GameSearchApp(QMainWindow):
         self.sidebar.set_active("downloads")
         self.download_prompt_ready.emit(url, title, None, download_id)
 
+    def check_torrent_client_preference(self):
+        """Checks if the user has set a preference for torrent handling. Shows dialog if not."""
+        if not self.settings_manager.get("torrent_preference_set", False):
+            from ui.dialogs.torrent_option_dialog import TorrentOptionDialog
+            dlg = TorrentOptionDialog(self)
+            if dlg.exec():
+                if dlg.choice == 'aio':
+                    self.settings_manager.update_setting("enable_bittorrent", True)
+                else:
+                    self.settings_manager.update_setting("enable_bittorrent", False)
+                self.settings_manager.update_setting("torrent_preference_set", True)
+                return True
+            return False  # Dialog was closed/cancelled
+        return True
+
     def initiate_torrent_download(self, magnet_link, title):
         """Start a BitTorrent download directly from a magnet link."""
+        if not self.check_torrent_client_preference():
+            return
+
         if not self.settings_manager.get("enable_bittorrent", False):
-            QMessageBox.information(
-                self,
-                "BitTorrent Disabled",
-                "Enable the BitTorrent client in Settings to download magnet links.",
-            )
+            import webbrowser
+            webbrowser.open(magnet_link)
             return
 
         from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
@@ -397,12 +412,16 @@ class GameSearchApp(QMainWindow):
         threading.Thread(target=run_torrent, daemon=True).start()
 
     def prompt_torrent_download(self):
+        if not self.check_torrent_client_preference():
+            return
+
         if not self.settings_manager.get("enable_bittorrent", False):
-            QMessageBox.information(
-                self,
-                "BitTorrent Disabled",
-                "Enable the BitTorrent client in Settings to download magnet links.",
+            file_name, _ = QFileDialog.getOpenFileName(
+                self, "Select Torrent", "", "Torrent Files (*.torrent)"
             )
+            if file_name:
+                import os
+                os.startfile(file_name)
             return
 
         from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
@@ -493,6 +512,9 @@ class GameSearchApp(QMainWindow):
 
     def initiate_monkrus_download(self, item):
         """Starts the multi-step resolution for Monkrus software."""
+        if not self.check_torrent_client_preference():
+            return
+            
         print(f"[DEBUG] Initiating Monkrus Download for: {item['title']}")
         import uuid
         download_id = str(uuid.uuid4())
@@ -548,6 +570,12 @@ class GameSearchApp(QMainWindow):
         if not initial_dir or not os.path.exists(initial_dir):
             initial_dir = str(Path(sys.argv[0]).resolve().parent)
             
+        if not self.settings_manager.get("enable_bittorrent", False):
+            self.download_status_updated.emit(download_id, "✅ Opening in system tracker...", 1.0)
+            import os
+            os.startfile(torrent_path)
+            return
+
         from core.bittorrent_downloader import download_torrent, list_torrent_files
 
         file_entries = self._prompt_torrent_file_selection(
