@@ -525,3 +525,194 @@ def resolve_monkrus_to_torrent(monkrus_url):
     except Exception as e:
         print(f"[DEBUG] Critical Exception in resolution: {str(e)}")
         return None, str(e)
+
+# =========================================================================
+# TORRENT SEARCH ENGINES
+# =========================================================================
+def _extract_human_size(text):
+    """
+    Extracts the first human-readable size token from a blob of text.
+    Returns a normalized string like "1.2 GB" or None.
+    """
+    if not text:
+        return None
+
+    # Common patterns: "Size: 1.2 GB", "1.2GiB", "700 MB", etc.
+    size_match = re.search(
+        r"\b(\d+(?:\.\d+)?)\s*(KiB|MiB|GiB|TiB|KB|MB|GB|TB|B)\b", text, flags=re.I
+    )
+    if not size_match:
+        return None
+
+    num = size_match.group(1)
+    unit_raw = size_match.group(2)
+    unit_key = unit_raw.strip().lower()
+
+    if unit_key in {"kib", "mib", "gib", "tib"}:
+        unit = f"{unit_key[0].upper()}iB"
+    elif unit_key in {"kb", "mb", "gb", "tb"}:
+        unit = unit_key.upper()
+    else:
+        unit = "B"
+
+    return f"{num} {unit}"
+
+
+KNABEN_BASE_URL = "https://knaben.org"
+
+
+def search_knaben(query, category=0, page=1, sort="seeders", max_results=50):
+    """
+    Searches Knaben and returns results (usually with magnet links).
+
+    Output item shape matches other search modules:
+      {title, link, image, source, magnet, size}
+    """
+    clean_query = (query or "").strip()
+    if not clean_query:
+        return []
+
+    sort = (sort or "seeders").strip() or "seeders"
+    try:
+        category = int(category)
+    except Exception:
+        category = 0
+    try:
+        page = int(page)
+    except Exception:
+        page = 1
+    if page < 1:
+        page = 1
+
+    # Example: https://knaben.org/search/adobe/0/1/seeders
+    search_url = f"{KNABEN_BASE_URL}/search/{quote(clean_query)}/{category}/{page}/{quote(sort)}"
+
+    try:
+        print(
+            f"[DEBUG] Searching Knaben: {search_url} q={clean_query!r} category={category} page={page} sort={sort!r} max_results={max_results}"
+        )
+        resp = requests.get(search_url, headers=HEADERS, timeout=20)
+        print(
+            f"[DEBUG] Knaben HTTP: status={resp.status_code} final_url={getattr(resp, 'url', None)!r} bytes={len(getattr(resp, 'text', '') or '')}"
+        )
+        if resp.status_code != 200:
+            return [
+                {
+                    "title": "Knaben unavailable. Open in browser.",
+                    "link": search_url,
+                    "image": None,
+                    "source": "Knaben",
+                    "magnet": None,
+                    "size": None,
+                }
+            ]
+
+        html_text = resp.text or ""
+
+        # Parse rows in the search results table using regex (avoids relying on any specific DOM).
+        rows = re.findall(r"<tr[^>]*>(.*?)</tr>", html_text, flags=re.I | re.S)
+        print(f"[DEBUG] Knaben parse: row_candidates={len(rows)}")
+
+        results = []
+        seen_magnets = set()
+        emitted_debug = 0
+
+        for row_html in rows:
+            # Magnet + title
+            a_match = re.search(
+                r'<a[^>]+href="(magnet:\\?[^"]+)"[^>]*>(.*?)</a>',
+                row_html,
+                flags=re.I | re.S,
+            )
+            if not a_match:
+                continue
+
+            magnet = html_lib.unescape(a_match.group(1))
+            if magnet in seen_magnets:
+                continue
+
+            raw_title = a_match.group(2)
+            # Strip tags from inner text (if any)
+            title = re.sub(r"<[^>]+>", " ", raw_title)
+            title = html_lib.unescape(title)
+            title = re.sub(r"\\s+", " ", title).strip() or clean_query
+
+            # Extract cell values (category, title, size, date, seeders, leechers, source)
+            tds = re.findall(r"<td[^>]*>(.*?)</td>", row_html, flags=re.I | re.S)
+            td_texts = []
+            for td in tds:
+                txt = html_lib.unescape(re.sub(r"<[^>]+>", " ", td))
+                txt = re.sub(r"\\s+", " ", txt).strip()
+                td_texts.append(txt)
+
+            seeders = None
+            leechers = None
+            provider = None
+            size = None
+
+            if len(td_texts) >= 7:
+                # Typical layout observed: [category, title, size, date, seeders, leechers, source]
+                size = td_texts[2] or None
+                provider = td_texts[6] or None
+                try:
+                    seeders = int(re.sub(r"[^0-9]", "", td_texts[4] or "")) if td_texts[4] else None
+                except Exception:
+                    seeders = None
+                try:
+                    leechers = int(re.sub(r"[^0-9]", "", td_texts[5] or "")) if td_texts[5] else None
+                except Exception:
+                    leechers = None
+
+            # Prefer any external source link (e.g., 1337x) if present.
+            link = None
+            hrefs = re.findall(r'href="([^"]+)"', row_html, flags=re.I)
+            for href in hrefs:
+                href = href.strip()
+                if not href or href.startswith("magnet:"):
+                    continue
+                if href.startswith("/"):
+                    href = KNABEN_BASE_URL + href
+                if href.startswith("http") and "knaben.org" not in href.lower():
+                    link = href
+                    break
+            if not link:
+                link = search_url
+
+            # Size fallback (if we didn't get it from table cells).
+            if not size:
+                row_text = re.sub(r"<[^>]+>", " ", row_html)
+                row_text = html_lib.unescape(row_text)
+                size = _extract_human_size(row_text)
+
+            item = {
+                "title": title,
+                "link": link,
+                "image": None,
+                "source": "Knaben",
+                "provider": provider,
+                "magnet": magnet,
+                "size": size,
+                "seeders": seeders,
+                "leechers": leechers,
+            }
+            results.append(item)
+            seen_magnets.add(magnet)
+
+            if emitted_debug < 5:
+                print(
+                    f"[DEBUG] Knaben result: title={title!r} size={size!r} seeders={seeders!r} link={link!r}"
+                )
+                emitted_debug += 1
+
+            if len(results) >= max_results:
+                break
+
+        print(
+            f"[DEBUG] Knaben done: results={len(results)} unique_magnets={len(seen_magnets)}"
+        )
+        return results
+
+    except Exception as e:
+        print(f"[DEBUG] Knaben Search Error: {e}")
+        return []
+

@@ -32,7 +32,8 @@ from ui.tabs.downloads_page import DownloadsPage
 from ui.tabs.emulators_tab import EmulatorsTab
 from ui.tabs.info_tab import InfoTab
 from ui.tabs.patcher_tab import PatcherTab
-from ui.tabs.search_tab import SearchTab
+from ui.tabs.games_tab import GamesTab
+from ui.tabs.search_main_tab import SearchMainTab
 from ui.tabs.settings_tab import SettingsTab
 from ui.tabs.downloader_hub import DownloaderHub
 from ui.tabs.software_tab import SoftwareTab
@@ -147,7 +148,7 @@ class GameSearchApp(QMainWindow):
         )
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(30, 0, 30, 0)
-        self.page_title = QLabel("Search")
+        self.page_title = QLabel("Games")
         self.page_title.setStyleSheet(
             f"font-size: 20px; font-weight: 800; color: {COLORS['text_primary']};"
         )
@@ -160,8 +161,8 @@ class GameSearchApp(QMainWindow):
         self.main_stack = AnimatedStackedWidget()
 
         # Tabs
-        self.search_tab = SearchTab(self)
-        self.main_stack.addWidget(self.search_tab)
+        self.games_tab = GamesTab(self)
+        self.main_stack.addWidget(self.games_tab)
 
         self.downloads_tab = DownloadsPage(self)
         self.main_stack.addWidget(self.downloads_tab)
@@ -184,6 +185,9 @@ class GameSearchApp(QMainWindow):
         self.software_tab = SoftwareTab(self)
         self.main_stack.addWidget(self.software_tab)
 
+        self.search_tab = SearchMainTab(self)
+        self.main_stack.addWidget(self.search_tab)
+
         content_layout.addWidget(self.main_stack)
         self.content_container.setLayout(content_layout)
         body_layout.addWidget(self.content_container)
@@ -191,7 +195,7 @@ class GameSearchApp(QMainWindow):
         main_layout.addLayout(body_layout)
         central.setLayout(main_layout)
 
-        self.sidebar.set_active("search")
+        self.sidebar.set_active("games")
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -302,7 +306,7 @@ class GameSearchApp(QMainWindow):
             args=(
                 game["link"],
                 game["title"],
-                self.search_tab.direct_tab.anker_client,
+                self.games_tab.direct_tab.anker_client,
                 download_id,
             ),
             daemon=True,
@@ -338,7 +342,7 @@ class GameSearchApp(QMainWindow):
             )
             return
 
-        from core.bittorrent_downloader import download_torrent, is_available
+        from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
 
         if not is_available():
             QMessageBox.warning(
@@ -346,6 +350,16 @@ class GameSearchApp(QMainWindow):
                 "libtorrent Not Installed",
                 "The BitTorrent client requires the Python package 'libtorrent'.",
             )
+            return
+
+        file_entries = self._prompt_torrent_file_selection(
+            magnet_link, title, list_torrent_files=list_torrent_files
+        )
+        if file_entries is None:
+            return
+
+        selected_indices = self._prompt_torrent_file_choices(title, file_entries)
+        if not selected_indices:
             return
 
         initial_dir = self.settings_manager.get("default_download_path", "")
@@ -375,6 +389,7 @@ class GameSearchApp(QMainWindow):
                 item_widget.control_flags
                 if item_widget
                 else {"paused": False, "stopped": False},
+                selected_file_indices=selected_indices,
             )
             self.download_finished.emit(download_id, result, save_path)
 
@@ -389,7 +404,7 @@ class GameSearchApp(QMainWindow):
             )
             return
 
-        from core.bittorrent_downloader import download_torrent, is_available
+        from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
 
         if not is_available():
             QMessageBox.warning(
@@ -432,6 +447,16 @@ class GameSearchApp(QMainWindow):
         else:
             return
 
+        file_entries = self._prompt_torrent_file_selection(
+            source, title, list_torrent_files=list_torrent_files
+        )
+        if file_entries is None:
+            return
+
+        selected_indices = self._prompt_torrent_file_choices(title, file_entries)
+        if not selected_indices:
+            return
+
         initial_dir = self.settings_manager.get("default_download_path", "")
         if not initial_dir or not os.path.exists(initial_dir):
             initial_dir = str(Path(sys.argv[0]).resolve().parent)
@@ -459,6 +484,7 @@ class GameSearchApp(QMainWindow):
                 item_widget.control_flags
                 if item_widget
                 else {"paused": False, "stopped": False},
+                selected_file_indices=selected_indices,
             )
             self.download_finished.emit(download_id, result, save_path)
 
@@ -521,12 +547,37 @@ class GameSearchApp(QMainWindow):
         if not initial_dir or not os.path.exists(initial_dir):
             initial_dir = str(Path(sys.argv[0]).resolve().parent)
             
+        from core.bittorrent_downloader import download_torrent, list_torrent_files
+
+        file_entries = self._prompt_torrent_file_selection(
+            torrent_path, title, list_torrent_files=list_torrent_files
+        )
+        if file_entries is None:
+            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            try:
+                os.remove(torrent_path)
+            except Exception:
+                pass
+            return
+
+        selected_indices = self._prompt_torrent_file_choices(title, file_entries)
+        if not selected_indices:
+            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            try:
+                os.remove(torrent_path)
+            except Exception:
+                pass
+            return
+
         save_path = QFileDialog.getExistingDirectory(self, "Select Download Folder", initial_dir)
         if not save_path:
             self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            try:
+                os.remove(torrent_path)
+            except Exception:
+                pass
             return
 
-        from core.bittorrent_downloader import download_torrent
         item_widget = self.downloads_tab.items.get(download_id)
 
         def progress_callback(text, progress):
@@ -537,7 +588,8 @@ class GameSearchApp(QMainWindow):
                 torrent_path,
                 save_path,
                 progress_callback,
-                item_widget.control_flags if item_widget else {"paused": False, "stopped": False}
+                item_widget.control_flags if item_widget else {"paused": False, "stopped": False},
+                selected_file_indices=selected_indices,
             )
             self.download_finished.emit(download_id, result, save_path)
             # Cleanup temp torrent file
@@ -545,6 +597,97 @@ class GameSearchApp(QMainWindow):
             except: pass
 
         threading.Thread(target=run_torrent, daemon=True).start()
+
+    def _prompt_torrent_file_choices(self, title: str, file_entries: list[dict]) -> list[int] | None:
+        from ui.dialogs.torrent_file_selector_dialog import TorrentFileSelectorDialog
+
+        dlg = TorrentFileSelectorDialog(title, file_entries, parent=self)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return None
+        selected = dlg.selected_file_indices()
+        return selected or None
+
+    def _prompt_torrent_file_selection(
+        self,
+        source: str,
+        title: str,
+        list_torrent_files,
+    ) -> list[dict] | None:
+        progress = QProgressDialog("Loading torrent metadata...", "Cancel", 0, 0, self)
+        progress.setWindowTitle("Preparing Torrent")
+        progress.setWindowModality(Qt.WindowModality.ApplicationModal)
+        progress.setMinimumDuration(0)
+        progress.setAutoClose(False)
+        progress.setAutoReset(False)
+        progress.show()
+
+        cancel_flags = {"stopped": False}
+
+        loop = QEventLoop(self)
+        result: dict = {"files": None, "error": None}
+
+        def on_cancel():
+            cancel_flags["stopped"] = True
+            try:
+                progress.setLabelText("Cancelling...")
+            except Exception:
+                pass
+            loop.quit()
+
+        progress.canceled.connect(on_cancel)
+
+        def status(text: str):
+            try:
+                QMetaObject.invokeMethod(
+                    progress,
+                    "setLabelText",
+                    Qt.ConnectionType.QueuedConnection,
+                    Q_ARG(str, text),
+                )
+            except Exception:
+                pass
+
+        def worker():
+            try:
+                files = list_torrent_files(
+                    source,
+                    status_callback=status,
+                    cancel_flags=cancel_flags,
+                )
+                result["files"] = files
+            except Exception as exc:
+                if cancel_flags.get("stopped", False) and str(exc).lower().startswith("cancel"):
+                    result["files"] = None
+                else:
+                    result["error"] = str(exc)
+            finally:
+                try:
+                    QMetaObject.invokeMethod(loop, "quit", Qt.ConnectionType.QueuedConnection)
+                except Exception:
+                    pass
+
+        threading.Thread(target=worker, daemon=True).start()
+        loop.exec()
+
+        try:
+            progress.close()
+        except Exception:
+            pass
+
+        if cancel_flags.get("stopped", False) and result.get("files") is None:
+            return None
+
+        error = result.get("error")
+        if error:
+            QMessageBox.warning(self, "Torrent Metadata Error", error)
+            return None
+
+        files = result.get("files") or []
+        if not files:
+            QMessageBox.warning(self, "Torrent Metadata Error", "No files found in torrent metadata.")
+            return None
+
+        return files
 
     def process_anker_download_flow(self, game_url, game_title, anker, download_id):
         self.download_status_updated.emit(

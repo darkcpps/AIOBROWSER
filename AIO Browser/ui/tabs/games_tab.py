@@ -1,4 +1,4 @@
-# search_tab.py
+# games_tab.py
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -6,7 +6,7 @@ from ui.tabs.search.direct_search import DirectSearchTab
 from ui.tabs.search.roms_search import RomsSearchTab
 from ui.tabs.search.torrent_search import TorrentSearchTab
 
-class SearchTab(QWidget):
+class GamesTab(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.main_app = parent

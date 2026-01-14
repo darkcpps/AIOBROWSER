@@ -35,6 +35,7 @@ class SettingsManager(QObject):
             "disable_splash": False,
             "default_download_path": str(Path(sys.argv[0]).resolve().parent),
             "enable_bittorrent": False,
+            "knaben_warning_acknowledged": False,
             "goldberg_nickname": "AIOUser",
             "goldberg_language": "english",
         }
