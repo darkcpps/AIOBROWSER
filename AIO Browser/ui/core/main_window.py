@@ -572,7 +572,6 @@ class GameSearchApp(QMainWindow):
             
         if not self.settings_manager.get("enable_bittorrent", False):
             self.download_status_updated.emit(download_id, "✅ Opening in system tracker...", 1.0)
-            import os
             os.startfile(torrent_path)
             return
 

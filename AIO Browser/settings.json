@@ -5,5 +5,6 @@
     "theme": "default",
     "default_download_path": "C:\\Users\\marti\\Documents\\GitHub\\AIOBROWSER\\AIO Browser",
     "enable_bittorrent": true,
-    "knaben_warning_acknowledged": false
+    "knaben_warning_acknowledged": false,
+    "torrent_preference_set": true
 }
