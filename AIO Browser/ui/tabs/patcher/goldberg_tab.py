@@ -28,7 +28,7 @@ class GoldbergTab(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(20)
 
         # Header + Refresh
@@ -98,9 +98,7 @@ class GoldbergTab(QWidget):
         self.info_frame.setVisible(False)
         self.info_frame.setStyleSheet(f"""
             QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {COLORS["bg_secondary"]},
-                    stop:1 {COLORS.get("bg_card", COLORS["bg_secondary"])});
+                background: {COLORS["bg_secondary"]};
                 border: 1px solid {COLORS["border"]};
                 border-left: 4px solid {COLORS["accent_primary"]};
                 border-radius: 10px;
@@ -111,7 +109,7 @@ class GoldbergTab(QWidget):
 
         if_title = QLabel("Goldberg Steam Emulator")
         if_title.setStyleSheet(
-            f"font-size: 18px; font-weight: bold; color: {COLORS['text_primary']};"
+            f"font-size: 15px; font-weight: 600; color: {COLORS['text_primary']};"
         )
         if_layout.addWidget(if_title)
 
@@ -246,7 +244,7 @@ class GoldbergTab(QWidget):
         err_label = QLabel(
             f"Scan Failed: {error_msg}\n\nPlease check your Steam installation."
         )
-        err_label.setStyleSheet(f"color: {COLORS['accent_red']}; font-weight: bold;")
+        err_label.setStyleSheet(f"color: {COLORS['accent_red']}; font-weight: 600;")
         err_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.steam_container_layout.addWidget(err_label)
 

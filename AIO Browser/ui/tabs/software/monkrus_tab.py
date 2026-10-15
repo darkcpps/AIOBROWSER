@@ -66,6 +66,7 @@ class MonkrusTab(QWidget):
         input_row.addWidget(self.search_input)
 
         self.search_btn = QPushButton("Search")
+        self.search_btn.setObjectName("PrimaryButton")
         self.search_btn.setFixedSize(120, 45)
         self.search_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.search_btn.setStyleSheet(f"""
@@ -73,7 +74,7 @@ class MonkrusTab(QWidget):
                 background-color: {COLORS['accent_primary']};
                 color: white;
                 border-radius: 12px;
-                font-weight: bold;
+                font-weight: 600;
                 font-size: 14px;
             }}
             QPushButton:hover {{

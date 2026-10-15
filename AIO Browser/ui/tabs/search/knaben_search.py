@@ -27,14 +27,14 @@ class KnabenSearchTab(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(12)
 
         self._default_banner_title = "Knaben"
         self._default_banner_body_lines = [
             "Search Knaben for torrents and download via magnet links.",
             "<b>Will show everything so be specific on your searches.</b>",
-            "<b style='color: #ff6b6b;'>UNTRUSTED CONTENT - Only use if you know what you're doing.</b>",
+            "<b style='color: #E5484D;'>UNTRUSTED CONTENT</b> - Only use if you know what you're doing.",
         ]
         self._default_banner_icon = "search"
 
@@ -63,6 +63,7 @@ class KnabenSearchTab(QWidget):
         sb_layout.addWidget(self.search_input, 1)
 
         self.search_btn = QPushButton("Search")
+        self.search_btn.setObjectName("PrimaryButton")
         self.search_btn.setFixedSize(100, 40)
         self.search_btn.clicked.connect(self.start_search)
         sb_layout.addWidget(self.search_btn)

@@ -13,7 +13,7 @@ class VideoTab(QWidget):
     def initUI(self):
         colors = get_colors()
         video_layout = QVBoxLayout(self)
-        video_layout.setContentsMargins(40, 40, 40, 40)
+        video_layout.setContentsMargins(24, 20, 24, 20)
         video_layout.setSpacing(20)
 
         # Video Header
@@ -22,7 +22,7 @@ class VideoTab(QWidget):
 
         video_title = QLabel("Video Download")
         video_title.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {colors['text_primary']};"
+            f"font-size: 16px; font-weight: 600; color: {colors['text_primary']};"
         )
         video_title_layout.addWidget(video_title)
 
@@ -122,6 +122,7 @@ class VideoTab(QWidget):
 
         # Video Download Button
         self.video_download_btn = QPushButton("Start Download")
+        self.video_download_btn.setObjectName("PrimaryButton")
         self.video_download_btn.setFixedHeight(50)
         self.video_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Pass URL and quality from the visible tab to the helper to avoid hidden-tab mismatch

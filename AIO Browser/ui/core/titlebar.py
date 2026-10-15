@@ -75,9 +75,9 @@ class CustomTitleBar(QWidget):
             }}
             QLabel#TitleLabel {{
                 color: {COLORS["text_secondary"]};
-                font-weight: 800;
+                font-weight: 600;
                 font-size: 11px;
-                letter-spacing: 1px;
+                letter-spacing: 0.5px;
                 border: none;
                 background: transparent;
                 padding-left: 5px;

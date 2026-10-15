@@ -62,7 +62,7 @@ class EmulatorCard(QFrame):
 
         title = QLabel(self.option.name)
         title.setStyleSheet(
-            f"font-size: 16px; font-weight: 800; color: {COLORS['text_primary']};"
+            f"font-size: 16px; font-weight: 600; color: {COLORS['text_primary']};"
         )
         left.addWidget(title)
 
@@ -95,10 +95,11 @@ class EmulatorCard(QFrame):
         btns.addWidget(page_btn)
 
         download_btn = QPushButton("Download")
+        download_btn.setObjectName("PrimaryButton")
         download_btn.setFixedHeight(34)
         hover_text = "#000000" if get_current_theme() == "black_gold" else "white"
         download_btn.setStyleSheet(
-            f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: 800; border-radius: 8px; padding: 0 14px; }}"
+            f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: 600; border-radius: 8px; padding: 0 14px; }}"
             f"QPushButton:hover {{ background: {COLORS['accent_secondary']}; color: {hover_text}; }}"
         )
         download_btn.clicked.connect(self.download)
@@ -156,7 +157,7 @@ class EmulatorsTab(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 30, 40, 30)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(16)
 
         layout.addWidget(

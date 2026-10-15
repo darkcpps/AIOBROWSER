@@ -26,15 +26,15 @@ class DownloadDialog(QDialog):
         """)
         
         layout = QVBoxLayout()
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(25)
         
         # Header / Title
         display_title = self.game_title[:45] + "..." if len(self.game_title) > 45 else self.game_title
         self.title_label = QLabel(f"Downloading {display_title}")
         self.title_label.setStyleSheet(f"""
-            font-size: 18px;
-            font-weight: 800;
+            font-size: 15px;
+            font-weight: 600;
             color: {COLORS["text_primary"]};
         """)
         self.title_label.setWordWrap(True)
@@ -58,9 +58,7 @@ class DownloadDialog(QDialog):
                 color: transparent;
             }}
             QProgressBar::chunk {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, 
-                    stop:0 {COLORS["accent_primary"]}, 
-                    stop:1 {COLORS["accent_secondary"]});
+                background-color: {COLORS["accent_primary"]};
                 border-radius: 6px;
             }}
         """)
@@ -80,7 +78,7 @@ class DownloadDialog(QDialog):
                 background-color: {COLORS["bg_card"]};
                 color: white;
                 border: 1px solid {COLORS["border"]};
-                font-weight: bold;
+                font-weight: 600;
                 border-radius: 12px;
             }}
             QPushButton:hover {{
@@ -96,7 +94,7 @@ class DownloadDialog(QDialog):
             QPushButton {{
                 background-color: {COLORS["accent_red"]};
                 color: white;
-                font-weight: bold;
+                font-weight: 600;
                 border: none;
                 border-radius: 12px;
             }}
@@ -130,7 +128,7 @@ class DownloadDialog(QDialog):
                 QPushButton {{
                     background-color: {COLORS["accent_green"]};
                     color: white;
-                    font-weight: bold;
+                    font-weight: 600;
                     border-radius: 12px;
                 }}
                 QPushButton:hover {{
@@ -145,7 +143,7 @@ class DownloadDialog(QDialog):
                     background-color: {COLORS["bg_card"]};
                     color: white;
                     border: 1px solid {COLORS["border"]};
-                    font-weight: bold;
+                    font-weight: 600;
                     border-radius: 12px;
                 }}
                 QPushButton:hover {{

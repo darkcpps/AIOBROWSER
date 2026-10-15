@@ -66,7 +66,7 @@ class SplashScreen(QWidget):
         
         # Title (typed effect)
         self.splash_title = QLabel("")
-        self.splash_title.setStyleSheet(f"font-size: 32px; font-weight: bold; color: {COLORS['text_primary']}; margin: 15px 0;")
+        self.splash_title.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {COLORS['text_primary']}; margin: 15px 0;")
         self.splash_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(self.splash_title)
         

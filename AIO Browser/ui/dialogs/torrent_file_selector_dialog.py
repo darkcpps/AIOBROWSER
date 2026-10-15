@@ -108,7 +108,7 @@ class TorrentFileSelectorDialog(QDialog):
 
         header = QLabel(f"Choose what to download: {self._title}")
         header.setWordWrap(True)
-        header.setStyleSheet("font-size: 15px; font-weight: 800;")
+        header.setStyleSheet("font-size: 15px; font-weight: 600;")
         layout.addWidget(header)
 
         self.filter_input = QLineEdit()

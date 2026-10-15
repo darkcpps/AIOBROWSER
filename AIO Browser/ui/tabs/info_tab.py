@@ -12,13 +12,13 @@ class InfoTab(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout()
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(20)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
 
         title = QLabel("About AIO Browser")
         title.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {COLORS['text_primary']};"
+            f"font-size: 16px; font-weight: 600; color: {COLORS['text_primary']};"
         )
         layout.addWidget(title)
 

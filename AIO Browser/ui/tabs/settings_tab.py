@@ -72,41 +72,18 @@ class ThemePreviewCard(QFrame):
 
         # Mini accent bar
         accent_bar = QFrame()
-        accent_bar.setFixedHeight(8)
-
-        if self.theme_key == "black_gold":
-            accent_style = f"""
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.theme_data["glossy_gradient_end"]},
-                    stop:0.2 {self.theme_data["accent_primary"]},
-                    stop:0.4 #FFFFFF,
-                    stop:0.5 {self.theme_data["accent_secondary"]},
-                    stop:0.6 #FFFFFF,
-                    stop:0.8 {self.theme_data["accent_primary"]},
-                    stop:1 {self.theme_data["glossy_gradient_end"]});
-            """
-        else:
-            accent_style = f"""
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {self.theme_data["glossy_gradient_end"]},
-                    stop:0.3 {self.theme_data["accent_primary"]},
-                    stop:0.5 {self.theme_data["accent_secondary"]},
-                    stop:0.7 {self.theme_data["accent_primary"]},
-                    stop:1 {self.theme_data["glossy_gradient_end"]});
-            """
-
-        accent_bar.setStyleSheet(f"""
-            {accent_style}
-            border-radius: 4px;
-        """)
+        accent_bar.setFixedHeight(6)
+        accent_bar.setStyleSheet(
+            f"background: {self.theme_data['accent_primary']}; border-radius: 3px;"
+        )
         preview_layout.addWidget(accent_bar)
 
         # Mini text preview
         text_preview = QLabel("Aa")
         text_preview.setStyleSheet(f"""
             color: {self.theme_data["text_primary"]};
-            font-size: 24px;
-            font-weight: bold;
+            font-size: 16px;
+            font-weight: 600;
             background: transparent;
         """)
         text_preview.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -122,7 +99,13 @@ class ThemePreviewCard(QFrame):
         label_layout.setContentsMargins(10, 8, 10, 8)
         label_layout.setSpacing(8)
 
-        # Hide theme names in the UI; keep only the selection checkmark.
+        # Theme name + selection checkmark
+        theme_name = QLabel(self.theme_data.get("name", self.theme_key))
+        theme_name.setStyleSheet(
+            f"color: {self.theme_data['text_secondary']}; font-size: 12px;"
+            " background: transparent;"
+        )
+        label_layout.addWidget(theme_name)
         label_layout.addStretch(1)
 
         self.check_label = QLabel("")
@@ -136,7 +119,7 @@ class ThemePreviewCard(QFrame):
         self.check_label.setStyleSheet(f"""
             color: {self.theme_data["accent_primary"]};
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
             background: transparent;
         """)
         self.check_label.setVisible(self.is_selected)
@@ -164,17 +147,11 @@ class ThemePreviewCard(QFrame):
             if self.theme_key == "black_gold":
                 # Special radial preview for Royal Obsidian
                 bg_style = f"""
-                    background: qradialgradient(cx:0.5, cy:0, radius:1, fx:0.5, fy:0,
-                        stop:0 rgba(212, 175, 55, 0.2),
-                        stop:0.4 {self.theme_data["bg_primary"]},
-                        stop:1 {self.theme_data["bg_secondary"]});
+                    background: rgba(212;
                 """
             else:
                 bg_style = f"""
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {self.theme_data["bg_card_hover"]},
-                        stop:0.3 {self.theme_data["bg_primary"]},
-                        stop:1 {self.theme_data["bg_secondary"]});
+                    background: {self.theme_data["bg_card_hover"]};
                 """
 
             self.preview_frame.setStyleSheet(f"""
@@ -192,9 +169,7 @@ class ThemePreviewCard(QFrame):
                 bg_style = f"background: {self.theme_data['bg_secondary']};"
             else:
                 bg_style = f"""
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {self.theme_data["bg_card"]},
-                        stop:1 {self.theme_data["bg_secondary"]});
+                    background: {self.theme_data["bg_card"]};
                 """
 
             self.label_frame.setStyleSheet(f"""
@@ -252,7 +227,7 @@ class SettingsTab(QWidget):
         self.content_widget.setStyleSheet("QWidget#SettingsContent { background: transparent; }")
         
         layout = QVBoxLayout(self.content_widget)
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(30)
         layout.setAlignment(Qt.AlignmentFlag.AlignTop)
         
@@ -279,7 +254,7 @@ class SettingsTab(QWidget):
 
         theme_title = QLabel("APPEARANCE")
         theme_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;"
         )
         theme_layout.addWidget(theme_title)
 
@@ -291,9 +266,7 @@ class SettingsTab(QWidget):
         self.themes_frame = QFrame()
         self.themes_frame.setStyleSheet(f"""
             QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {COLORS["bg_card"]},
-                    stop:1 {COLORS["bg_secondary"]});
+                background: {COLORS["bg_card"]};
                 border: 1px solid {COLORS["border"]};
                 border-radius: 16px;
             }}
@@ -337,7 +310,7 @@ class SettingsTab(QWidget):
 
         gen_title = QLabel("GENERAL")
         gen_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;"
         )
         general_layout.addWidget(gen_title)
 
@@ -364,7 +337,7 @@ class SettingsTab(QWidget):
 
         down_title = QLabel("DOWNLOADS")
         down_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;"
         )
         down_layout.addWidget(down_title)
 
@@ -379,9 +352,7 @@ class SettingsTab(QWidget):
         # "Browse" button, overriding the app's themed button style.
         self.path_box.setStyleSheet(f"""
             QFrame#PathBox {{
-                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                    stop:0 {COLORS["bg_card"]},
-                    stop:1 {COLORS["bg_secondary"]});
+                background: {COLORS["bg_card"]};
                 border: 1px solid {COLORS["border"]};
                 border-radius: 12px;
             }}
@@ -435,7 +406,7 @@ class SettingsTab(QWidget):
 
         emu_title = QLabel("EMULATOR IDENTITY")
         emu_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;"
         )
         emu_layout.addWidget(emu_title)
 
@@ -586,7 +557,7 @@ class SettingsTab(QWidget):
                                 "EMULATOR IDENTITY",
                             ]:
                                 label.setStyleSheet(
-                                    f"color: {colors['accent_primary']}; font-size: 12px; font-weight: 900; letter-spacing: 1px;"
+                                    f"color: {colors['text_secondary']}; font-size: 12px; font-weight: 600; letter-spacing: 0.5px;"
                                 )
                             elif text in [
                                 "Choose a theme for the application",
@@ -604,8 +575,8 @@ class SettingsTab(QWidget):
                 if item and item.widget() and isinstance(item.widget(), QLabel):
                     if item.widget().text() == "Settings":
                         item.widget().setStyleSheet(f"""
-                            font-size: 28px;
-                            font-weight: 900;
+                            font-size: 16px;
+                            font-weight: 600;
                             color: {colors["text_primary"]};
                         """)
                         break
@@ -614,9 +585,7 @@ class SettingsTab(QWidget):
         if hasattr(self, "themes_frame"):
             self.themes_frame.setStyleSheet(f"""
                 QFrame {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {colors["bg_card"]},
-                        stop:1 {colors["bg_secondary"]});
+                    background: {colors["bg_card"]};
                     border: 1px solid {colors["border"]};
                     border-radius: 16px;
                 }}
@@ -625,9 +594,7 @@ class SettingsTab(QWidget):
         if hasattr(self, "path_box"):
             self.path_box.setStyleSheet(f"""
                 QFrame {{
-                    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                        stop:0 {colors["bg_card"]},
-                        stop:1 {colors["bg_secondary"]});
+                    background: {colors["bg_card"]};
                     border: 1px solid {colors["border"]};
                     border-radius: 12px;
                 }}

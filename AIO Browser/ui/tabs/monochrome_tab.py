@@ -50,7 +50,7 @@ class MonochromeTab(QWidget):
 
         # Title
         title = QLabel("Monochrome Downloader (FLAC) - WIP")
-        title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_primary']};")
+        title.setStyleSheet(f"font-size: 16px; font-weight: 600; color: {COLORS['text_primary']};")
         layout.addWidget(title)
 
         # Info banner
@@ -94,7 +94,7 @@ class MonochromeTab(QWidget):
                 border-radius: 8px;
                 padding: 12px;
                 font-size: 14px;
-                font-weight: bold;
+                font-weight: 600;
             }}
             QPushButton:hover {{
                 background-color: {COLORS['accent_secondary']};
@@ -120,7 +120,7 @@ class MonochromeTab(QWidget):
         group = QGroupBox("Search Music")
         group.setStyleSheet(f"""
             QGroupBox {{
-                font-weight: bold;
+                font-weight: 600;
                 color: {COLORS['text_primary']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 8px;
@@ -185,6 +185,7 @@ class MonochromeTab(QWidget):
         search_layout.addWidget(self.search_input)
 
         search_btn = QPushButton("Search")
+        search_btn.setObjectName("PrimaryButton")
         search_btn.setStyleSheet(f"""
             QPushButton {{
                 background-color: {COLORS['accent_primary']};
@@ -192,7 +193,7 @@ class MonochromeTab(QWidget):
                 border: none;
                 border-radius: 6px;
                 padding: 10px 20px;
-                font-weight: bold;
+                font-weight: 600;
             }}
             QPushButton:hover {{
                 background-color: {COLORS['accent_secondary']};
@@ -211,7 +212,7 @@ class MonochromeTab(QWidget):
         group = QGroupBox("Download Quality")
         group.setStyleSheet(f"""
             QGroupBox {{
-                font-weight: bold;
+                font-weight: 600;
                 color: {COLORS['text_primary']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 8px;
@@ -272,7 +273,7 @@ class MonochromeTab(QWidget):
         group = QGroupBox("Search Results")
         group.setStyleSheet(f"""
             QGroupBox {{
-                font-weight: bold;
+                font-weight: 600;
                 color: {COLORS['text_primary']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 8px;
@@ -321,7 +322,7 @@ class MonochromeTab(QWidget):
                 border: none;
                 border-radius: 6px;
                 padding: 8px 16px;
-                font-weight: bold;
+                font-weight: 600;
             }}
             QPushButton:hover {{
                 background-color: {COLORS['accent_secondary']};
@@ -338,7 +339,7 @@ class MonochromeTab(QWidget):
         group = QGroupBox("Tracks")
         group.setStyleSheet(f"""
             QGroupBox {{
-                font-weight: bold;
+                font-weight: 600;
                 color: {COLORS['text_primary']};
                 border: 1px solid {COLORS['border']};
                 border-radius: 8px;

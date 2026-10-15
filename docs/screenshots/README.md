@@ -2,11 +2,13 @@
 
 Rendered from the running application (headless, 1300×840).
 
-## All sections — Midnight Purple (default theme)
+## All sections — Graphite (default theme)
 
 ![All sections](contact_default.png)
 
 ## Themes
+
+Graphite, Aurora and Obsidian:
 
 ![Themes](contact_themes.png)
 

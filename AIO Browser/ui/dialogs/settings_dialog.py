@@ -89,14 +89,14 @@ class SettingsDialog(QDialog):
         """)
 
         layout = QVBoxLayout()
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(28, 26, 28, 26)
         layout.setSpacing(25)
 
         # Header
         title = QLabel("Settings")
         title.setStyleSheet(f"""
-            font-size: 24px;
-            font-weight: 800;
+            font-size: 16px;
+            font-weight: 600;
             color: {COLORS["text_primary"]};
         """)
         layout.addWidget(title)
@@ -109,7 +109,7 @@ class SettingsDialog(QDialog):
 
         gen_title = QLabel("GENERAL")
         gen_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 11px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;"
         )
         general_layout.addWidget(gen_title)
 
@@ -128,7 +128,7 @@ class SettingsDialog(QDialog):
 
         down_title = QLabel("DOWNLOADS")
         down_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 11px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;"
         )
         down_layout.addWidget(down_title)
 
@@ -174,7 +174,7 @@ class SettingsDialog(QDialog):
 
         emu_title = QLabel("EMULATOR IDENTITY")
         emu_title.setStyleSheet(
-            f"color: {COLORS['accent_primary']}; font-size: 11px; font-weight: 900; letter-spacing: 1px;"
+            f"color: {COLORS['text_secondary']}; font-size: 11px; font-weight: 600; letter-spacing: 0.5px;"
         )
         emu_layout.addWidget(emu_title)
 

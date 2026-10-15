@@ -151,7 +151,7 @@ class GameSearchApp(QMainWindow):
             f"QFrame#Header {{ background-color: {COLORS['bg_primary']}; border-bottom: 1px solid {COLORS['border']}; }}"
         )
         header_layout = QHBoxLayout()
-        header_layout.setContentsMargins(40, 0, 40, 0)
+        header_layout.setContentsMargins(20, 0, 20, 0)
         self.page_title = QLabel("Games")
         self.page_title.setObjectName("PageTitle")
         header_layout.addWidget(self.page_title)

@@ -1,5 +1,10 @@
 # styles.py
-"""Application-wide Qt stylesheet and dark palette generation."""
+"""Application-wide Qt stylesheet and dark palette generation.
+
+The look is intentionally restrained and flat: solid colours, 1px borders and
+small radii. Only true call-to-action buttons use the accent colour (via the
+``PrimaryButton`` object name); everything else is neutral.
+"""
 from PyQt6.QtGui import QColor, QPalette  # QColor kept for backwards compatibility
 
 from ui.core.assets import icon_url
@@ -14,8 +19,8 @@ from ui.themes import (
 
 #: Cross-platform font stack - the first installed family is used.
 FONT_STACK = (
-    "'Inter', 'Outfit', 'Segoe UI Variable Text', 'Segoe UI', 'Ubuntu', "
-    "'Noto Sans', 'Cantarell', 'DejaVu Sans', 'Helvetica Neue', Arial, sans-serif"
+    "'Inter', 'SF Pro Text', 'Segoe UI', 'Ubuntu', 'Noto Sans', "
+    "'Cantarell', 'DejaVu Sans', 'Helvetica Neue', Arial, sans-serif"
 )
 
 
@@ -25,8 +30,13 @@ def _resolve_colors(theme_name=None):
     return get_colors()
 
 
-def _is_black_gold(theme_name=None):
-    return (theme_name or get_current_theme()) == "black_gold"
+def _contrast_text(color_hex):
+    """Return near-black or white, whichever reads better on ``color_hex``."""
+    color = QColor(color_hex)
+    luminance = (
+        0.2126 * color.redF() + 0.7152 * color.greenF() + 0.0722 * color.blueF()
+    )
+    return "#0B0D10" if luminance > 0.6 else "#FFFFFF"
 
 
 def build_palette(theme_name=None):
@@ -40,14 +50,14 @@ def build_palette(theme_name=None):
     accent = QColor(colors["accent_primary"])
     text = QColor(colors["text_primary"])
     muted = QColor(colors["text_muted"])
-    on_accent = QColor("#0B0B0B" if _is_black_gold(theme_name) else "#FFFFFF")
+    on_accent = QColor(_contrast_text(colors["accent_primary"]))
 
     palette = QPalette()
     palette.setColor(QPalette.ColorRole.Window, QColor(colors["bg_primary"]))
     palette.setColor(QPalette.ColorRole.WindowText, text)
     palette.setColor(QPalette.ColorRole.Base, QColor(colors["bg_card"]))
     palette.setColor(QPalette.ColorRole.AlternateBase, QColor(colors["bg_secondary"]))
-    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(colors["bg_secondary"]))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(colors["bg_card"]))
     palette.setColor(QPalette.ColorRole.ToolTipText, text)
     palette.setColor(QPalette.ColorRole.Text, text)
     palette.setColor(QPalette.ColorRole.Button, QColor(colors["bg_card"]))
@@ -83,40 +93,43 @@ QWidget {
     font-family: %(font)s;
 }
 
-QToolTip {
-    background-color: %(bg_secondary)s;
-    color: %(text)s;
-    border: 1px solid %(accent)s;
-    border-radius: 6px;
-    padding: 6px 8px;
-    font-size: 12px;
-}
-
 /* ------------------------------ Text ------------------------------ */
 QLabel { background: transparent; color: %(text)s; }
-QLabel#TitleLabel { color: %(text2)s; font-weight: 700; letter-spacing: 1px; }
-QLabel#PageTitle { font-size: 22px; font-weight: 800; color: %(text)s; }
-QLabel#SectionTitle { color: %(accent)s; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
-QLabel#Muted { color: %(muted)s; }
+QLabel#AppName { font-size: 14px; font-weight: 600; color: %(text)s; }
+QLabel#PageTitle { font-size: 16px; font-weight: 600; color: %(text)s; }
+QLabel#SectionLabel { font-size: 11px; font-weight: 600; color: %(muted)s; letter-spacing: 0.5px; }
+QLabel#Muted { color: %(text2)s; }
 
 /* ---------------------------- Buttons ---------------------------- */
 QPushButton {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %(accent)s, stop:1 %(accent_end)s);
-    color: %(on_accent)s;
-    border: 1px solid %(accent2)s;
-    border-radius: 8px;
-    padding: 8px 16px;
-    font-weight: 600;
-    font-size: 13px;
-}
-QPushButton:hover {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %(accent2)s, stop:1 %(accent)s);
-}
-QPushButton:pressed { background: %(accent_end)s; }
-QPushButton:disabled {
-    background: %(bg_secondary)s;
-    color: %(muted)s;
+    background-color: %(bg_card)s;
+    color: %(text)s;
     border: 1px solid %(border)s;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 13px;
+    font-weight: 500;
+}
+QPushButton:hover { background-color: %(bg_hover)s; border-color: %(border_hover)s; }
+QPushButton:pressed { background-color: %(bg_secondary)s; }
+QPushButton:disabled {
+    background-color: %(bg_secondary)s;
+    color: %(muted)s;
+    border-color: %(border)s;
+}
+
+QPushButton#PrimaryButton {
+    background-color: %(accent)s;
+    color: %(on_accent)s;
+    border: 1px solid %(accent)s;
+    font-weight: 600;
+}
+QPushButton#PrimaryButton:hover { background-color: %(accent2)s; border-color: %(accent2)s; }
+QPushButton#PrimaryButton:pressed { background-color: %(accent)s; }
+QPushButton#PrimaryButton:disabled {
+    background-color: %(bg_card)s;
+    color: %(muted)s;
+    border-color: %(border)s;
 }
 
 QToolButton {
@@ -130,37 +143,37 @@ QToolButton:hover { background: %(bg_hover)s; color: %(text)s; }
 
 /* ----------------------------- Inputs ---------------------------- */
 QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateEdit {
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
     color: %(text)s;
     border: 1px solid %(border)s;
-    border-radius: 10px;
-    padding: 9px 12px;
+    border-radius: 6px;
+    padding: 8px 10px;
     selection-background-color: %(accent)s;
     selection-color: %(on_accent)s;
 }
 QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover { border-color: %(border_hover)s; }
 QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus,
-QSpinBox:focus, QDoubleSpinBox:focus { border: 1px solid %(accent)s; }
+QSpinBox:focus, QDoubleSpinBox:focus { border-color: %(accent)s; }
 
 /* ------------------------- Checks / radios ----------------------- */
-QCheckBox, QRadioButton { color: %(text)s; spacing: 10px; background: transparent; }
+QCheckBox, QRadioButton { color: %(text)s; spacing: 8px; background: transparent; }
 QCheckBox::indicator, QRadioButton::indicator {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     border: 1px solid %(border_hover)s;
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
 }
-QCheckBox::indicator { border-radius: 5px; }
-QRadioButton::indicator { border-radius: 9px; }
+QCheckBox::indicator { border-radius: 4px; }
+QRadioButton::indicator { border-radius: 8px; }
 QCheckBox::indicator:hover, QRadioButton::indicator:hover { border-color: %(accent)s; }
 QCheckBox::indicator:checked {
-    background: %(accent)s;
+    background-color: %(accent)s;
     border-color: %(accent)s;
     %(check_css)s
 }
 QRadioButton::indicator:checked {
     border: 5px solid %(accent)s;
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
 }
 
 /* ------------------------------ Tabs ----------------------------- */
@@ -170,26 +183,26 @@ QTabBar { background: transparent; }
 QTabBar::tab {
     background: transparent;
     color: %(text2)s;
-    padding: 10px 20px;
-    margin-right: 6px;
+    padding: 8px 14px;
+    margin-right: 4px;
     border-bottom: 2px solid transparent;
-    font-weight: 600;
     font-size: 13px;
+    font-weight: 500;
 }
 QTabBar::tab:hover:!selected { color: %(text)s; }
 QTabBar::tab:selected {
-    color: %(accent)s;
+    color: %(text)s;
     border-bottom: 2px solid %(accent)s;
-    font-weight: 700;
+    font-weight: 600;
 }
 
 /* ---------------------------- Combo box -------------------------- */
 QComboBox {
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
     color: %(text)s;
     border: 1px solid %(border)s;
-    border-radius: 10px;
-    padding: 8px 12px;
+    border-radius: 6px;
+    padding: 7px 10px;
     min-width: 120px;
 }
 QComboBox:hover { border-color: %(border_hover)s; }
@@ -197,129 +210,132 @@ QComboBox:focus { border-color: %(accent)s; }
 QComboBox::drop-down {
     subcontrol-origin: padding;
     subcontrol-position: center right;
-    width: 26px;
+    width: 24px;
     border: none;
     background: transparent;
 }
-QComboBox::down-arrow { width: 12px; height: 12px; %(arrow_css)s }
+QComboBox::down-arrow { width: 11px; height: 11px; %(arrow_css)s }
 QComboBox QAbstractItemView {
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
     color: %(text)s;
     border: 1px solid %(border)s;
-    border-radius: 8px;
-    padding: 6px;
+    border-radius: 6px;
+    padding: 4px;
     outline: 0;
-    selection-background-color: %(accent)s;
-    selection-color: %(on_accent)s;
+    selection-background-color: %(bg_hover)s;
+    selection-color: %(text)s;
 }
-QComboBox QAbstractItemView::item { padding: 7px 10px; border-radius: 6px; }
+QComboBox QAbstractItemView::item { padding: 6px 8px; border-radius: 4px; }
 
 /* --------------------------- Item views -------------------------- */
 QListView, QListWidget, QTreeView, QTreeWidget, QTableWidget, QTableView {
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
     color: %(text)s;
     border: 1px solid %(border)s;
-    border-radius: 10px;
+    border-radius: 6px;
     outline: 0;
     gridline-color: %(border)s;
     selection-background-color: %(accent)s;
     selection-color: %(on_accent)s;
 }
 QHeaderView::section {
-    background: %(bg_secondary)s;
+    background-color: %(bg_secondary)s;
     color: %(text2)s;
     border: none;
-    border-right: 1px solid %(border)s;
     border-bottom: 1px solid %(border)s;
-    padding: 8px 10px;
+    padding: 6px 8px;
     font-weight: 600;
 }
-QTableCornerButton::section { background: %(bg_secondary)s; border: none; }
 
 /* --------------------------- Scrollbars -------------------------- */
 QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
-QScrollBar::handle:vertical { background: %(border_hover)s; border-radius: 5px; min-height: 36px; }
-QScrollBar::handle:vertical:hover { background: %(accent)s; }
+QScrollBar::handle:vertical { background: %(border_hover)s; border-radius: 5px; min-height: 32px; }
+QScrollBar::handle:vertical:hover { background: %(muted)s; }
 QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
-QScrollBar::handle:horizontal { background: %(border_hover)s; border-radius: 5px; min-width: 36px; }
-QScrollBar::handle:horizontal:hover { background: %(accent)s; }
+QScrollBar::handle:horizontal { background: %(border_hover)s; border-radius: 5px; min-width: 32px; }
+QScrollBar::handle:horizontal:hover { background: %(muted)s; }
 QScrollBar::add-line, QScrollBar::sub-line { width: 0px; height: 0px; background: transparent; }
 QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
 
 /* -------------------------- Progress bar ------------------------- */
 QProgressBar {
-    background: %(bg_secondary)s;
-    border: 1px solid %(border)s;
-    border-radius: 7px;
-    color: %(text)s;
+    background-color: %(bg_secondary)s;
+    border: none;
+    border-radius: 3px;
+    color: %(text2)s;
     text-align: center;
-    font-size: 11px;
-    font-weight: 600;
-    min-height: 14px;
+    font-size: 10px;
 }
-QProgressBar::chunk {
-    border-radius: 6px;
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %(accent)s, stop:1 %(accent2)s);
-}
+QProgressBar::chunk { background-color: %(accent)s; border-radius: 3px; }
 
 /* ----------------------------- Slider ---------------------------- */
-QSlider::groove:horizontal { height: 4px; background: %(border)s; border-radius: 2px; }
+QSlider::groove:horizontal { height: 3px; background: %(border)s; border-radius: 2px; }
 QSlider::sub-page:horizontal { background: %(accent)s; border-radius: 2px; }
 QSlider::handle:horizontal {
-    background: %(text)s; width: 14px; height: 14px; margin: -6px 0; border-radius: 7px;
+    background: %(text)s; width: 12px; height: 12px; margin: -5px 0; border-radius: 6px;
 }
 
 /* ------------------------ Frames / containers -------------------- */
-QFrame#Card {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %(bg_card)s, stop:1 %(bg_secondary)s);
-    border: 1px solid %(border)s;
-    border-radius: 14px;
-}
-QFrame#Card:hover { border-color: %(accent)s; }
-QFrame#Header { background: %(bg_primary)s; border-bottom: 1px solid %(border)s; }
-QWidget#ContentArea { background: %(bg_primary)s; }
-QGroupBox { border: 1px solid %(border)s; border-radius: 10px; margin-top: 12px; padding: 10px; }
-QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; color: %(text2)s; }
+QFrame#Card { background-color: %(bg_card)s; border: 1px solid %(border)s; border-radius: 8px; }
+QFrame#Card:hover { border-color: %(border_hover)s; }
+QFrame#Header { background-color: %(bg_primary)s; border-bottom: 1px solid %(border)s; }
+QWidget#ContentArea { background-color: %(bg_primary)s; }
+QGroupBox { border: 1px solid %(border)s; border-radius: 6px; margin-top: 10px; padding: 8px; }
+QGroupBox::title { subcontrol-origin: margin; left: 10px; padding: 0 4px; color: %(text2)s; }
 QSplitter::handle { background: %(border)s; }
 
 /* ------------------------------ Menus ---------------------------- */
 QMenuBar { background: %(bg_primary)s; color: %(text)s; }
-QMenuBar::item { padding: 6px 10px; background: transparent; border-radius: 6px; }
+QMenuBar::item { padding: 5px 8px; background: transparent; }
 QMenuBar::item:selected { background: %(bg_hover)s; }
 QMenu {
-    background: %(bg_card)s;
+    background-color: %(bg_card)s;
     color: %(text)s;
     border: 1px solid %(border)s;
-    border-radius: 8px;
-    padding: 6px;
+    border-radius: 6px;
+    padding: 4px;
 }
-QMenu::item { padding: 7px 22px; border-radius: 6px; }
-QMenu::item:selected { background: %(accent)s; color: %(on_accent)s; }
-QMenu::separator { height: 1px; background: %(border)s; margin: 5px 8px; }
+QMenu::item { padding: 6px 18px; border-radius: 4px; }
+QMenu::item:selected { background-color: %(bg_hover)s; color: %(text)s; }
+QMenu::separator { height: 1px; background: %(border)s; margin: 4px 6px; }
 
 /* ----------------------------- Dialogs --------------------------- */
-QMessageBox { background: %(bg_primary)s; }
-QMessageBox QLabel { color: %(text)s; }
-QDialogButtonBox QPushButton { min-width: 84px; }
+QMessageBox { background-color: %(bg_primary)s; }
+QDialogButtonBox QPushButton { min-width: 78px; }
+
+/* ----------------------------- Tooltip --------------------------- */
+QToolTip {
+    background-color: %(bg_card)s;
+    color: %(text)s;
+    border: 1px solid %(border)s;
+    border-radius: 4px;
+    padding: 5px 7px;
+    font-size: 12px;
+}
 
 /* --------------------------- Status bar -------------------------- */
-QStatusBar { background: %(bg_secondary)s; color: %(text2)s; border-top: 1px solid %(border)s; }
+QStatusBar {
+    background-color: %(bg_secondary)s;
+    color: %(muted)s;
+    border-top: 1px solid %(border)s;
+    font-size: 12px;
+}
 QStatusBar::item { border: none; }
-QSizeGrip { background: transparent; width: 18px; height: 18px; }
+QSizeGrip { background: transparent; width: 16px; height: 16px; }
 
 /* ---------------------------- Sidebar ---------------------------- */
-QFrame#Sidebar, QWidget#Sidebar { background: %(bg_secondary)s; border-right: 1px solid %(border)s; }
+QFrame#Sidebar { background-color: %(bg_secondary)s; border-right: 1px solid %(border)s; }
 """
 
 
 def generate_stylesheet(theme_name=None):
     """Build the application stylesheet for ``theme_name`` (or the current one)."""
     colors = _resolve_colors(theme_name)
-    on_accent = "#0B0B0B" if _is_black_gold(theme_name) else "#FFFFFF"
+    on_accent = _contrast_text(colors["accent_primary"])
 
     check_url = icon_url("check", on_accent, 16)
     check_css = ("image: %s;" % check_url) if check_url else ""
-    arrow_url = icon_url("chevron_down", colors["text_secondary"], 12)
+    arrow_url = icon_url("chevron_down", colors["text_secondary"], 11)
     arrow_css = ("image: %s;" % arrow_url) if arrow_url else ""
 
     mapping = {
@@ -348,34 +364,25 @@ STYLESHEET = generate_stylesheet("default")
 
 
 def get_sidebar_button_style(colors, is_active=False):
-    """Generate glossy sidebar button style."""
+    """Kept for backwards compatibility; the sidebar styles itself now."""
     if is_active:
         return (
-            "QPushButton { background-color: %s; color: #FFFFFF; border: none; "
-            "border-left: 3px solid %s; border-radius: 0px; padding: 15px 20px; "
-            "text-align: left; font-weight: 700; }"
+            "QPushButton { background-color: %s; color: %s; border: none; "
+            "border-radius: 6px; text-align: left; font-weight: 600; }"
             % (colors["accent_glow"], colors["accent_primary"])
         )
     return (
         "QPushButton { background-color: transparent; color: %s; border: none; "
-        "border-left: 3px solid transparent; border-radius: 0px; padding: 15px 20px; "
-        "text-align: left; font-weight: 500; }"
-        "QPushButton:hover { color: %s; }"
-        % (colors["text_secondary"], colors["text_primary"])
+        "border-radius: 6px; text-align: left; font-weight: 500; }"
+        "QPushButton:hover { background-color: %s; color: %s; }"
+        % (colors["text_secondary"], colors["bg_card_hover"], colors["text_primary"])
     )
 
 
 def get_theme_preview_style(theme_name):
-    """Generate a mini preview style for theme selection."""
+    """A flat preview swatch for theme selection."""
     colors = THEMES.get(theme_name, THEMES["default"])
     return (
-        "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
-        "stop:0 %s, stop:0.5 %s, stop:1 %s); "
-        "border: 2px solid %s; border-radius: 8px;"
-        % (
-            colors["bg_primary"],
-            colors["accent_primary"],
-            colors["bg_secondary"],
-            colors["accent_primary"],
-        )
+        "background-color: %s; border: 1px solid %s; border-radius: 8px;"
+        % (colors["bg_primary"], colors["border"])
     )

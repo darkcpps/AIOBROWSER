@@ -26,7 +26,7 @@ class TorrentSearchTab(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 40, 40, 40)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(12)
 
         layout.addWidget(
@@ -57,6 +57,7 @@ class TorrentSearchTab(QWidget):
         sb_layout.addWidget(self.search_input, 1)
 
         self.search_btn = QPushButton("Search")
+        self.search_btn.setObjectName("PrimaryButton")
         self.search_btn.setFixedSize(100, 40)
         self.search_btn.clicked.connect(self.start_search)
         sb_layout.addWidget(self.search_btn)

@@ -13,7 +13,7 @@ class AudioTab(QWidget):
     def initUI(self):
         colors = get_colors()
         audio_layout = QVBoxLayout(self)
-        audio_layout.setContentsMargins(40, 40, 40, 40)
+        audio_layout.setContentsMargins(24, 20, 24, 20)
         audio_layout.setSpacing(20)
 
         # Audio Header
@@ -22,7 +22,7 @@ class AudioTab(QWidget):
 
         audio_title = QLabel("Audio Download")
         audio_title.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {colors['text_primary']};"
+            f"font-size: 16px; font-weight: 600; color: {colors['text_primary']};"
         )
         audio_title_layout.addWidget(audio_title)
 
@@ -120,6 +120,7 @@ class AudioTab(QWidget):
 
         # Audio Download Button
         self.audio_download_btn = QPushButton("Start Download")
+        self.audio_download_btn.setObjectName("PrimaryButton")
         self.audio_download_btn.setFixedHeight(50)
         self.audio_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Pass URL and quality from the visible tab to the helper to avoid hidden-tab mismatch

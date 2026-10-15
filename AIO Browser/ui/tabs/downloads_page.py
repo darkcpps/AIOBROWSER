@@ -48,7 +48,7 @@ class DownloadItemWidget(QFrame):
 
         self.title_label = QLabel(self.title)
         self.title_label.setStyleSheet(
-            f"font-size: 15px; font-weight: bold; color: {COLORS['text_primary']};"
+            f"font-size: 15px; font-weight: 600; color: {COLORS['text_primary']};"
         )
         header_layout.addWidget(self.title_label, 1)
 
@@ -72,9 +72,7 @@ class DownloadItemWidget(QFrame):
                 color: transparent;
             }}
             QProgressBar::chunk {{
-                background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {COLORS["accent_primary"]},
-                    stop:1 {COLORS["accent_secondary"]});
+                background-color: {COLORS["accent_primary"]};
                 border-radius: 4px;
             }}
         """)
@@ -134,7 +132,7 @@ class DownloadItemWidget(QFrame):
                 color: white;
                 border: none;
                 border-radius: 8px;
-                font-weight: bold;
+                font-weight: 600;
                 padding: 0;
             }}
             QPushButton:hover {{
@@ -220,14 +218,14 @@ class DownloadsPage(QWidget):
 
     def initUI(self):
         layout = QVBoxLayout(self)
-        layout.setContentsMargins(40, 30, 40, 30)
+        layout.setContentsMargins(24, 20, 24, 20)
         layout.setSpacing(20)
 
         # Header
         header_row = QHBoxLayout()
         header = QLabel("Active Downloads")
         header.setStyleSheet(
-            f"font-size: 24px; font-weight: 800; color: {COLORS['text_primary']};"
+            f"font-size: 16px; font-weight: 600; color: {COLORS['text_primary']};"
         )
         header_row.addWidget(header, 1)
 

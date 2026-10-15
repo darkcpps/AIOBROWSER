@@ -8,7 +8,7 @@ An all-in-one software solution designed to handle the complicated stuff, making
 
 ![All sections](docs/screenshots/contact_default.png)
 
-Three built-in themes (Midnight Purple, Aurora Borealis, Black Gold):
+Three built-in themes (Graphite, Aurora, Obsidian):
 
 ![Themes](docs/screenshots/contact_themes.png)
 

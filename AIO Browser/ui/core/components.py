@@ -102,12 +102,10 @@ class InfoBanner(QFrame):
         self.setStyleSheet(
             f"""
             QFrame#{self.objectName()} {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {COLORS.get('bg_secondary')},
-                    stop:1 {COLORS.get('bg_card', COLORS.get('bg_secondary'))});
+                background-color: {COLORS.get('bg_card', COLORS.get('bg_secondary'))};
                 border: 1px solid {COLORS.get('border')};
-                border-left: 4px solid {self._accent_color};
-                border-radius: 10px;
+                border-left: 3px solid {self._accent_color};
+                border-radius: 8px;
             }}
             """
         )
@@ -319,9 +317,7 @@ class LoadingWidget(QWidget):
         container = QFrame()
         container.setStyleSheet(f"""
             QFrame {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-                    stop:0 {COLORS["bg_secondary"]},
-                    stop:1 {COLORS["bg_primary"]});
+                background: {COLORS["bg_secondary"]};
                 border: 2px solid {COLORS["border"]};
                 border-radius: 20px;
                 padding: 40px;
@@ -361,10 +357,10 @@ class LoadingWidget(QWidget):
         # Main text with dots
         self.text_label = QLabel(self.text)
         self.text_label.setStyleSheet(f"""
-            font-size: 18px;
+            font-size: 15px;
             color: {COLORS["text_primary"]};
-            letter-spacing: 1px;
-            font-weight: bold;
+            letter-spacing: 0.5px;
+            font-weight: 600;
         """)
         self.text_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
@@ -477,7 +473,7 @@ class GamePatcherCard(QFrame):
             name_text = name_text[:37] + "..."
         name = QLabel(name_text)
         name.setStyleSheet(
-            f"font-size: 15px; font-weight: 800; color: {COLORS['text_primary']}; background: transparent;"
+            f"font-size: 15px; font-weight: 600; color: {COLORS['text_primary']}; background: transparent;"
         )
         info.addWidget(name)
 
@@ -485,7 +481,7 @@ class GamePatcherCard(QFrame):
         meta_layout.setSpacing(15)
         id_lbl = QLabel(f"🆔 {self.game['id']}")
         id_lbl.setStyleSheet(
-            "color: #6366F1; font-weight: bold; font-size: 11px; background: transparent;"
+            "color: #6366F1; font-weight: 600; font-size: 11px; background: transparent;"
         )
         meta_layout.addWidget(id_lbl)
 
@@ -516,10 +512,11 @@ class GamePatcherCard(QFrame):
             btn_layout.addWidget(revert_btn)
 
         patch_btn = QPushButton("Patch")
+        patch_btn.setObjectName("PrimaryButton")
         patch_btn.setFixedSize(80, 32)
         patch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         patch_btn.setStyleSheet(
-            f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: bold; border-radius: 6px; }} QPushButton:hover {{ background: {COLORS['accent_secondary']}; }}"
+            f"QPushButton {{ background: {COLORS['accent_primary']}; color: white; font-weight: 600; border-radius: 6px; }} QPushButton:hover {{ background: {COLORS['accent_secondary']}; }}"
         )
         patch_btn.clicked.connect(lambda: self.patch_callback(self.game))
         btn_layout.addWidget(patch_btn)
@@ -569,15 +566,8 @@ class GameCardWidget(QFrame):
         self.group.start()
 
     def on_entrance_finished(self):
-        # Swap opacity effect for shadow effect now that entrance is done
-        self.shadow = QGraphicsDropShadowEffect(self)
-        self.shadow.setBlurRadius(20)
-        self.shadow.setXOffset(0)
-        self.shadow.setYOffset(4)
-        self.shadow.setColor(QColor(0, 0, 0, 80))
-        self.setGraphicsEffect(self.shadow)
-
-        # Re-enable hover signals/checks if needed
+        # Flat design: drop the fade effect and do not add a drop shadow.
+        self.setGraphicsEffect(None)
         self.setAttribute(Qt.WidgetAttribute.WA_Hover)
 
     def initUI(self):
@@ -599,7 +589,7 @@ class GameCardWidget(QFrame):
         self.image_label.setStyleSheet(f"""
             background-color: {COLORS["bg_secondary"]};
             border-radius: 10px;
-            font-size: 28px;
+            font-size: 16px;
         """)
         self.image_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.image_label.setText("🎮")
@@ -614,7 +604,7 @@ class GameCardWidget(QFrame):
         self.title_label = QLabel(self.game["title"])
         self.title_label.setStyleSheet(f"""
             font-size: 16px;
-            font-weight: 800;
+            font-weight: 600;
             color: {COLORS["text_primary"]};
             background-color: transparent;
         """)
@@ -695,7 +685,7 @@ class GameCardWidget(QFrame):
                 color: white;
                 border-radius: 14px;
                 font-size: 13px;
-                font-weight: 800;
+                font-weight: 600;
                 border: 1px solid rgba(255, 255, 255, 0.1);
             }}
             QPushButton:hover {{
@@ -880,63 +870,52 @@ class SidebarButton(QPushButton):
         self.setText(text)
         self.icon_name = icon_name
         self.setCheckable(True)
-        self.setFixedHeight(46)
+        self.setFixedHeight(34)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
-        self.setIconSize(QSize(18, 18))
+        self.setIconSize(QSize(16, 16))
         self.update_style()
 
     def update_style(self):
         from ui.core.icons import make_icon
-        from ui.core.styles import get_colors, get_current_theme
+        from ui.core.styles import get_colors
 
-        # Reset style state to ensure theme changes apply 100%
         self.style().unpolish(self)
-
         colors = get_colors()
-        is_black_gold = get_current_theme() == "black_gold"
 
         if self.isChecked():
-            bg_color = colors["accent_primary"]
-            text_color = "#000000" if is_black_gold else "#FFFFFF"
-            border = f"1px solid {colors['accent_secondary']}" if is_black_gold else "none"
-            font_weight = "700"
+            background = colors["accent_glow"]
+            text_color = colors["text_primary"]
+            icon_color = colors["accent_primary"]
+            weight = "600"
         else:
-            bg_color = "transparent"
+            background = "transparent"
             text_color = colors["text_secondary"]
-            border = "none"
-            font_weight = "500"
+            icon_color = colors["text_secondary"]
+            weight = "500"
 
         if self.icon_name:
-            self.setIcon(make_icon(self.icon_name, text_color, 18))
+            self.setIcon(make_icon(self.icon_name, icon_color, 16))
 
         self.setStyleSheet(f"""
             QPushButton {{
-                background-color: {bg_color};
+                background-color: {background};
                 color: {text_color};
-                border: {border};
+                border: none;
                 text-align: left;
-                padding-left: 14px;
-                font-size: 14px;
-                font-weight: {font_weight};
-                border-radius: 10px;
-                margin: 2px 8px;
+                padding-left: 10px;
+                font-size: 13px;
+                font-weight: {weight};
+                border-radius: 6px;
+                margin: 1px 4px;
             }}
             QPushButton:hover {{
-                background-color: {colors["bg_card_hover"] if not self.isChecked() else bg_color};
-                color: {colors["text_primary"] if not self.isChecked() else text_color};
+                background-color: {colors["bg_card_hover"]};
+                color: {colors["text_primary"]};
             }}
         """)
 
-        if self.isChecked():
-            shadow = QGraphicsDropShadowEffect(self)
-            shadow.setBlurRadius(14)
-            shadow.setXOffset(0)
-            shadow.setYOffset(0)
-            shadow.setColor(QColor(colors["accent_primary"]))
-            self.setGraphicsEffect(shadow)
-        else:
-            self.setGraphicsEffect(None)
-
+        # No glow / drop shadows - flat design.
+        self.setGraphicsEffect(None)
         self.style().polish(self)
         self.update()
 
@@ -1034,89 +1013,67 @@ class ModernSidebar(QFrame):
         self.initUI()
 
     def initUI(self):
-        from ui.core.styles import get_colors, get_current_theme
+        from ui.core.styles import get_colors
 
         colors = get_colors()
 
-        # Add background particles if in black_gold theme
-        if get_current_theme() == "black_gold":
-            self.particles = GoldParticleBackground(self)
-            self.particles.lower()  # Place behind everything
-
-        self.setFixedWidth(240)
+        self.setFixedWidth(216)
         self.setObjectName("Sidebar")
-        self.setStyleSheet(f"""
-            QFrame#Sidebar {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {colors["bg_secondary"]},
-                    stop:0.02 {colors["bg_card"]},
-                    stop:0.98 {colors["bg_secondary"]},
-                    stop:1 {colors["border"]});
-                border-right: 1px solid {colors["border"]};
-            }}
-        """)
 
-        layout = QVBoxLayout()
-        layout.setContentsMargins(15, 30, 15, 30)
-        layout.setSpacing(10)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(10, 12, 10, 12)
+        layout.setSpacing(2)
 
-        # Logo / Brand
-        logo_container = QWidget()
-        logo_container.setObjectName("LogoContainer")
-        logo_container.setStyleSheet("background: transparent; margin-bottom: 20px;")
-        logo_layout = QVBoxLayout(logo_container)
-        logo_layout.setContentsMargins(0, 0, 0, 0)
-        logo_layout.setSpacing(5)
+        # Wordmark
+        brand = QWidget()
+        brand.setObjectName("Brand")
+        brand_layout = QHBoxLayout(brand)
+        brand_layout.setContentsMargins(10, 2, 10, 12)
+        brand_layout.setSpacing(8)
 
-        logo_label = QLabel("AIO")
-        logo_label.setStyleSheet(f"""
-            font-size: 26px;
-            font-weight: 1000;
-            color: {colors["text_primary"]};
-            letter-spacing: 4px;
-            background: transparent;
-        """)
-        logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        sub_logo = QLabel("BROWSER")
-        sub_logo.setStyleSheet(f"""
-            font-size: 13px;
-            font-weight: 500;
-            color: {colors["accent_primary"]};
-            letter-spacing: 6px;
-            background: transparent;
-            margin-top: -2px;
-        """)
-        sub_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        
-        logo_layout.addWidget(logo_label)
-        logo_layout.addWidget(sub_logo)
-        
-        if get_current_theme() == "black_gold":
-            shadow = QGraphicsDropShadowEffect()
-            shadow.setBlurRadius(25)
-            shadow.setColor(QColor(colors["accent_secondary"]))
-            shadow.setOffset(0, 0)
-            logo_container.setGraphicsEffect(shadow)
+        mark = QLabel()
+        mark.setFixedSize(18, 18)
+        try:
+            from ui.core.icons import make_icon
 
-        layout.addWidget(logo_container)
+            mark.setPixmap(
+                make_icon("gamepad", colors["accent_primary"], 18).pixmap(18, 18)
+            )
+        except Exception:
+            pass
+        brand_layout.addWidget(mark)
 
-        self.setLayout(layout)
+        name = QLabel("AIO Browser")
+        name.setObjectName("AppName")
+        brand_layout.addWidget(name)
+        brand_layout.addStretch()
+        layout.addWidget(brand)
 
-        # Navigation
+        # Library
+        self._add_section_label(layout, "LIBRARY")
         self.add_nav_item("games", "Games", "gamepad")
         self.add_nav_item("search", "Search", "search")
         self.add_nav_item("software", "Software", "disc")
-        self.add_nav_item("patcher", "Patcher", "wrench")
+
+        # Tools
+        self._add_section_label(layout, "TOOLS")
+        self.add_nav_item("patcher", "Steam Patcher", "wrench")
         self.add_nav_item("downloader", "Downloaders", "box")
         self.add_nav_item("emulators", "Emulators", "chip")
 
         layout.addStretch()
 
-        # Bottom Actions
+        # Bottom actions
         self.add_nav_item("info", "Info", "info")
         self.add_nav_item("downloads", "Downloads", "tray")
         self.add_nav_item("settings", "Settings", "gear")
+
+    def _add_section_label(self, layout, text):
+        layout.addSpacing(12)
+        label = QLabel(text)
+        label.setObjectName("SectionLabel")
+        label.setContentsMargins(10, 0, 0, 2)
+        layout.addWidget(label)
 
     def add_nav_item(self, key, label, icon_name=""):
         btn = SidebarButton(label, icon_name)
@@ -1162,70 +1119,11 @@ class ModernSidebar(QFrame):
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
-        if hasattr(self, "particles"):
-            self.particles.setGeometry(self.rect())
 
     def refresh_theme(self):
-        """Refresh all styles when theme changes"""
-        from ui.core.styles import get_colors, get_current_theme
-
-        # Force unpolish for complete style reset
+        """Re-apply theme-dependent styling to the sidebar."""
         self.style().unpolish(self)
-
-        # Handle particles visibility based on theme
-        if get_current_theme() == "black_gold":
-            if not hasattr(self, "particles"):
-                self.particles = GoldParticleBackground(self)
-                self.particles.lower()
-                self.particles.setGeometry(self.rect())
-            self.particles.show()
-        elif hasattr(self, "particles"):
-            self.particles.hide()
-
-        colors = get_colors()
-
-        # Update sidebar background
-        self.setStyleSheet(f"""
-            QFrame#Sidebar {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 {colors["bg_secondary"]},
-                    stop:0.01 rgba(255, 255, 255, 0.03),
-                    stop:0.02 {colors["bg_card"]},
-                    stop:0.98 {colors["bg_secondary"]},
-                    stop:0.99 rgba(255, 255, 255, 0.02),
-                    stop:1 {colors["border"]});
-                border-right: 1px solid {colors["border"]};
-            }}
-        """)
-
-        # Update all buttons
         for button in self.buttons.values():
             button.update_style()
-
-        # Update logo
-        for i in range(self.layout().count()):
-            widget = self.layout().itemAt(i).widget()
-            if isinstance(widget, QLabel) and "BROWSER" in widget.text():
-                widget.setStyleSheet(f"""
-                    font-size: 18px;
-                    font-weight: 900;
-                    color: {colors["accent_secondary"] if get_current_theme() == "black_gold" else colors["accent_primary"]};
-                    margin-bottom: 30px;
-                    letter-spacing: 1.5px;
-                    background: transparent;
-                    border-bottom: 2px solid {colors["accent_primary"]};
-                    padding-bottom: 8px;
-                """)
-                if get_current_theme() == "black_gold":
-                    shadow = QGraphicsDropShadowEffect()
-                    shadow.setBlurRadius(20)
-                    shadow.setColor(QColor(colors["accent_secondary"]))
-                    shadow.setOffset(0, 0)
-                    widget.setGraphicsEffect(shadow)
-                else:
-                    widget.setGraphicsEffect(None)
-                break
-
-        # Re-polish for theme application
         self.style().polish(self)
         self.update()

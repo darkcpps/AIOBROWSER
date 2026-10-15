@@ -41,8 +41,8 @@ class TorrentOptionDialog(QDialog):
         # Title
         title = QLabel("Choose Your Torrent Client")
         title.setStyleSheet(f"""
-            font-size: 22px;
-            font-weight: 800;
+            font-size: 15px;
+            font-weight: 600;
             color: {COLORS["text_primary"]};
         """)
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -73,7 +73,7 @@ class TorrentOptionDialog(QDialog):
                 border: 1px solid {COLORS["border"]};
                 border-radius: 12px;
                 font-size: 15px;
-                font-weight: bold;
+                font-weight: 600;
                 color: {COLORS["text_primary"]};
             }}
             QPushButton:hover {{
@@ -94,7 +94,7 @@ class TorrentOptionDialog(QDialog):
                 border: 1px solid {COLORS["border"]};
                 border-radius: 12px;
                 font-size: 15px;
-                font-weight: bold;
+                font-weight: 600;
                 color: {COLORS["text_primary"]};
             }}
             QPushButton:hover {{
