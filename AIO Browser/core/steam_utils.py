@@ -10,6 +10,7 @@ except ImportError:  # pragma: no cover - non-Windows platforms
     # (e.g. for tests or future cross-platform support) by degrading gracefully.
     winreg = None
 
+
 def get_steam_path():
     """Locate Steam installation path from Registry, process list, or default locations."""
     # 1. Registry Lookup (Thorough) - Windows only

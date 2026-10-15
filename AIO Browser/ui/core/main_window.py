@@ -9,6 +9,7 @@ import requests
 from pathlib import Path
 
 from core import downloader, scraper
+from core.path_utils import open_path
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -420,8 +421,7 @@ class GameSearchApp(QMainWindow):
                 self, "Select Torrent", "", "Torrent Files (*.torrent)"
             )
             if file_name:
-                import os
-                os.startfile(file_name)
+                open_path(file_name)
             return
 
         from core.bittorrent_downloader import download_torrent, is_available, list_torrent_files
@@ -572,7 +572,7 @@ class GameSearchApp(QMainWindow):
             
         if not self.settings_manager.get("enable_bittorrent", False):
             self.download_status_updated.emit(download_id, "✅ Opening in system tracker...", 1.0)
-            os.startfile(torrent_path)
+            open_path(torrent_path)
             return
 
         from core.bittorrent_downloader import download_torrent, list_torrent_files
@@ -802,10 +802,7 @@ class GameSearchApp(QMainWindow):
             )
 
             def final_cleanup():
-                try:
-                    os.startfile(os.path.dirname(save_path))
-                except:
-                    pass
+                open_path(os.path.dirname(save_path))
 
             QTimer.singleShot(2000, final_cleanup)
         elif result == "STOPPED":

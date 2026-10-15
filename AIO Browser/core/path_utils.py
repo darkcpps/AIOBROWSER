@@ -1,5 +1,6 @@
 # core/path_utils.py
 import os
+import subprocess
 import sys
 from pathlib import Path
 
@@ -31,3 +32,22 @@ def get_tools_dir():
         return tools_in_internal
         
     return tools_in_root
+
+
+def open_path(path):
+    """Open ``path`` with the operating system's default handler.
+
+    ``os.startfile`` only exists on Windows, so fall back to the platform
+    specific opener on macOS/Linux. Never raises: returns ``True`` if an opener
+    was launched and ``False`` otherwise.
+    """
+    try:
+        if hasattr(os, "startfile"):  # Windows
+            os.startfile(path)  # type: ignore[attr-defined]
+        elif sys.platform == "darwin":  # macOS
+            subprocess.Popen(["open", path])
+        else:  # Linux/BSD
+            subprocess.Popen(["xdg-open", path])
+        return True
+    except Exception:
+        return False
