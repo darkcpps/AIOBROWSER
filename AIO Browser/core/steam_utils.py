@@ -1,6 +1,7 @@
 # core/steam_utils.py
 import os
 import re
+import sys
 from pathlib import Path
 
 try:
@@ -38,16 +39,40 @@ def get_steam_path():
     except:
         pass
 
-    # 3. Common Default Paths
-    defaults = [
-        r"C:\Program Files (x86)\Steam",
-        r"C:\Program Files\Steam",
-        Path.home() / "AppData" / "Local" / "Steam"
-    ]
+    # 3. Common Default Paths (per platform)
+    if sys.platform == "win32":
+        defaults = [
+            r"C:\Program Files (x86)\Steam",
+            r"C:\Program Files\Steam",
+            Path.home() / "AppData" / "Local" / "Steam",
+        ]
+    elif sys.platform == "darwin":
+        defaults = [
+            Path.home() / "Library" / "Application Support" / "Steam",
+        ]
+    else:
+        # Linux (native, Debian/Ubuntu/Fedora, Flatpak and Snap installs).
+        defaults = [
+            Path.home() / ".steam" / "steam",
+            Path.home() / ".steam" / "root",
+            Path.home() / ".local" / "share" / "Steam",
+            Path.home() / ".var" / "app" / "com.valvesoftware.Steam"
+            / ".local" / "share" / "Steam",
+            Path.home() / "snap" / "steam" / "common" / ".local" / "share" / "Steam",
+            Path.home() / ".flatpak" / "steam" / "steam",
+        ]
+
     for d in defaults:
         p = Path(d)
-        if p.exists() and (p / "steam.exe").exists():
-            return p
+        try:
+            if p.exists() and (
+                (p / "steamapps").exists()
+                or (p / "steam.exe").exists()
+                or (p / "steam.sh").exists()
+            ):
+                return p
+        except OSError:
+            continue
 
     return None
 

@@ -179,3 +179,15 @@ cython_debug/
 #  refer to https://docs.cursor.com/context/ignore-files
 .cursorignore
 .cursorindexingignore
+
+# Local dev/sandbox helpers (not part of the shipped application)
+/.syslibs/
+/aptroot/
+/shots/
+/.fontcache/
+/qt_env.sh
+/smoke_test.py
+/shots.py
+/fonts.conf
+/apt.log
+/pipinstall.log

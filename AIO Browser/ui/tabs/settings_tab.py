@@ -537,9 +537,19 @@ class SettingsTab(QWidget):
                 clean_env.pop(var, None)
             
             if getattr(sys, "frozen", False):
-                # Launch the .exe directly
-                subprocess.Popen([sys.executable] + sys.argv[1:], env=clean_env, 
-                               creationflags=subprocess.CREATE_NEW_PROCESS_GROUP | subprocess.DETACHED_PROCESS)
+                # Launch the frozen executable directly.
+                popen_kwargs = {}
+                if os.name == "nt":
+                    popen_kwargs["creationflags"] = (
+                        subprocess.CREATE_NEW_PROCESS_GROUP
+                        | subprocess.DETACHED_PROCESS
+                    )
+                else:
+                    # POSIX: detach into a new session so the child survives.
+                    popen_kwargs["start_new_session"] = True
+                subprocess.Popen(
+                    [sys.executable] + sys.argv[1:], env=clean_env, **popen_kwargs
+                )
             else:
                 # Launch via python interpreter
                 subprocess.Popen([sys.executable, sys.argv[0]] + sys.argv[1:], env=clean_env)

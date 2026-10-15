@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import re
 import shutil
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
@@ -19,6 +20,7 @@ class EmulatorOption:
     github_asset_patterns: tuple[str, ...] = ()
     notes: tuple[str, ...] = ()
     common_dir_names: tuple[str, ...] = ()
+    linux_exe_names: tuple[str, ...] = ()
 
 
 def _clean_text(value: str) -> str:
@@ -145,6 +147,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         direct_download_url="https://archive.org/download/lime3ds-emulator/lime3ds-2118.2-windows-msvc.zip",
         notes=("Recommended newer Citra fork (archived build).",),
         common_dir_names=("Lime3DS",),
+        linux_exe_names=("lime3ds-qt", "lime3ds"),
     ),
     "citra": EmulatorOption(
         id="citra",
@@ -154,6 +157,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         direct_download_url="https://archive.org/download/citra-nightly-2104_20240304/citra-windows-msvc-20240304-0ff3440.zip",
         notes=("Legacy (archived build). Many users prefer Lime3DS now.",),
         common_dir_names=("Citra",),
+        linux_exe_names=("citra-qt", "citra"),
     ),
     "ryujinx": EmulatorOption(
         id="ryujinx",
@@ -162,6 +166,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://git.ryujinx.app/api/v4/projects/1/packages/generic/Ryubing/1.3.3/ryujinx-1.3.3-win_x64.zip",
         direct_download_url="https://git.ryujinx.app/api/v4/projects/1/packages/generic/Ryubing/1.3.3/ryujinx-1.3.3-win_x64.zip",
         common_dir_names=("Ryujinx",),
+        linux_exe_names=("ryujinx", "Ryujinx"),
     ),
     "dolphin": EmulatorOption(
         id="dolphin",
@@ -170,6 +175,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://dl.dolphin-emu.org/builds/64/56/dolphin-master-2512-120-x64.7z",
         direct_download_url="https://dl.dolphin-emu.org/builds/64/56/dolphin-master-2512-120-x64.7z",
         common_dir_names=("Dolphin Emulator", "Dolphin"),
+        linux_exe_names=("dolphin-emu", "dolphin"),
     ),
     "cemu": EmulatorOption(
         id="cemu",
@@ -178,6 +184,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-windows-x64.zip",
         direct_download_url="https://github.com/cemu-project/Cemu/releases/download/v2.6/cemu-2.6-windows-x64.zip",
         common_dir_names=("Cemu",),
+        linux_exe_names=("Cemu", "cemu"),
     ),
     "melonds": EmulatorOption(
         id="melonds",
@@ -186,6 +193,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://melonds.kuribo64.net/downloads/melonDS-1.1-windows-x86_64.zip",
         direct_download_url="https://melonds.kuribo64.net/downloads/melonDS-1.1-windows-x86_64.zip",
         common_dir_names=("melonDS",),
+        linux_exe_names=("melonDS", "melonds"),
     ),
     "retroarch": EmulatorOption(
         id="retroarch",
@@ -194,6 +202,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://buildbot.libretro.com/nightly/windows/x86_64/RetroArch.7z",
         direct_download_url="https://buildbot.libretro.com/nightly/windows/x86_64/RetroArch.7z",
         common_dir_names=("RetroArch",),
+        linux_exe_names=("retroarch",),
     ),
     "mgba": EmulatorOption(
         id="mgba",
@@ -202,6 +211,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/mgba-emu/mgba/releases/download/0.10.5/mGBA-0.10.5-win64.7z",
         direct_download_url="https://github.com/mgba-emu/mgba/releases/download/0.10.5/mGBA-0.10.5-win64.7z",
         common_dir_names=("mGBA", "mgba"),
+        linux_exe_names=("mgba-qt", "mgba"),
     ),
     "duckstation": EmulatorOption(
         id="duckstation",
@@ -210,6 +220,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/stenzek/duckstation/releases/download/latest/duckstation-windows-x64-release.zip",
         direct_download_url="https://github.com/stenzek/duckstation/releases/download/latest/duckstation-windows-x64-release.zip",
         common_dir_names=("DuckStation",),
+        linux_exe_names=("duckstation-qt", "duckstation"),
     ),
     "pcsx2": EmulatorOption(
         id="pcsx2",
@@ -218,6 +229,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/PCSX2/pcsx2/releases/download/v2.7.10/pcsx2-v2.7.10-windows-x64-Qt.7z",
         direct_download_url="https://github.com/PCSX2/pcsx2/releases/download/v2.7.10/pcsx2-v2.7.10-windows-x64-Qt.7z",
         common_dir_names=("PCSX2",),
+        linux_exe_names=("pcsx2-qt", "pcsx2"),
     ),
     "rpcs3": EmulatorOption(
         id="rpcs3",
@@ -226,6 +238,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://rpcs3.net/latest-build?download=win",
         direct_download_url="https://rpcs3.net/latest-build?download=win",
         common_dir_names=("RPCS3",),
+        linux_exe_names=("rpcs3",),
     ),
     "shadps4": EmulatorOption(
         id="shadps4",
@@ -235,6 +248,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         direct_download_url="https://sourceforge.net/projects/shadps4.mirror/files/v.0.12.0/shadps4-win64-qt-0.12.0.zip/download",
         notes=("Windows build is via mirror; official site notes Windows releases are unavailable.",),
         common_dir_names=("shadPS4", "ShadPS4"),
+        linux_exe_names=("shadps4",),
     ),
     "ppsspp": EmulatorOption(
         id="ppsspp",
@@ -243,6 +257,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/hrydgard/ppsspp/releases/download/v1.19.1/ppsspp_win.zip",
         direct_download_url="https://github.com/hrydgard/ppsspp/releases/download/v1.19.1/ppsspp_win.zip",
         common_dir_names=("PPSSPP",),
+        linux_exe_names=("PPSSPPSDL", "ppsspp"),
     ),
     "vita3k": EmulatorOption(
         id="vita3k",
@@ -251,6 +266,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://sourceforge.net/projects/vita3k.mirror/files/continuous/windows-latest.zip/download",
         direct_download_url="https://sourceforge.net/projects/vita3k.mirror/files/continuous/windows-latest.zip/download",
         common_dir_names=("Vita3K",),
+        linux_exe_names=("Vita3K", "vita3k"),
     ),
     "xemu": EmulatorOption(
         id="xemu",
@@ -259,6 +275,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/xemu-project/xemu/releases/latest/download/xemu-win-x86_64-release.zip",
         direct_download_url="https://github.com/xemu-project/xemu/releases/latest/download/xemu-win-x86_64-release.zip",
         common_dir_names=("xemu", "Xemu"),
+        linux_exe_names=("xemu",),
     ),
     "xenia": EmulatorOption(
         id="xenia",
@@ -267,6 +284,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/xenia-project/release-builds-windows/releases/latest/download/xenia_master.zip",
         direct_download_url="https://github.com/xenia-project/release-builds-windows/releases/latest/download/xenia_master.zip",
         common_dir_names=("Xenia",),
+        linux_exe_names=("xenia",),
     ),
     "xenia_canary": EmulatorOption(
         id="xenia_canary",
@@ -275,6 +293,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/xenia-canary/xenia-canary/releases/latest/download/xenia_canary.zip",
         direct_download_url="https://github.com/xenia-canary/xenia-canary/releases/latest/download/xenia_canary.zip",
         common_dir_names=("Xenia", "Xenia Canary"),
+        linux_exe_names=("xenia-canary", "xenia_canary"),
     ),
     "flycast": EmulatorOption(
         id="flycast",
@@ -283,6 +302,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://github.com/flyinghead/flycast/releases/download/v2.5/flycast-win64-2.5.zip",
         direct_download_url="https://github.com/flyinghead/flycast/releases/download/v2.5/flycast-win64-2.5.zip",
         common_dir_names=("Flycast",),
+        linux_exe_names=("flycast",),
     ),
     "mednafen": EmulatorOption(
         id="mednafen",
@@ -291,6 +311,7 @@ EMULATORS: dict[str, EmulatorOption] = {
         download_page_url="https://mednafen.github.io/releases/files/mednafen-1.32.1-win64.zip",
         direct_download_url="https://mednafen.github.io/releases/files/mednafen-1.32.1-win64.zip",
         common_dir_names=("Mednafen",),
+        linux_exe_names=("mednafen",),
     ),
 }
 
@@ -342,7 +363,59 @@ def get_platform_notes(platform_key: str) -> tuple[str, ...]:
     return PLATFORM_NOTES.get(platform_key, ())
 
 
+def _candidate_exe_names(option: EmulatorOption) -> list[str]:
+    """Return executable names to look for, most likely first.
+
+    On Windows only the declared ``.exe`` names are used. On Linux/macOS the
+    ``linux_exe_names`` are tried first (many distro packages drop the ``.exe``
+    suffix and install a binary named after the emulator itself).
+    """
+    names: list[str] = []
+    if os.name != "nt":
+        names.extend(option.linux_exe_names)
+        if option.id not in names:
+            names.append(option.id)
+    names.extend(option.exe_names)
+
+    ordered: list[str] = []
+    seen: set[str] = set()
+    for name in names:
+        if name and name not in seen:
+            seen.add(name)
+            ordered.append(name)
+    return ordered
+
+
+def _platform_search_roots() -> list[Path]:
+    """Return the base directories to scan for portable emulator installs."""
+    if os.name == "nt":
+        env_roots = [
+            os.environ.get("PROGRAMFILES"),
+            os.environ.get("PROGRAMFILES(X86)"),
+            os.environ.get("LOCALAPPDATA"),
+            os.environ.get("APPDATA"),
+        ]
+        return [Path(r) for r in env_roots if r]
+
+    if sys.platform == "darwin":
+        return [Path("/Applications"), Path.home() / "Applications"]
+
+    roots = [
+        Path("/usr/bin"),
+        Path("/usr/local/bin"),
+        Path("/snap/bin"),
+        Path("/app/bin"),
+        Path("/opt"),
+        Path("/var/lib/flatpak/exports/bin"),
+        Path.home() / ".local" / "bin",
+        Path.home() / "Applications",
+        Path.home() / ".local" / "share" / "flatpak" / "exports" / "bin",
+    ]
+    return roots
+
+
 def find_emulator_executable(option: EmulatorOption, emulator_paths: dict | None = None) -> Optional[Path]:
+    """Locate an installed emulator executable for the current platform."""
     emulator_paths = emulator_paths or {}
     configured = emulator_paths.get(option.id)
     if configured:
@@ -353,8 +426,11 @@ def find_emulator_executable(option: EmulatorOption, emulator_paths: dict | None
         except Exception:
             pass
 
-    for exe in option.exe_names:
-        found = shutil.which(exe)
+    names = _candidate_exe_names(option)
+
+    # 1. Anything already on PATH.
+    for name in names:
+        found = shutil.which(name)
         if found:
             try:
                 p = Path(found)
@@ -363,27 +439,14 @@ def find_emulator_executable(option: EmulatorOption, emulator_paths: dict | None
             except Exception:
                 pass
 
-    roots = [
-        os.environ.get("PROGRAMFILES"),
-        os.environ.get("PROGRAMFILES(X86)"),
-        os.environ.get("LOCALAPPDATA"),
-        os.environ.get("APPDATA"),
-    ]
-    roots = [Path(r) for r in roots if r]
-
-    for root in roots:
+    # 2. Well-known install locations (portable/AppImage style layouts).
+    subdirs = ("", "bin", "qt", "x64", "windows", "Release", "ReleaseLTO")
+    for root in _platform_search_roots():
         for dir_name in option.common_dir_names:
             base = root / dir_name
-            for exe in option.exe_names:
-                for candidate in (
-                    base / exe,
-                    base / "bin" / exe,
-                    base / "qt" / exe,
-                    base / "x64" / exe,
-                    base / "windows" / exe,
-                    base / "Release" / exe,
-                    base / "ReleaseLTO" / exe,
-                ):
+            for name in names:
+                for sub in subdirs:
+                    candidate = base / sub / name if sub else base / name
                     try:
                         if candidate.exists() and candidate.is_file():
                             return candidate
