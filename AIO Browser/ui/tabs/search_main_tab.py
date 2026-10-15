@@ -27,7 +27,7 @@ class SearchMainTab(QWidget):
         )
 
         self.knaben_tab = KnabenSearchTab(self.main_app)
-        self.search_tabs.addTab(self.knaben_tab, "Knaben ⚠️")
+        self.search_tabs.addTab(self.knaben_tab, "Knaben ")
 
         main_layout.addWidget(self.search_tabs)
         self.setLayout(main_layout)

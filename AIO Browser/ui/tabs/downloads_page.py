@@ -1,5 +1,5 @@
 # ui/downloads.py
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal, pyqtSlot
+from PyQt6.QtCore import QSize, Qt, QTimer, pyqtSignal, pyqtSlot
 from PyQt6.QtWidgets import (
     QFrame,
     QHBoxLayout,
@@ -94,16 +94,20 @@ class DownloadItemWidget(QFrame):
         self.btn_layout.setContentsMargins(0, 0, 0, 0)
         self.btn_layout.setSpacing(10)
 
-        self.pause_btn = QPushButton("⏸")
+        self.pause_btn = QPushButton()
         self.pause_btn.setFixedSize(35, 35)
         self.pause_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.pause_btn.setIconSize(QSize(15, 15))
+        self._set_btn_icon(self.pause_btn, "pause")
         self.pause_btn.setStyleSheet(self.get_button_style(COLORS["bg_secondary"]))
         self.pause_btn.clicked.connect(self.toggle_pause)
         self.btn_layout.addWidget(self.pause_btn)
 
-        self.stop_btn = QPushButton("✕")
+        self.stop_btn = QPushButton()
         self.stop_btn.setFixedSize(35, 35)
         self.stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.stop_btn.setIconSize(QSize(15, 15))
+        self._set_btn_icon(self.stop_btn, "stop")
         self.stop_btn.setStyleSheet(self.get_button_style(COLORS["accent_red"]))
         self.stop_btn.clicked.connect(self.handle_stop_or_remove)
         self.btn_layout.addWidget(self.stop_btn)
@@ -112,6 +116,16 @@ class DownloadItemWidget(QFrame):
         bottom_layout.addWidget(self.btn_frame)
 
         main_layout.addLayout(bottom_layout)
+
+    @staticmethod
+    def _set_btn_icon(button, name, color="#FFFFFF"):
+        """Set a crisp vector icon on a small control button."""
+        try:
+            from ui.core.icons import make_icon
+
+            button.setIcon(make_icon(name, color, 15))
+        except Exception:
+            pass
 
     def get_button_style(self, bg):
         return f"""
@@ -131,11 +145,11 @@ class DownloadItemWidget(QFrame):
     def toggle_pause(self):
         self.control_flags["paused"] = not self.control_flags["paused"]
         if self.control_flags["paused"]:
-            self.pause_btn.setText("▶")
+            self._set_btn_icon(self.pause_btn, "play")
             self.status_label.setText("Paused")
             self.pause_btn.setStyleSheet(self.get_button_style(COLORS["accent_green"]))
         else:
-            self.pause_btn.setText("⏸")
+            self._set_btn_icon(self.pause_btn, "pause")
             self.status_label.setText("Downloading")
             self.pause_btn.setStyleSheet(self.get_button_style(COLORS["bg_secondary"]))
 
@@ -158,7 +172,7 @@ class DownloadItemWidget(QFrame):
             # First click stops it
             self.stop_download()
             # Change icon to a "bin"
-            self.stop_btn.setText("🗑️")
+            self._set_btn_icon(self.stop_btn, "trash")
             self.setEnabled(True)  # Re-enable so they can click the trash icon
             self.pause_btn.hide()
 
@@ -168,19 +182,19 @@ class DownloadItemWidget(QFrame):
         self.progress_bar.setValue(int(progress * 100))
 
         # Check msg for status indicators
-        if "Complete" in status_msg or "✅" in status_msg:
+        if "Complete" in status_msg:
             self.status_label.setText("Finished")
             self.pause_btn.hide()
-            self.stop_btn.setText("🗑")
-        elif "Error" in status_msg or "❌" in status_msg:
+            self._set_btn_icon(self.stop_btn, "trash")
+        elif "Error" in status_msg:
             self.status_label.setText("Error")
             self.control_flags["stopped"] = True
-            self.stop_btn.setText("🗑")
+            self._set_btn_icon(self.stop_btn, "trash")
             self.pause_btn.hide()
-        elif "Stopped" in status_msg or "⏹" in status_msg:
+        elif "Stopped" in status_msg:
             self.status_label.setText("Stopped")
             self.control_flags["stopped"] = True
-            self.stop_btn.setText("🗑️")
+            self._set_btn_icon(self.stop_btn, "trash")
             self.pause_btn.hide()
         elif self.control_flags["paused"]:
             self.status_label.setText("Paused")

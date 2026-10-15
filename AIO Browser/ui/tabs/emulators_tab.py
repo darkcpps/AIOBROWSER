@@ -166,7 +166,7 @@ class EmulatorsTab(QWidget):
                     "Download and manage emulators used for ROMs.",
                     "Use Locate if you already have an emulator installed (portable or custom path).",
                 ],
-                icon="🎮",
+                icon="chip",
                 object_name="EmulatorsInfoBanner",
                 compact=True,
             )

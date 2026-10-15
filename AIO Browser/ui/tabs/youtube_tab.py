@@ -274,7 +274,7 @@ class YoutubeTab(QWidget):
         self.tab_widget.setEnabled(True)
 
         if result == "SUCCESS":
-            self.status_label.setText(f"✅ Downloaded: {title}")
+            self.status_label.setText(f"Downloaded: {title}")
             QTimer.singleShot(5000, self.progress_container.hide)
 
             # Optional: Show a small toast or notification
@@ -284,9 +284,9 @@ class YoutubeTab(QWidget):
             msg.setIcon(QMessageBox.Icon.Information)
             msg.show()
         elif result == "STOPPED":
-            self.status_label.setText("❌ Download cancelled.")
+            self.status_label.setText("Download cancelled.")
             QTimer.singleShot(3000, self.progress_container.hide)
         else:
-            self.status_label.setText(f"❌ Error occurred.")
+            self.status_label.setText(f"Error occurred.")
             QMessageBox.critical(self, "Download Error", result)
             self.progress_container.hide()

@@ -72,7 +72,7 @@ class DownloadDialog(QDialog):
         btn_layout.setContentsMargins(0, 0, 0, 0)
         btn_layout.setSpacing(15)
         
-        self.pause_btn = QPushButton("⏸  Pause")
+        self.pause_btn = QPushButton("Pause")
         self.pause_btn.setFixedHeight(45)
         self.pause_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.pause_btn.setStyleSheet(f"""
@@ -89,7 +89,7 @@ class DownloadDialog(QDialog):
         """)
         self.pause_btn.clicked.connect(self.toggle_pause)
         
-        self.stop_btn = QPushButton("⏹  Stop")
+        self.stop_btn = QPushButton("Stop")
         self.stop_btn.setFixedHeight(45)
         self.stop_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.stop_btn.setStyleSheet(f"""
@@ -124,8 +124,8 @@ class DownloadDialog(QDialog):
     def toggle_pause(self):
         self.control_flags["paused"] = not self.control_flags["paused"]
         if self.control_flags["paused"]:
-            self.pause_btn.setText("▶  Resume")
-            self.progress_label.setText("⏸  Download Paused")
+            self.pause_btn.setText("Resume")
+            self.progress_label.setText("Download Paused")
             self.pause_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {COLORS["accent_green"]};
@@ -138,8 +138,8 @@ class DownloadDialog(QDialog):
                 }}
             """)
         else:
-            self.pause_btn.setText("⏸  Pause")
-            self.progress_label.setText("▶  Resuming...")
+            self.pause_btn.setText("Pause")
+            self.progress_label.setText("Resuming...")
             self.pause_btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: {COLORS["bg_card"]};
@@ -156,7 +156,7 @@ class DownloadDialog(QDialog):
     def stop_download(self):
         self.control_flags["stopped"] = True
         self.pause_btn.setEnabled(False)
-        self.progress_label.setText("⏹  Stopping...")
+        self.progress_label.setText("Stopping...")
     
     def show_controls(self):
         self.btn_frame.show()

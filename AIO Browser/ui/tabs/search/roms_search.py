@@ -37,7 +37,7 @@ class RomsSearchTab(QWidget):
                 body_lines=[
                     "Search Axekin for ROM downloads. Pick a console to filter results, then click Download to add it to Downloads.",
                 ],
-                icon="🕹️",
+                icon="gamepad",
                 object_name="RomsSearchInfoBanner",
                 compact=True,
             )

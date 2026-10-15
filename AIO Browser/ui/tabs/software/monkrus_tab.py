@@ -29,12 +29,12 @@ class MonkrusTab(QWidget):
 
         # 1. Info Banner (Placed at top of header)
         info = InfoBanner(
-            "Monkrus ✅",
+            "Monkrus ",
             [
                 "Search for Adobe apps via Monkrus. All downloads are torrents via Uztracker.",
                 "Download speeds will vary based on seeders.",
             ],
-            icon="✅",
+            icon="check",
             accent_color=COLORS.get("accent_green", "#22C55E"),
             compact=True,
         )

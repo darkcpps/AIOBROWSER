@@ -49,7 +49,7 @@ class MonochromeTab(QWidget):
         layout.setSpacing(20)
 
         # Title
-        title = QLabel("🎧 Monochrome Downloader (FLAC) - WIP")
+        title = QLabel("Monochrome Downloader (FLAC) - WIP")
         title.setStyleSheet(f"font-size: 24px; font-weight: bold; color: {COLORS['text_primary']};")
         layout.addWidget(title)
 
@@ -61,7 +61,7 @@ class MonochromeTab(QWidget):
                 f"Powered by <span style='color:{COLORS.get('accent_primary')}'>monochrome-api.samidy.com</span>",
                 "Currently WIP and may not download some songs!",
             ],
-            icon="✨",
+            icon="sparkle",
             object_name="MonochromeInfoBanner",
         )
         layout.addWidget(info_banner)
@@ -258,7 +258,7 @@ class MonochromeTab(QWidget):
         self.quality_info_banner = InfoBanner(
             title="",
             body_lines=["LOSSLESS quality recommended for best audio quality"],
-            icon="💡",
+            icon="info",
             object_name="MonochromeQualityInfoBanner",
             compact=True,
         )
@@ -425,11 +425,11 @@ class MonochromeTab(QWidget):
         """Search Monochrome catalog"""
         query = self.search_input.text().strip()
         if not query:
-            self.status_label.setText("❌ Please enter a search term")
+            self.status_label.setText("Please enter a search term")
             self.status_label.setStyleSheet(f"color: {COLORS.get('accent_red', '#ff0000')}; font-size: 12px;")
             return
 
-        self.status_label.setText("🔍 Searching Monochrome...")
+        self.status_label.setText("Searching Monochrome...")
         self.status_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
 
         # Get search type
@@ -480,7 +480,7 @@ class MonochromeTab(QWidget):
             for item in items:
                 artists = ", ".join([a["name"] for a in item.get("artists", [])])
                 album = item.get("album", {}).get("title", "Unknown Album")
-                text = f"🎵 {item.get('title', 'Unknown')} - {artists} (from: {album})"
+                text = f"{item.get('title', 'Unknown')} - {artists} (from: {album})"
                 list_item = QListWidgetItem(text)
                 list_item.setData(Qt.ItemDataRole.UserRole, {"type": "track", "id": item["id"], "data": item})
                 self.search_results_list.addItem(list_item)
@@ -492,7 +492,7 @@ class MonochromeTab(QWidget):
                 artists = ", ".join([a["name"] for a in item.get("artists", [])])
                 year = item.get("releaseDate", "")[:4] if item.get("releaseDate") else ""
                 num_tracks = item.get("numberOfTracks", "?")
-                text = f"💿 {item.get('title', 'Unknown')} - {artists} ({year}) • {num_tracks} tracks"
+                text = f"{item.get('title', 'Unknown')} - {artists} ({year}) • {num_tracks} tracks"
                 list_item = QListWidgetItem(text)
                 list_item.setData(Qt.ItemDataRole.UserRole, {"type": "album", "id": item["id"], "data": item})
                 self.search_results_list.addItem(list_item)
@@ -503,7 +503,7 @@ class MonochromeTab(QWidget):
             for item in items:
                 creator = item.get("creator", {}).get("name", "Unknown")
                 num_tracks = item.get("numberOfTracks", 0)
-                text = f"📝 {item.get('title', 'Unknown')} by {creator} ({num_tracks} tracks)"
+                text = f"{item.get('title', 'Unknown')} by {creator} ({num_tracks} tracks)"
                 list_item = QListWidgetItem(text)
                 list_item.setData(Qt.ItemDataRole.UserRole, {"type": "playlist", "id": item.get("uuid", item.get("id")), "data": item})
                 self.search_results_list.addItem(list_item)
@@ -512,7 +512,7 @@ class MonochromeTab(QWidget):
         elif search_type == "a":  # Artists
             items = results.get("artists", {}).get("items", [])
             for item in items:
-                text = f"👤 {item.get('name', 'Unknown')}"
+                text = f"{item.get('name', 'Unknown')}"
                 list_item = QListWidgetItem(text)
                 list_item.setData(Qt.ItemDataRole.UserRole, {"type": "artist", "id": item["id"], "data": item})
                 self.search_results_list.addItem(list_item)
@@ -523,14 +523,14 @@ class MonochromeTab(QWidget):
         self.track_list_widget.setVisible(False)
         self.download_btn.setVisible(False)
 
-        self.status_label.setText(f"✅ Found {len(items)} result(s)")
+        self.status_label.setText(f"Found {len(items)} result(s)")
         self.status_label.setStyleSheet(f"color: {COLORS.get('accent_green', '#00ff00')}; font-size: 12px;")
 
     def select_search_result(self):
         """Select a search result and fetch its tracks"""
         selected_items = self.search_results_list.selectedItems()
         if not selected_items:
-            self.status_label.setText("❌ Please select a result")
+            self.status_label.setText("Please select a result")
             self.status_label.setStyleSheet(f"color: {COLORS.get('accent_red', '#ff0000')}; font-size: 12px;")
             return
 
@@ -544,7 +544,7 @@ class MonochromeTab(QWidget):
 
         print(f"[MONOCHROME UI] Selected {result_type}: {result_id}")
 
-        self.status_label.setText("🔄 Fetching tracks...")
+        self.status_label.setText("Fetching tracks...")
         self.status_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
 
         # Run in background thread (pass prefill from search result if available)
@@ -677,7 +677,7 @@ class MonochromeTab(QWidget):
         # Replace current tracks with validated list
         self.current_tracks = valid_tracks
 
-        status_text = f"✅ Loaded {len(valid_tracks)} track(s)"
+        status_text = f"Loaded {len(valid_tracks)} track(s)"
         if skipped:
             status_text += f" • Skipped {skipped} track(s) with missing id"
 
@@ -698,7 +698,7 @@ class MonochromeTab(QWidget):
         """Start downloading selected tracks"""
         selected_items = self.track_list.selectedItems()
         if not selected_items:
-            self.status_label.setText("❌ Please select at least one track")
+            self.status_label.setText("Please select at least one track")
             self.status_label.setStyleSheet(f"color: {COLORS.get('accent_red', '#ff0000')}; font-size: 12px;")
             return
 
@@ -714,7 +714,7 @@ class MonochromeTab(QWidget):
         # Get selected track IDs
         selected_track_ids = [item.data(Qt.ItemDataRole.UserRole) for item in selected_items]
 
-        self.status_label.setText(f"⬇️ Downloading {len(selected_track_ids)} track(s)...")
+        self.status_label.setText(f"Downloading {len(selected_track_ids)} track(s)...")
         self.status_label.setStyleSheet(f"color: {COLORS['text_secondary']}; font-size: 12px;")
         self.download_btn.setEnabled(False)
 
@@ -775,18 +775,18 @@ class MonochromeTab(QWidget):
                     item.setText(f"{original_text} [Already exists]")
                     item.setBackground(QColor("#ffaa00").lighter(160))
                 else:
-                    item.setText(f"{original_text} [✅ Complete]")
+                    item.setText(f"{original_text} [Complete]")
                     item.setBackground(QColor("#00ff00").lighter(160))
                 break
 
         # Check if all downloads are complete
         completed = sum(1 for i in range(self.track_list.count())
-                       if "[✅ Complete]" in self.track_list.item(i).text() or
+                       if "[Complete]" in self.track_list.item(i).text() or
                           "[Already exists]" in self.track_list.item(i).text())
         selected = len(self.track_list.selectedItems())
 
         if completed >= selected:
-            self.status_label.setText("✅ All downloads complete!")
+            self.status_label.setText("All downloads complete!")
             self.status_label.setStyleSheet(f"color: {COLORS.get('accent_green', '#00ff00')}; font-size: 12px;")
             self.download_btn.setEnabled(True)
 
@@ -797,7 +797,7 @@ class MonochromeTab(QWidget):
                 item = self.track_list.item(i)
                 if str(item.data(Qt.ItemDataRole.UserRole)) == track_id:
                     original_text = item.text().split(" [")[0]
-                    item.setText(f"{original_text} [❌ Error]")
+                    item.setText(f"{original_text} [Error]")
                     item.setBackground(QColor(COLORS.get('accent_red', '#ff0000')).lighter(160))
                     # attach full error in tooltip for debugging
                     item.setToolTip(error_msg)
@@ -810,6 +810,6 @@ class MonochromeTab(QWidget):
         elif "Upstream API error" in error_msg or "403" in error_msg:
             user_msg = "Track unavailable due to upstream API error (restricted)."
 
-        self.status_label.setText(f"❌ Error: {user_msg}")
+        self.status_label.setText(f"Error: {user_msg}")
         self.status_label.setStyleSheet(f"color: {COLORS.get('accent_red', '#ff0000')}; font-size: 12px;")
         self.download_btn.setEnabled(True)

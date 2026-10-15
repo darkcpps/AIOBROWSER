@@ -93,7 +93,7 @@ class SettingsDialog(QDialog):
         layout.setSpacing(25)
 
         # Header
-        title = QLabel("⚙  Settings")
+        title = QLabel("Settings")
         title.setStyleSheet(f"""
             font-size: 24px;
             font-weight: 800;

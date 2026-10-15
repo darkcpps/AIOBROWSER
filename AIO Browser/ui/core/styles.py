@@ -1,5 +1,8 @@
 # styles.py
-from PyQt6.QtGui import QColor
+"""Application-wide Qt stylesheet and dark palette generation."""
+from PyQt6.QtGui import QColor, QPalette  # QColor kept for backwards compatibility
+
+from ui.core.assets import icon_url
 from ui.themes import (
     THEMES,
     get_current_theme,
@@ -9,448 +12,370 @@ from ui.themes import (
     update_colors,
 )
 
+#: Cross-platform font stack - the first installed family is used.
+FONT_STACK = (
+    "'Inter', 'Outfit', 'Segoe UI Variable Text', 'Segoe UI', 'Ubuntu', "
+    "'Noto Sans', 'Cantarell', 'DejaVu Sans', 'Helvetica Neue', Arial, sans-serif"
+)
+
+
+def _resolve_colors(theme_name=None):
+    if theme_name:
+        return THEMES.get(theme_name, THEMES["default"])
+    return get_colors()
+
+
+def _is_black_gold(theme_name=None):
+    return (theme_name or get_current_theme()) == "black_gold"
+
+
+def build_palette(theme_name=None):
+    """Return a dark QPalette matching the active theme.
+
+    Setting a palette (in addition to the stylesheet) makes native widgets that
+    are not covered by the stylesheet - menus, message boxes, item views -
+    blend into the dark UI instead of falling back to a light system theme.
+    """
+    colors = _resolve_colors(theme_name)
+    accent = QColor(colors["accent_primary"])
+    text = QColor(colors["text_primary"])
+    muted = QColor(colors["text_muted"])
+    on_accent = QColor("#0B0B0B" if _is_black_gold(theme_name) else "#FFFFFF")
+
+    palette = QPalette()
+    palette.setColor(QPalette.ColorRole.Window, QColor(colors["bg_primary"]))
+    palette.setColor(QPalette.ColorRole.WindowText, text)
+    palette.setColor(QPalette.ColorRole.Base, QColor(colors["bg_card"]))
+    palette.setColor(QPalette.ColorRole.AlternateBase, QColor(colors["bg_secondary"]))
+    palette.setColor(QPalette.ColorRole.ToolTipBase, QColor(colors["bg_secondary"]))
+    palette.setColor(QPalette.ColorRole.ToolTipText, text)
+    palette.setColor(QPalette.ColorRole.Text, text)
+    palette.setColor(QPalette.ColorRole.Button, QColor(colors["bg_card"]))
+    palette.setColor(QPalette.ColorRole.ButtonText, text)
+    palette.setColor(QPalette.ColorRole.BrightText, QColor(colors["accent_red"]))
+    palette.setColor(QPalette.ColorRole.Link, accent)
+    palette.setColor(QPalette.ColorRole.Highlight, accent)
+    palette.setColor(QPalette.ColorRole.HighlightedText, on_accent)
+    palette.setColor(QPalette.ColorRole.PlaceholderText, muted)
+
+    for role in (
+        QPalette.ColorRole.Text,
+        QPalette.ColorRole.ButtonText,
+        QPalette.ColorRole.WindowText,
+    ):
+        palette.setColor(QPalette.ColorGroup.Disabled, role, muted)
+
+    return palette
+
+# The stylesheet is built with %-formatting (not f-strings) so that the many
+# CSS braces do not need escaping.
+_STYLESHEET_TEMPLATE = """
+/* ------------------------------ Base ------------------------------ */
+QMainWindow, QDialog, QMessageBox, QWizard {
+    background-color: %(bg_primary)s;
+    color: %(text)s;
+    font-family: %(font)s;
+    font-size: 13px;
+}
+
+QWidget {
+    color: %(text)s;
+    font-family: %(font)s;
+}
+
+QToolTip {
+    background-color: %(bg_secondary)s;
+    color: %(text)s;
+    border: 1px solid %(accent)s;
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 12px;
+}
+
+/* ------------------------------ Text ------------------------------ */
+QLabel { background: transparent; color: %(text)s; }
+QLabel#TitleLabel { color: %(text2)s; font-weight: 700; letter-spacing: 1px; }
+QLabel#PageTitle { font-size: 22px; font-weight: 800; color: %(text)s; }
+QLabel#SectionTitle { color: %(accent)s; font-size: 11px; font-weight: 800; letter-spacing: 1px; }
+QLabel#Muted { color: %(muted)s; }
+
+/* ---------------------------- Buttons ---------------------------- */
+QPushButton {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %(accent)s, stop:1 %(accent_end)s);
+    color: %(on_accent)s;
+    border: 1px solid %(accent2)s;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-weight: 600;
+    font-size: 13px;
+}
+QPushButton:hover {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %(accent2)s, stop:1 %(accent)s);
+}
+QPushButton:pressed { background: %(accent_end)s; }
+QPushButton:disabled {
+    background: %(bg_secondary)s;
+    color: %(muted)s;
+    border: 1px solid %(border)s;
+}
+
+QToolButton {
+    background: transparent;
+    color: %(text2)s;
+    border: none;
+    border-radius: 6px;
+    padding: 6px;
+}
+QToolButton:hover { background: %(bg_hover)s; color: %(text)s; }
+
+/* ----------------------------- Inputs ---------------------------- */
+QLineEdit, QPlainTextEdit, QTextEdit, QSpinBox, QDoubleSpinBox, QDateEdit {
+    background: %(bg_card)s;
+    color: %(text)s;
+    border: 1px solid %(border)s;
+    border-radius: 10px;
+    padding: 9px 12px;
+    selection-background-color: %(accent)s;
+    selection-color: %(on_accent)s;
+}
+QLineEdit:hover, QPlainTextEdit:hover, QTextEdit:hover { border-color: %(border_hover)s; }
+QLineEdit:focus, QPlainTextEdit:focus, QTextEdit:focus,
+QSpinBox:focus, QDoubleSpinBox:focus { border: 1px solid %(accent)s; }
+
+/* ------------------------- Checks / radios ----------------------- */
+QCheckBox, QRadioButton { color: %(text)s; spacing: 10px; background: transparent; }
+QCheckBox::indicator, QRadioButton::indicator {
+    width: 18px;
+    height: 18px;
+    border: 1px solid %(border_hover)s;
+    background: %(bg_card)s;
+}
+QCheckBox::indicator { border-radius: 5px; }
+QRadioButton::indicator { border-radius: 9px; }
+QCheckBox::indicator:hover, QRadioButton::indicator:hover { border-color: %(accent)s; }
+QCheckBox::indicator:checked {
+    background: %(accent)s;
+    border-color: %(accent)s;
+    %(check_css)s
+}
+QRadioButton::indicator:checked {
+    border: 5px solid %(accent)s;
+    background: %(bg_card)s;
+}
+
+/* ------------------------------ Tabs ----------------------------- */
+QTabWidget::pane { border: none; background: transparent; }
+QTabWidget::tab-bar { alignment: left; }
+QTabBar { background: transparent; }
+QTabBar::tab {
+    background: transparent;
+    color: %(text2)s;
+    padding: 10px 20px;
+    margin-right: 6px;
+    border-bottom: 2px solid transparent;
+    font-weight: 600;
+    font-size: 13px;
+}
+QTabBar::tab:hover:!selected { color: %(text)s; }
+QTabBar::tab:selected {
+    color: %(accent)s;
+    border-bottom: 2px solid %(accent)s;
+    font-weight: 700;
+}
+
+/* ---------------------------- Combo box -------------------------- */
+QComboBox {
+    background: %(bg_card)s;
+    color: %(text)s;
+    border: 1px solid %(border)s;
+    border-radius: 10px;
+    padding: 8px 12px;
+    min-width: 120px;
+}
+QComboBox:hover { border-color: %(border_hover)s; }
+QComboBox:focus { border-color: %(accent)s; }
+QComboBox::drop-down {
+    subcontrol-origin: padding;
+    subcontrol-position: center right;
+    width: 26px;
+    border: none;
+    background: transparent;
+}
+QComboBox::down-arrow { width: 12px; height: 12px; %(arrow_css)s }
+QComboBox QAbstractItemView {
+    background: %(bg_card)s;
+    color: %(text)s;
+    border: 1px solid %(border)s;
+    border-radius: 8px;
+    padding: 6px;
+    outline: 0;
+    selection-background-color: %(accent)s;
+    selection-color: %(on_accent)s;
+}
+QComboBox QAbstractItemView::item { padding: 7px 10px; border-radius: 6px; }
+
+/* --------------------------- Item views -------------------------- */
+QListView, QListWidget, QTreeView, QTreeWidget, QTableWidget, QTableView {
+    background: %(bg_card)s;
+    color: %(text)s;
+    border: 1px solid %(border)s;
+    border-radius: 10px;
+    outline: 0;
+    gridline-color: %(border)s;
+    selection-background-color: %(accent)s;
+    selection-color: %(on_accent)s;
+}
+QHeaderView::section {
+    background: %(bg_secondary)s;
+    color: %(text2)s;
+    border: none;
+    border-right: 1px solid %(border)s;
+    border-bottom: 1px solid %(border)s;
+    padding: 8px 10px;
+    font-weight: 600;
+}
+QTableCornerButton::section { background: %(bg_secondary)s; border: none; }
+
+/* --------------------------- Scrollbars -------------------------- */
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: %(border_hover)s; border-radius: 5px; min-height: 36px; }
+QScrollBar::handle:vertical:hover { background: %(accent)s; }
+QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px; }
+QScrollBar::handle:horizontal { background: %(border_hover)s; border-radius: 5px; min-width: 36px; }
+QScrollBar::handle:horizontal:hover { background: %(accent)s; }
+QScrollBar::add-line, QScrollBar::sub-line { width: 0px; height: 0px; background: transparent; }
+QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
+
+/* -------------------------- Progress bar ------------------------- */
+QProgressBar {
+    background: %(bg_secondary)s;
+    border: 1px solid %(border)s;
+    border-radius: 7px;
+    color: %(text)s;
+    text-align: center;
+    font-size: 11px;
+    font-weight: 600;
+    min-height: 14px;
+}
+QProgressBar::chunk {
+    border-radius: 6px;
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 %(accent)s, stop:1 %(accent2)s);
+}
+
+/* ----------------------------- Slider ---------------------------- */
+QSlider::groove:horizontal { height: 4px; background: %(border)s; border-radius: 2px; }
+QSlider::sub-page:horizontal { background: %(accent)s; border-radius: 2px; }
+QSlider::handle:horizontal {
+    background: %(text)s; width: 14px; height: 14px; margin: -6px 0; border-radius: 7px;
+}
+
+/* ------------------------ Frames / containers -------------------- */
+QFrame#Card {
+    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 %(bg_card)s, stop:1 %(bg_secondary)s);
+    border: 1px solid %(border)s;
+    border-radius: 14px;
+}
+QFrame#Card:hover { border-color: %(accent)s; }
+QFrame#Header { background: %(bg_primary)s; border-bottom: 1px solid %(border)s; }
+QWidget#ContentArea { background: %(bg_primary)s; }
+QGroupBox { border: 1px solid %(border)s; border-radius: 10px; margin-top: 12px; padding: 10px; }
+QGroupBox::title { subcontrol-origin: margin; left: 12px; padding: 0 4px; color: %(text2)s; }
+QSplitter::handle { background: %(border)s; }
+
+/* ------------------------------ Menus ---------------------------- */
+QMenuBar { background: %(bg_primary)s; color: %(text)s; }
+QMenuBar::item { padding: 6px 10px; background: transparent; border-radius: 6px; }
+QMenuBar::item:selected { background: %(bg_hover)s; }
+QMenu {
+    background: %(bg_card)s;
+    color: %(text)s;
+    border: 1px solid %(border)s;
+    border-radius: 8px;
+    padding: 6px;
+}
+QMenu::item { padding: 7px 22px; border-radius: 6px; }
+QMenu::item:selected { background: %(accent)s; color: %(on_accent)s; }
+QMenu::separator { height: 1px; background: %(border)s; margin: 5px 8px; }
+
+/* ----------------------------- Dialogs --------------------------- */
+QMessageBox { background: %(bg_primary)s; }
+QMessageBox QLabel { color: %(text)s; }
+QDialogButtonBox QPushButton { min-width: 84px; }
+
+/* --------------------------- Status bar -------------------------- */
+QStatusBar { background: %(bg_secondary)s; color: %(text2)s; border-top: 1px solid %(border)s; }
+QStatusBar::item { border: none; }
+QSizeGrip { background: transparent; width: 18px; height: 18px; }
+
+/* ---------------------------- Sidebar ---------------------------- */
+QFrame#Sidebar, QWidget#Sidebar { background: %(bg_secondary)s; border-right: 1px solid %(border)s; }
+"""
+
 
 def generate_stylesheet(theme_name=None):
-    """Generate stylesheet for the given theme or current theme"""
-    if theme_name:
-        colors = THEMES.get(theme_name, THEMES["default"])
-    else:
-        colors = get_colors()
+    """Build the application stylesheet for ``theme_name`` (or the current one)."""
+    colors = _resolve_colors(theme_name)
+    on_accent = "#0B0B0B" if _is_black_gold(theme_name) else "#FFFFFF"
 
-    # Add white gloss overlay and premium particle simulation for black_gold theme
-    gloss_overlay = ""
-    if theme_name == "black_gold" or (
-        not theme_name and get_current_theme() == "black_gold"
-    ):
-        gloss_overlay = f"""
-QWidget#ContentArea, QFrame#Card {{
-    background: qradialgradient(cx:0.5, cy:0, radius:1, fx:0.5, fy:0,
-        stop:0 rgba(212, 175, 55, 0.08),
-        stop:0.4 {colors["bg_primary"]},
-        stop:1 {colors["bg_secondary"]});
-    border: 1px solid rgba(212, 175, 55, 0.1);
-}}
+    check_url = icon_url("check", on_accent, 16)
+    check_css = ("image: %s;" % check_url) if check_url else ""
+    arrow_url = icon_url("chevron_down", colors["text_secondary"], 12)
+    arrow_css = ("image: %s;" % arrow_url) if arrow_url else ""
 
-QLabel#ParticleBackground {{
-    background-color: transparent;
-}}
-        """
-
-    # Define theme-specific component styles
-    if theme_name == "black_gold" or (
-        not theme_name and get_current_theme() == "black_gold"
-    ):
-        # Luxury specific styles
-        btn_style = f"""
-QPushButton {{
-    background-color: {colors["accent_primary"]};
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.18),
-        stop:0.08 {colors["accent_primary"]},
-        stop:0.55 {colors["glossy_gradient_end"]},
-        stop:1 #4D3308);
-    color: {colors["text_primary"]};
-    border: 1px solid rgba(255, 255, 255, 0.5);
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-}}
-
-QPushButton:hover {{
-    background-color: {colors["accent_secondary"]};
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 rgba(255, 255, 255, 0.30),
-        stop:0.1 {colors["accent_secondary"]},
-        stop:0.55 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    border: 1px solid {colors["accent_secondary"]};
-    color: #0B0B0B;
-}}
-"""
-        progress_chunk_style = f"""
-QProgressBar::chunk {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 #996515,
-        stop:0.4 {colors["accent_secondary"]},
-        stop:0.5 #FFFFFF,
-        stop:0.6 {colors["accent_secondary"]},
-        stop:1 #996515);
-    border-radius: 9px;
-}}
-"""
-        checkbox_checked_style = f"""
-QCheckBox::indicator:checked {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 #FFFFFF,
-        stop:0.2 {colors["accent_secondary"]},
-        stop:0.6 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    border-color: #FFFFFF;
-}}
-"""
-    else:
-        # Default style
-        btn_style = f"""
-QPushButton {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["glossy_shine"]},
-        stop:0.1 {colors["glossy_gradient_start"]},
-        stop:0.5 {colors["glossy_gradient_start"]},
-        stop:0.9 {colors["glossy_gradient_end"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    color: white;
-    border: 1px solid {colors["accent_secondary"]};
-    padding: 8px 15px;
-    border-radius: 8px;
-    font-weight: 600;
-    font-size: 13px;
-}}
-
-QPushButton:hover {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["accent_secondary"]},
-        stop:0.4 {colors["accent_secondary"]},
-        stop:0.5 {colors["glossy_gradient_start"]},
-        stop:1 {colors["glossy_gradient_start"]});
-    border: 1px solid {colors["accent_secondary"]};
-}}
-"""
-        progress_chunk_style = f"""
-QProgressBar::chunk {{
-    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-        stop:0 {colors["glossy_gradient_end"]},
-        stop:0.3 {colors["accent_primary"]},
-        stop:0.5 {colors["accent_secondary"]},
-        stop:0.7 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    border-radius: 9px;
-}}
-"""
-        checkbox_checked_style = f"""
-QCheckBox::indicator:checked {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["accent_secondary"]},
-        stop:0.4 {colors["accent_primary"]},
-        stop:1 {colors["glossy_gradient_end"]});
-    border-color: {colors["accent_primary"]};
-}}
-"""
-
-    return f"""
-QMainWindow, QDialog, QWidget {{
-    background-color: {colors["bg_primary"]};
-    color: {colors["text_primary"]};
-    font-family: 'Outfit', 'Inter', 'Segoe UI', sans-serif;
-}}
-{gloss_overlay}
-
-QTabWidget::pane {{
-    border: none;
-    background-color: transparent;
-}}
-
-QTabBar::tab {{
-    background-color: transparent;
-    color: {colors["text_secondary"]};
-    padding: 14px 28px;
-    margin-right: 8px;
-    border-bottom: 3px solid transparent;
-    font-weight: 600;
-    font-size: 14px;
-    letter-spacing: 0.5px;
-}}
-
-QTabBar::tab:selected {{
-    color: {colors["accent_primary"]};
-    border-bottom: 3px solid {colors["accent_primary"]};
-    font-weight: 800;
-    background-color: rgba(255, 255, 255, 0.03);
-}}
-
-QTabBar::tab:hover:!selected {{
-    color: {colors["text_primary"]};
-    background-color: rgba(255, 255, 255, 0.05);
-    border-radius: 10px 10px 0 0;
-}}
-
-{btn_style}
-
-QPushButton:pressed {{
-    padding-top: 10px;
-    padding-bottom: 6px;
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["glossy_gradient_end"]},
-        stop:1 {colors["accent_primary"]});
-}}
-
-QPushButton:disabled {{
-    background-color: {colors["bg_secondary"]};
-    color: {colors["text_muted"]};
-    border: 1px solid {colors["border"]};
-    opacity: 0.5;
-}}
-
-QLineEdit {{
-    background: {colors["bg_card"]};
-    color: {colors["text_primary"]};
-    border: 1px solid {colors["border"]};
-    border-radius: 12px;
-    padding: 14px 18px;
-    font-size: 14px;
-    selection-background-color: {colors["accent_primary"]};
-}}
-
-QLineEdit:hover {{
-    border: 1px solid {colors["border_hover"]};
-    background: {colors["bg_card_hover"]};
-}}
-
-QLineEdit:focus {{
-    border: 2px solid {colors["accent_primary"]};
-    background: {colors["bg_secondary"]};
-    outline: none;
-}}
-
-QScrollArea {{
-    border: none;
-    background-color: transparent;
-}}
-
-QScrollBar:vertical {{
-    background: transparent;
-    width: 8px;
-    margin: 4px;
-    border-radius: 4px;
-}}
-
-QScrollBar::handle:vertical {{
-    background: {colors["text_muted"]};
-    border-radius: 4px;
-    min-height: 40px;
-    opacity: 0.5;
-}}
-
-QScrollBar::handle:vertical:hover {{
-    background: {colors["accent_primary"]};
-}}
-
-QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical,
-QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {{
-    height: 0px;
-    background: transparent;
-}}
-
-QProgressBar {{
-    border: 1px solid {colors["border"]};
-    border-radius: 8px;
-    background: {colors["bg_secondary"]};
-    text-align: center;
-    color: white;
-    font-weight: bold;
-    font-size: 11px;
-    height: 12px;
-}}
-
-{progress_chunk_style}
-
-QLabel {{
-    color: {colors["text_primary"]};
-    background-color: transparent;
-}}
-
-QFrame#Card {{
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-        stop:0 {colors["bg_card"]},
-        stop:1 {colors["bg_secondary"]});
-    border-radius: 16px;
-    border: 1px solid {colors["border"]};
-}}
-
-QFrame#Card:hover {{
-    border: 1px solid {colors["accent_primary"]};
-    background: {colors["bg_card_hover"]};
-}}
-
-QCheckBox {{
-    color: {colors["text_primary"]};
-    spacing: 12px;
-    font-weight: 500;
-}}
-
-QCheckBox::indicator {{
-    width: 22px;
-    height: 22px;
-    border-radius: 8px;
-    border: 2px solid {colors["border"]};
-    background: {colors["bg_card"]};
-}}
-
-{checkbox_checked_style}
-
-QCheckBox::indicator:hover {{
-    border-color: {colors["accent_primary"]};
-    background: {colors["bg_card_hover"]};
-}}
-
-QComboBox {{
-    background: {colors["bg_card"]};
-    color: {colors["text_primary"]};
-    border: 1px solid {colors["border"]};
-    border-radius: 10px;
-    padding: 10px 18px;
-    font-size: 14px;
-    min-width: 150px;
-}}
-
-QComboBox:hover {{
-    border: 1px solid {colors["accent_primary"]};
-    background: {colors["bg_card_hover"]};
-}}
-
-QComboBox:focus {{
-    border: 2px solid {colors["accent_primary"]};
-}}
-
-QComboBox::drop-down {{
-    subcontrol-origin: padding;
-    subcontrol-position: top right;
-    width: 35px;
-    border-left: 1px solid {colors["border"]};
-    border-top-right-radius: 10px;
-    border-bottom-right-radius: 10px;
-    background: transparent;
-}}
-
-QComboBox::down-arrow {{
-    image: none;
-    border-top: 5px solid {colors["text_secondary"]};
-    border-left: 5px solid transparent;
-    border-right: 5px solid transparent;
-    margin-top: 2px;
-}}
-
-QComboBox QAbstractItemView {{
-    background-color: {colors["bg_card"]};
-    color: {colors["text_primary"]};
-    border: 1px solid {colors["accent_primary"]};
-    border-radius: 10px;
-    padding: 8px;
-    selection-background-color: {colors["accent_primary"]};
-    selection-color: white;
-    outline: 0;
-}}
-
-QComboBox QAbstractItemView::item {{
-    padding: 10px;
-    border-radius: 6px;
-}}
-
-QComboBox QAbstractItemView::item:selected {{
-    background-color: {colors["accent_primary"]};
-    color: white;
-}}
-
-QListView {{
-    background-color: {colors["bg_card"]};
-    color: {colors["text_primary"]};
-    selection-background-color: {colors["accent_primary"]};
-    selection-color: white;
-    border: 1px solid {colors["border"]};
-    border-radius: 10px;
-    padding: 5px;
-}}
-
-QToolTip {{
-    background: {colors["bg_secondary"]};
-    color: {colors["text_primary"]};
-    border: 1px solid {colors["accent_primary"]};
-    border-radius: 8px;
-    padding: 10px;
-    font-size: 13px;
-}}
-
-/* Glossy Sidebar Style */
-QWidget#Sidebar {{
-    background: {colors["bg_secondary"]};
-    border-right: 1px solid {colors["border"]};
-}}
-
-/* Glossy Header Style */
-QFrame#Header {{
-    background: {colors["bg_primary"]};
-    border-bottom: 1px solid {colors["border"]};
-}}
-
-QStatusBar {{
-    background-color: {colors["bg_secondary"]};
-    color: {colors["text_secondary"]};
-    border-top: 1px solid {colors["border"]};
-    font-size: 12px;
-}}
-
-QSizeGrip {{
-    background-color: transparent;
-    width: 20px;
-    height: 20px;
-}}
-"""
+    mapping = {
+        "font": FONT_STACK,
+        "bg_primary": colors["bg_primary"],
+        "bg_secondary": colors["bg_secondary"],
+        "bg_card": colors["bg_card"],
+        "bg_hover": colors["bg_card_hover"],
+        "accent": colors["accent_primary"],
+        "accent2": colors["accent_secondary"],
+        "accent_end": colors["glossy_gradient_end"],
+        "on_accent": on_accent,
+        "text": colors["text_primary"],
+        "text2": colors["text_secondary"],
+        "muted": colors["text_muted"],
+        "border": colors["border"],
+        "border_hover": colors["border_hover"],
+        "check_css": check_css,
+        "arrow_css": arrow_css,
+    }
+    return _STYLESHEET_TEMPLATE % mapping
 
 
-# Default stylesheet for backward compatibility
+# Default stylesheet for backward compatibility.
 STYLESHEET = generate_stylesheet("default")
 
 
 def get_sidebar_button_style(colors, is_active=False):
-    """Generate glossy sidebar button style"""
+    """Generate glossy sidebar button style."""
     if is_active:
-        return f"""
-            QPushButton {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 transparent,
-                    stop:0.1 {colors["accent_glow"]},
-                    stop:0.9 {colors["accent_glow"]},
-                    stop:1 transparent);
-                color: {colors["accent_primary"]};
-                border: none;
-                border-left: 3px solid {colors["accent_primary"]};
-                border-radius: 0px;
-                padding: 15px 20px;
-                text-align: left;
-                font-weight: 600;
-            }}
-        """
-    else:
-        return f"""
-            QPushButton {{
-                background-color: transparent;
-                color: {colors["text_secondary"]};
-                border: none;
-                border-left: 3px solid transparent;
-                border-radius: 0px;
-                padding: 15px 20px;
-                text-align: left;
-                font-weight: 500;
-            }}
-            QPushButton:hover {{
-                background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
-                    stop:0 transparent,
-                    stop:0.1 {colors["bg_card_hover"]},
-                    stop:0.9 {colors["bg_card_hover"]},
-                    stop:1 transparent);
-                color: {colors["text_primary"]};
-            }}
-        """
+        return (
+            "QPushButton { background-color: %s; color: #FFFFFF; border: none; "
+            "border-left: 3px solid %s; border-radius: 0px; padding: 15px 20px; "
+            "text-align: left; font-weight: 700; }"
+            % (colors["accent_glow"], colors["accent_primary"])
+        )
+    return (
+        "QPushButton { background-color: transparent; color: %s; border: none; "
+        "border-left: 3px solid transparent; border-radius: 0px; padding: 15px 20px; "
+        "text-align: left; font-weight: 500; }"
+        "QPushButton:hover { color: %s; }"
+        % (colors["text_secondary"], colors["text_primary"])
+    )
 
 
 def get_theme_preview_style(theme_name):
-    """Generate a mini preview style for theme selection"""
+    """Generate a mini preview style for theme selection."""
     colors = THEMES.get(theme_name, THEMES["default"])
-    return f"""
-        background: qlineargradient(x1:0, y1:0, x2:1, y2:1,
-            stop:0 {colors["bg_primary"]},
-            stop:0.5 {colors["accent_primary"]},
-            stop:1 {colors["bg_secondary"]});
-        border: 2px solid {colors["accent_primary"]};
-        border-radius: 8px;
-    """
+    return (
+        "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, "
+        "stop:0 %s, stop:0.5 %s, stop:1 %s); "
+        "border: 2px solid %s; border-radius: 8px;"
+        % (
+            colors["bg_primary"],
+            colors["accent_primary"],
+            colors["bg_secondary"],
+            colors["accent_primary"],
+        )
+    )

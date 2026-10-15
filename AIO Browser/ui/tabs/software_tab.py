@@ -24,7 +24,7 @@ class SoftwareTab(QWidget):
 
         # Monkrus Software Subtab
         self.monkrus_tab = MonkrusTab(self.main_app)
-        self.tabs.addTab(self.monkrus_tab, "Monkrus ✅")
+        self.tabs.addTab(self.monkrus_tab, "Monkrus ")
 
         # Future software suites could be added here (e.g., Office, Dev Tools)
 

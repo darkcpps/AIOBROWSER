@@ -34,9 +34,9 @@ class KnabenSearchTab(QWidget):
         self._default_banner_body_lines = [
             "Search Knaben for torrents and download via magnet links.",
             "<b>Will show everything so be specific on your searches.</b>",
-            "<b style='color: #ff6b6b;'>⚠️ UNTRUSTED CONTENT - Only use if you know what you're doing.</b>",
+            "<b style='color: #ff6b6b;'>UNTRUSTED CONTENT - Only use if you know what you're doing.</b>",
         ]
-        self._default_banner_icon = "🧲"
+        self._default_banner_icon = "search"
 
         self.banner = InfoBanner(
             title=self._default_banner_title,
@@ -224,7 +224,7 @@ class KnabenSearchTab(QWidget):
                     "Knaben returned an unsupported response, so the app can't scrape magnets right now.",
                     "Click the result below to open the search in your browser, then try again later.",
                 ],
-                icon="⚠️",
+                icon="warning",
             )
         else:
             self.banner.set_content(

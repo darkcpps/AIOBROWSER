@@ -24,6 +24,7 @@ from ui.core.styles import (
     COLORS,
     STYLESHEET,
     THEMES,
+    build_palette,
     generate_stylesheet,
     set_current_theme,
 )
@@ -71,10 +72,12 @@ class GameSearchApp(QMainWindow):
             from ui.core.styles import update_colors
             update_colors()
             
-        # Apply initial stylesheet to the application
+        # Apply initial stylesheet + dark palette to the application
         app = QApplication.instance()
         if app:
-            app.setStyleSheet(generate_stylesheet(saved_theme if saved_theme in THEMES else "default"))
+            theme = saved_theme if saved_theme in THEMES else "default"
+            app.setStyleSheet(generate_stylesheet(theme))
+            app.setPalette(build_palette(theme))
 
         self.initUI()
 
@@ -85,7 +88,7 @@ class GameSearchApp(QMainWindow):
 
     def initUI(self):
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint)
-        self.setWindowTitle("🎮 AIO Browser v0.1.3")
+        self.setWindowTitle("AIO Browser v0.2.0")
         self.setGeometry(100, 100, 1100, 750)
 
         # Initialize and style StatusBar
@@ -150,9 +153,7 @@ class GameSearchApp(QMainWindow):
         header_layout = QHBoxLayout()
         header_layout.setContentsMargins(40, 0, 40, 0)
         self.page_title = QLabel("Games")
-        self.page_title.setStyleSheet(
-            f"font-size: 26px; font-weight: 1000; color: {COLORS['text_primary']}; letter-spacing: -0.5px;"
-        )
+        self.page_title.setObjectName("PageTitle")
         header_layout.addWidget(self.page_title)
         header_layout.addStretch()
         
@@ -523,16 +524,16 @@ class GameSearchApp(QMainWindow):
 
         def run_resolution():
             print(f"[DEBUG] [{download_id}] Thread started for resolution")
-            self.download_status_updated.emit(download_id, "🔗 Finding tracker link...", 0.1)
+            self.download_status_updated.emit(download_id, "Finding tracker link...", 0.1)
             final_torrent_url, error = scraper.resolve_monkrus_to_torrent(item["link"])
             
             if error or not final_torrent_url:
                 print(f"[DEBUG] [{download_id}] Resolution failed: {error}")
-                self.download_status_updated.emit(download_id, f"❌ Error: {error or 'Link not found'}", 0)
+                self.download_status_updated.emit(download_id, f"Error: {error or 'Link not found'}", 0)
                 return
             
             print(f"[DEBUG] [{download_id}] Torrent URL resolved: {final_torrent_url}")
-            self.download_status_updated.emit(download_id, "📥 Downloading .torrent...", 0.4)
+            self.download_status_updated.emit(download_id, "Downloading .torrent...", 0.4)
             
             try:
                 # 1. Download the .torrent file to a temporary location
@@ -547,7 +548,7 @@ class GameSearchApp(QMainWindow):
                         f.write(chunk)
                 
                 print(f"[DEBUG] [{download_id}] .torrent file downloaded successfully.")
-                self.download_status_updated.emit(download_id, "📁 Select save folder...", 0.6)
+                self.download_status_updated.emit(download_id, "Select save folder...", 0.6)
                 
                 # 2. Ask user for save directory
                 QMetaObject.invokeMethod(self, "_finish_monkrus_on_main_thread", 
@@ -558,7 +559,7 @@ class GameSearchApp(QMainWindow):
                                        
             except Exception as e:
                 print(f"[DEBUG] [{download_id}] Exception during .torrent download: {str(e)}")
-                self.download_status_updated.emit(download_id, f"❌ Download Error: {str(e)}", 0)
+                self.download_status_updated.emit(download_id, f"Download Error: {str(e)}", 0)
 
         threading.Thread(target=run_resolution, daemon=True).start()
 
@@ -571,7 +572,7 @@ class GameSearchApp(QMainWindow):
             initial_dir = str(Path(sys.argv[0]).resolve().parent)
             
         if not self.settings_manager.get("enable_bittorrent", False):
-            self.download_status_updated.emit(download_id, "✅ Opening in system tracker...", 1.0)
+            self.download_status_updated.emit(download_id, "Opening in system tracker...", 1.0)
             open_path(torrent_path)
             return
 
@@ -581,7 +582,7 @@ class GameSearchApp(QMainWindow):
             torrent_path, title, list_torrent_files=list_torrent_files
         )
         if file_entries is None:
-            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            self.download_status_updated.emit(download_id, "Cancelled", 0)
             try:
                 os.remove(torrent_path)
             except Exception:
@@ -590,7 +591,7 @@ class GameSearchApp(QMainWindow):
 
         selected_indices = self._prompt_torrent_file_choices(title, file_entries)
         if not selected_indices:
-            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            self.download_status_updated.emit(download_id, "Cancelled", 0)
             try:
                 os.remove(torrent_path)
             except Exception:
@@ -599,7 +600,7 @@ class GameSearchApp(QMainWindow):
 
         save_path = QFileDialog.getExistingDirectory(self, "Select Download Folder", initial_dir)
         if not save_path:
-            self.download_status_updated.emit(download_id, "❌ Cancelled", 0)
+            self.download_status_updated.emit(download_id, "Cancelled", 0)
             try:
                 os.remove(torrent_path)
             except Exception:
@@ -719,19 +720,19 @@ class GameSearchApp(QMainWindow):
 
     def process_anker_download_flow(self, game_url, game_title, anker, download_id):
         self.download_status_updated.emit(
-            download_id, "🔗 Fetching direct link...", 0.1
+            download_id, "Fetching direct link...", 0.1
         )
         try:
             final_url, error = anker.get_download_link(game_url)
             if error or not final_url:
                 self.download_status_updated.emit(
-                    download_id, f"❌ Error: {error}. Opening page...", 0
+                    download_id, f"Error: {error}. Opening page...", 0
                 )
                 time.sleep(2)
                 webbrowser.open(game_url)
                 return
             self.download_status_updated.emit(
-                download_id, "🔍 Resolving final link...", 0.3
+                download_id, "Resolving final link...", 0.3
             )
             real_file_url, suggested_name = anker.resolve_final_link(final_url)
             if not suggested_name:
@@ -741,13 +742,13 @@ class GameSearchApp(QMainWindow):
             )
         except Exception as e:
             print(f"[DEBUG] Error: {e}")
-            self.download_status_updated.emit(download_id, f"❌ Error: {str(e)}", 0)
+            self.download_status_updated.emit(download_id, f"Error: {str(e)}", 0)
 
     @pyqtSlot(str, str, object, str)
     def prompt_download(self, url, default_name, session, download_id):
         if "ankergames.net" in url and "treasure-box" in url:
             self.download_status_updated.emit(
-                download_id, "⚠ Opening manual download page...", 1.0
+                download_id, "Opening manual download page...", 1.0
             )
             time.sleep(1)
             webbrowser.open(url)
@@ -766,7 +767,7 @@ class GameSearchApp(QMainWindow):
 
             def run_download():
                 self.download_status_updated.emit(
-                    download_id, "⏳ Preparing download...", 0
+                    download_id, "Preparing download...", 0
                 )
                 time.sleep(0.5)
                 if session and "Referer" in session.headers:
@@ -786,7 +787,7 @@ class GameSearchApp(QMainWindow):
 
             threading.Thread(target=run_download, daemon=True).start()
         else:
-            self.download_status_updated.emit(download_id, "❌ Download cancelled", 0)
+            self.download_status_updated.emit(download_id, "Download cancelled", 0)
 
     @pyqtSlot(str, str, float)
     def update_download_status(self, download_id, text, progress):
@@ -798,7 +799,7 @@ class GameSearchApp(QMainWindow):
     def on_download_finished(self, download_id, result, save_path):
         if result == "SUCCESS":
             self.update_download_status(
-                download_id, f"✅ Complete: {os.path.basename(save_path)}", 1.0
+                download_id, f"Complete: {os.path.basename(save_path)}", 1.0
             )
 
             def final_cleanup():
@@ -806,9 +807,9 @@ class GameSearchApp(QMainWindow):
 
             QTimer.singleShot(2000, final_cleanup)
         elif result == "STOPPED":
-            self.update_download_status(download_id, "⏹ Download Stopped", 0)
+            self.update_download_status(download_id, "Download Stopped", 0)
         elif result == "ERROR":
-            self.update_download_status(download_id, "❌ Error occurred", 0)
+            self.update_download_status(download_id, "Error occurred", 0)
 
     def open_settings(self):
         self.sidebar.set_active("settings")

@@ -36,7 +36,7 @@ class DirectSearchTab(QWidget):
                 body_lines=[
                     "Search for direct download games. Use specific titles/keywords for better matches.",
                 ],
-                icon="🔎",
+                icon="search",
                 object_name="DirectSearchInfoBanner",
                 compact=True,
             )

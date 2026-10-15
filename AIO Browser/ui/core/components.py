@@ -20,6 +20,34 @@ from PyQt6.QtWidgets import *
 
 from ui.core.styles import COLORS
 
+#: Common emoji used across the UI mapped to crisp vector icon names. Emoji do
+#: not render on many Linux systems, so banners prefer the vector icon when one
+#: is available and fall back to the emoji text otherwise.
+_EMOJI_TO_ICON = {
+    "🎮": "gamepad",
+    "🕹": "gamepad",
+    "🕹️": "gamepad",
+    "🔎": "search",
+    "🔍": "search",
+    "🧲": "search",
+    "💡": "info",
+    "ℹ️": "info",
+    "ℹ": "info",
+    "❔": "info",
+    "❓": "info",
+    "⚠️": "info",
+    "⚙️": "gear",
+    "⚙": "gear",
+    "⬇️": "tray",
+    "⬇": "tray",
+    "📥": "tray",
+    "📦": "box",
+    "💿": "disc",
+    "🛠": "wrench",
+    "🛠️": "wrench",
+    "🚀": "play",
+}
+
 
 # =========================================================================
 # ANIMATED LOADING WIDGET WITH COOL EFFECTS
@@ -88,18 +116,17 @@ class InfoBanner(QFrame):
         layout.setContentsMargins(pad_x, pad_y, pad_x, pad_y)
         layout.setSpacing(sizes["spacing"])
 
-        self._icon_label = QLabel(self._icon)
+        self._icon_label = QLabel()
         self._icon_label.setStyleSheet(
             f"""
             font-size: {icon_size}px;
             color: {COLORS.get('accent_primary')};
-            font-family: 'Segoe UI Emoji', 'Segoe UI Symbol', 'Segoe UI', 'Roboto', 'Inter', sans-serif;
             background: transparent;
             """
         )
         self._icon_label.setAlignment(Qt.AlignmentFlag.AlignTop)
-        self._icon_label.setVisible(bool(self._icon))
         layout.addWidget(self._icon_label)
+        self._apply_icon()
 
         self._text_label = QLabel(self._build_html(title_size, body_size))
         self._text_label.setTextFormat(Qt.TextFormat.RichText)
@@ -108,6 +135,22 @@ class InfoBanner(QFrame):
             "font-family: 'Segoe UI Emoji', 'Segoe UI Symbol', 'Segoe UI', 'Roboto', 'Inter', sans-serif; background: transparent;"
         )
         layout.addWidget(self._text_label, 1)
+
+    def _apply_icon(self):
+        """Render the banner icon as a vector glyph when possible."""
+        from ui.core.icons import available_icons, make_icon
+
+        name = self._icon if self._icon in available_icons() else _EMOJI_TO_ICON.get(self._icon, "")
+        if name:
+            size = self._sizes()["icon"] + 2
+            icon = make_icon(name, COLORS.get("accent_primary", "#8B5CF6"), size)
+            self._icon_label.setText("")
+            self._icon_label.setPixmap(icon.pixmap(size, size))
+            self._icon_label.setVisible(True)
+        else:
+            self._icon_label.setPixmap(QPixmap())
+            self._icon_label.setText(self._icon or "")
+            self._icon_label.setVisible(bool(self._icon))
 
     def _build_html(self, title_size, body_size):
         title_html = ""
@@ -136,8 +179,7 @@ class InfoBanner(QFrame):
             self._body_lines = body_lines
         if icon is not None:
             self._icon = icon
-            self._icon_label.setText(self._icon)
-            self._icon_label.setVisible(bool(self._icon))
+            self._apply_icon()
         sizes = self._sizes()
         self._text_label.setText(
             self._build_html(sizes["title"], sizes["body"])
@@ -776,75 +818,75 @@ class GameCardWidget(QFrame):
 # ANIMATED STACKED WIDGET (FADING)
 # =========================================================================
 class AnimatedStackedWidget(QStackedWidget):
+    """QStackedWidget that switches pages instantly, then fades the new one in.
+
+    Switching synchronously (instead of waiting for a fade-out animation to
+    finish) keeps navigation responsive and impossible to get "stuck" if the
+    animation is interrupted by a quick second click.
+    """
+
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.p_opacity = 1.0
-        self.anim = QPropertyAnimation(self, b"opacity")
-        self.anim.setDuration(400)
-        self.anim.setEasingCurve(QEasingCurve.Type.OutCubic)
-        self.opacity_effect = None
+        self._opacity_value = 1.0
+        self._effect = None
+        self._anim = QPropertyAnimation(self, b"opacity", self)
+        self._anim.setDuration(200)
+        self._anim.setEasingCurve(QEasingCurve.Type.OutCubic)
+        self._anim.finished.connect(self._on_fade_finished)
 
     @pyqtProperty(float)
     def opacity(self):
-        return self.p_opacity
+        return self._opacity_value
 
     @opacity.setter
     def opacity(self, value):
-        self.p_opacity = value
-        if self.opacity_effect:
-            self.opacity_effect.setOpacity(value)
+        self._opacity_value = value
+        if self._effect is not None:
+            self._effect.setOpacity(value)
 
     def setCurrentIndex(self, index):
-        if index == self.currentIndex():
+        if index == super().currentIndex():
             return
-        self.anim.stop()
-        if self.graphicsEffect():
-            self.setGraphicsEffect(None)
-        self.opacity_effect = QGraphicsOpacityEffect(self)
-        self.setGraphicsEffect(self.opacity_effect)
-        self.anim.setStartValue(1.0)
-        self.anim.setEndValue(0.0)
+        super().setCurrentIndex(index)
+        self._fade_in()
 
-        def on_fade_in_done():
-            self.setGraphicsEffect(None)
-            self.opacity_effect = None
-            try:
-                self.anim.finished.disconnect()
-            except:
-                pass
+    def setCurrentWidget(self, widget):
+        index = self.indexOf(widget)
+        if index >= 0:
+            self.setCurrentIndex(index)
 
-        def on_fade_out():
-            super(AnimatedStackedWidget, self).setCurrentIndex(index)
-            self.opacity_effect = QGraphicsOpacityEffect(self)
-            self.setGraphicsEffect(self.opacity_effect)
-            try:
-                self.anim.finished.disconnect()
-            except:
-                pass
-            self.anim.setStartValue(0.0)
-            self.anim.setEndValue(1.0)
-            self.anim.finished.connect(on_fade_in_done)
-            self.anim.start()
+    def _fade_in(self):
+        self._anim.stop()
+        self.setGraphicsEffect(None)
+        self._effect = QGraphicsOpacityEffect(self)
+        self._effect.setOpacity(0.0)
+        self.setGraphicsEffect(self._effect)
+        self._opacity_value = 0.0
+        self._anim.setStartValue(0.0)
+        self._anim.setEndValue(1.0)
+        self._anim.start()
 
-        try:
-            self.anim.finished.disconnect()
-        except:
-            pass
-        self.anim.finished.connect(on_fade_out)
-        self.anim.start()
+    def _on_fade_finished(self):
+        # Drop the effect once the fade is done: keeping an opacity effect on a
+        # large widget forces off-screen compositing on every repaint.
+        self.setGraphicsEffect(None)
+        self._effect = None
+        self._opacity_value = 1.0
 
 
 class SidebarButton(QPushButton):
-    def __init__(self, text, icon_text, parent=None):
+    def __init__(self, text, icon_name="", parent=None):
         super().__init__(parent)
         self.setText(text)
-        self.icon_text = icon_text
+        self.icon_name = icon_name
         self.setCheckable(True)
-        self.setFixedHeight(50)
+        self.setFixedHeight(46)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
+        self.setIconSize(QSize(18, 18))
         self.update_style()
 
     def update_style(self):
+        from ui.core.icons import make_icon
         from ui.core.styles import get_colors, get_current_theme
 
         # Reset style state to ensure theme changes apply 100%
@@ -852,19 +894,20 @@ class SidebarButton(QPushButton):
 
         colors = get_colors()
         is_black_gold = get_current_theme() == "black_gold"
-        
+
         if self.isChecked():
             bg_color = colors["accent_primary"]
             text_color = "#000000" if is_black_gold else "#FFFFFF"
             border = f"1px solid {colors['accent_secondary']}" if is_black_gold else "none"
-            font_weight = "800"
-            glow = f"0px 0px 15px {colors['accent_glow']}"
+            font_weight = "700"
         else:
             bg_color = "transparent"
             text_color = colors["text_secondary"]
             border = "none"
             font_weight = "500"
-            glow = "none"
+
+        if self.icon_name:
+            self.setIcon(make_icon(self.icon_name, text_color, 18))
 
         self.setStyleSheet(f"""
             QPushButton {{
@@ -872,10 +915,10 @@ class SidebarButton(QPushButton):
                 color: {text_color};
                 border: {border};
                 text-align: left;
-                padding-left: 20px;
+                padding-left: 14px;
                 font-size: 14px;
                 font-weight: {font_weight};
-                border-radius: 12px;
+                border-radius: 10px;
                 margin: 2px 8px;
             }}
             QPushButton:hover {{
@@ -883,10 +926,10 @@ class SidebarButton(QPushButton):
                 color: {colors["text_primary"] if not self.isChecked() else text_color};
             }}
         """)
-        
+
         if self.isChecked():
             shadow = QGraphicsDropShadowEffect(self)
-            shadow.setBlurRadius(15)
+            shadow.setBlurRadius(14)
             shadow.setXOffset(0)
             shadow.setYOffset(0)
             shadow.setColor(QColor(colors["accent_primary"]))
@@ -1035,14 +1078,14 @@ class ModernSidebar(QFrame):
         """)
         logo_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
-        sub_logo = QLabel("B R O W S E R")
+        sub_logo = QLabel("BROWSER")
         sub_logo.setStyleSheet(f"""
-            font-size: 14px;
-            font-weight: 400;
+            font-size: 13px;
+            font-weight: 500;
             color: {colors["accent_primary"]};
-            letter-spacing: 5px;
+            letter-spacing: 6px;
             background: transparent;
-            margin-top: -5px;
+            margin-top: -2px;
         """)
         sub_logo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         
@@ -1061,22 +1104,22 @@ class ModernSidebar(QFrame):
         self.setLayout(layout)
 
         # Navigation
-        self.add_nav_item("games", "🎮  Games")
-        self.add_nav_item("search", "🔎  Search")
-        self.add_nav_item("software", "💿  Software")
-        self.add_nav_item("patcher", "🛠  Patcher")
-        self.add_nav_item("downloader", "📦  Downloaders")
-        self.add_nav_item("emulators", "🎮  Emulators")
+        self.add_nav_item("games", "Games", "gamepad")
+        self.add_nav_item("search", "Search", "search")
+        self.add_nav_item("software", "Software", "disc")
+        self.add_nav_item("patcher", "Patcher", "wrench")
+        self.add_nav_item("downloader", "Downloaders", "box")
+        self.add_nav_item("emulators", "Emulators", "chip")
 
         layout.addStretch()
 
         # Bottom Actions
-        self.add_nav_item("info", "ℹ️  Info")
-        self.add_nav_item("downloads", "📥  Downloads")
-        self.add_nav_item("settings", "⚙  Settings")
+        self.add_nav_item("info", "Info", "info")
+        self.add_nav_item("downloads", "Downloads", "tray")
+        self.add_nav_item("settings", "Settings", "gear")
 
-    def add_nav_item(self, key, label):
-        btn = SidebarButton(label, "")
+    def add_nav_item(self, key, label, icon_name=""):
+        btn = SidebarButton(label, icon_name)
         btn.clicked.connect(lambda: self.on_click(key))
         self.layout().addWidget(btn)
         self.buttons[key] = btn

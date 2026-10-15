@@ -50,9 +50,18 @@ class SplashScreen(QWidget):
         
         # 6. UI Elements
         # Icon
-        icon_label = QLabel("🎮")
-        icon_label.setStyleSheet(f"font-size: 72px; color: {COLORS['accent_primary']};")
+        icon_label = QLabel("")
         icon_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        try:
+            from ui.core.icons import make_icon
+
+            pixmap = make_icon("gamepad", COLORS["accent_primary"], 72).pixmap(72, 72)
+            icon_label.setPixmap(pixmap)
+        except Exception:
+            icon_label.setText("AIO")
+            icon_label.setStyleSheet(
+                f"font-size: 72px; color: {COLORS['accent_primary']};"
+            )
         content_layout.addWidget(icon_label)
         
         # Title (typed effect)
@@ -70,7 +79,7 @@ class SplashScreen(QWidget):
         content_layout.addStretch()
         
         # Version
-        version_label = QLabel("v0.1.3")
+        version_label = QLabel("v0.2.0")
         version_label.setStyleSheet(f"font-size: 10px; color: {COLORS['text_secondary']};")
         version_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         content_layout.addWidget(version_label)
@@ -88,7 +97,7 @@ class SplashScreen(QWidget):
     
     def type_animation(self, text, label, index):
         if index <= len(text):
-            label.setText(text[:index] + "▌")
+            label.setText(text[:index] + "")
             QTimer.singleShot(50, lambda: self.type_animation(text, label, index + 1))
         else:
             label.setText(text)

@@ -125,7 +125,14 @@ class ThemePreviewCard(QFrame):
         # Hide theme names in the UI; keep only the selection checkmark.
         label_layout.addStretch(1)
 
-        self.check_label = QLabel("✓")
+        self.check_label = QLabel("")
+        try:
+            from ui.core.icons import make_icon
+
+            check = make_icon("check", self.theme_data["accent_primary"], 16)
+            self.check_label.setPixmap(check.pixmap(16, 16))
+        except Exception:
+            self.check_label.setText("OK")
         self.check_label.setStyleSheet(f"""
             color: {self.theme_data["accent_primary"]};
             font-size: 16px;
@@ -252,22 +259,13 @@ class SettingsTab(QWidget):
         self.scroll_area.setWidget(self.content_widget)
         main_layout.addWidget(self.scroll_area)
 
-        # Header
-        title = QLabel("Settings")
-        title.setStyleSheet(f"""
-            font-size: 28px;
-            font-weight: 900;
-            color: {COLORS["text_primary"]};
-        """)
-        layout.addWidget(title)
-
         layout.addWidget(
             InfoBanner(
                 title="Quick info",
                 body_lines=[
                     "Change themes, default download folder, and emulator identity settings here.",
                 ],
-                icon="⚙️",
+                icon="gear",
                 object_name="SettingsInfoBanner",
                 compact=True,
             )
@@ -510,7 +508,7 @@ class SettingsTab(QWidget):
             self,
             "Restart Required",
             "Changing the theme requires restarting the application.\n\n"
-            "⚠️ WARNING: Any active downloads will be cancelled!\n\n"
+            "WARNING: Any active downloads will be cancelled!\n\n"
             "Do you want to proceed?",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
             QMessageBox.StandardButton.No,

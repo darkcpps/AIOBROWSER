@@ -35,12 +35,6 @@ class GoldbergTab(QWidget):
         header_layout = QHBoxLayout()
         title_vlayout = QVBoxLayout()
 
-        title = QLabel("🛠  Steam Patcher")
-        title.setStyleSheet(
-            f"font-size: 28px; font-weight: 900; color: {COLORS['text_primary']};"
-        )
-        title_vlayout.addWidget(title)
-
         subtitle = QLabel(
             "Apply Goldberg Emulator to your installed Steam games in one click."
         )
@@ -50,9 +44,16 @@ class GoldbergTab(QWidget):
 
         # Info Toggle
         self.info_visible = False
-        self.toggle_info_btn = QPushButton("❔ What is Goldberg?")
-        self.toggle_info_btn.setFixedSize(160, 40)
+        self.toggle_info_btn = QPushButton("What is Goldberg?")
+        self.toggle_info_btn.setFixedHeight(40)
+        self.toggle_info_btn.setMinimumWidth(190)
         self.toggle_info_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        try:
+            from ui.core.icons import make_icon
+
+            self.toggle_info_btn.setIcon(make_icon("info", COLORS["text_primary"], 16))
+        except Exception:
+            pass
         self.toggle_info_btn.setStyleSheet(f"""
             QPushButton {{ 
                 background: {COLORS['bg_secondary']}; 
@@ -70,15 +71,23 @@ class GoldbergTab(QWidget):
 
         header_layout.addStretch()
 
-        self.manual_patch_btn = QPushButton("📂  Manual Path")
-        self.manual_patch_btn.setFixedSize(140, 40)
+        self.manual_patch_btn = QPushButton("Manual Path")
+        self.manual_patch_btn.setFixedHeight(40)
+        self.manual_patch_btn.setMinimumWidth(150)
         self.manual_patch_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         self.manual_patch_btn.clicked.connect(self.manual_folder_patch)
         header_layout.addWidget(self.manual_patch_btn)
 
-        self.refresh_steam_btn = QPushButton("🔄  Scan Library")
-        self.refresh_steam_btn.setFixedSize(140, 40)
+        self.refresh_steam_btn = QPushButton("Scan Library")
+        self.refresh_steam_btn.setFixedHeight(40)
+        self.refresh_steam_btn.setMinimumWidth(150)
         self.refresh_steam_btn.setCursor(Qt.CursorShape.PointingHandCursor)
+        try:
+            from ui.core.icons import make_icon
+
+            self.refresh_steam_btn.setIcon(make_icon("refresh", "#FFFFFF", 16))
+        except Exception:
+            pass
         self.refresh_steam_btn.clicked.connect(self.request_library_scan)
         header_layout.addWidget(self.refresh_steam_btn)
 
@@ -100,7 +109,7 @@ class GoldbergTab(QWidget):
         if_layout = QVBoxLayout(self.info_frame)
         if_layout.setContentsMargins(20, 20, 20, 20)
 
-        if_title = QLabel("🚀 Goldberg Steam Emulator")
+        if_title = QLabel("Goldberg Steam Emulator")
         if_title.setStyleSheet(
             f"font-size: 18px; font-weight: bold; color: {COLORS['text_primary']};"
         )
@@ -125,7 +134,7 @@ class GoldbergTab(QWidget):
             self.info_visible = not self.info_visible
             self.info_frame.setVisible(self.info_visible)
             self.toggle_info_btn.setText(
-                "❌ Close Info" if self.info_visible else "❔ What is Goldberg?"
+                "Close Info" if self.info_visible else "What is Goldberg?"
             )
 
         self.toggle_info_btn.clicked.connect(toggle_info)
@@ -235,7 +244,7 @@ class GoldbergTab(QWidget):
 
         self.clear_layout(self.steam_container_layout)
         err_label = QLabel(
-            f"❌ Scan Failed: {error_msg}\n\nPlease check your Steam installation."
+            f"Scan Failed: {error_msg}\n\nPlease check your Steam installation."
         )
         err_label.setStyleSheet(f"color: {COLORS['accent_red']}; font-weight: bold;")
         err_label.setAlignment(Qt.AlignmentFlag.AlignCenter)

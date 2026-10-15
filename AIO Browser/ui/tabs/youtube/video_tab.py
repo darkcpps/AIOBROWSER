@@ -20,7 +20,7 @@ class VideoTab(QWidget):
         video_header = QHBoxLayout()
         video_title_layout = QVBoxLayout()
 
-        video_title = QLabel("📹  Video Download")
+        video_title = QLabel("Video Download")
         video_title.setStyleSheet(
             f"font-size: 28px; font-weight: 900; color: {colors['text_primary']};"
         )
@@ -30,7 +30,7 @@ class VideoTab(QWidget):
             InfoBanner(
                 title="",
                 body_lines=["Download YouTube videos in your preferred quality."],
-                icon="💡",
+                icon="info",
                 object_name="YouTubeVideoInfoBanner",
                 compact=True,
             )
@@ -121,7 +121,7 @@ class VideoTab(QWidget):
         video_layout.addWidget(video_quality_card)
 
         # Video Download Button
-        self.video_download_btn = QPushButton("🚀  Start Download")
+        self.video_download_btn = QPushButton("Start Download")
         self.video_download_btn.setFixedHeight(50)
         self.video_download_btn.setCursor(Qt.CursorShape.PointingHandCursor)
         # Pass URL and quality from the visible tab to the helper to avoid hidden-tab mismatch

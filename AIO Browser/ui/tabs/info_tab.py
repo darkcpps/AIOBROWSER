@@ -43,7 +43,7 @@ class InfoTab(QWidget):
                 body_lines=[
                     "This software is for educational purposes only. Please support game developers by purchasing the games you enjoy.",
                 ],
-                icon="⚠️",
+                icon="warning",
                 accent_color=COLORS.get("accent_red", COLORS["accent_primary"]),
                 object_name="InfoDisclaimerBanner",
                 compact=True,

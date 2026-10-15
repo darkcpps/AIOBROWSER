@@ -35,7 +35,7 @@ class TorrentSearchTab(QWidget):
                 body_lines=[
                     "Search for torrent/FitGirl repacks. You may need a torrent client to download.",
                 ],
-                icon="🧲",
+                icon="search",
                 object_name="TorrentSearchInfoBanner",
                 compact=True,
             )

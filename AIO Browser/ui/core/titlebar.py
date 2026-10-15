@@ -34,7 +34,7 @@ class CustomTitleBar(QWidget):
         self.setLayout(self.layout)
 
         # Title Label
-        self.title_label = QLabel("🎮 AIO Browser")
+        self.title_label = QLabel("AIO Browser")
         self.title_label.setObjectName("TitleLabel")
         self.layout.addWidget(self.title_label)
 

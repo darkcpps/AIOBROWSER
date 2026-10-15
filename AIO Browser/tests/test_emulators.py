@@ -1,5 +1,62 @@
-"""Tests for the pure helpers in core.emulators."""
-from core.emulators import EMULATORS, normalize_platform, pick_platform
+"""Tests for the cross-platform emulator detection helpers."""
+import os
+
+from core import emulators
+from core.emulators import (
+    EMULATORS,
+    find_emulator_executable,
+    normalize_platform,
+    pick_platform,
+)
+
+
+def test_candidate_exe_names_includes_linux_binaries(monkeypatch):
+    monkeypatch.setattr(emulators.os, "name", "posix")
+    names = emulators._candidate_exe_names(EMULATORS["dolphin"])
+    assert "dolphin-emu" in names
+    assert "Dolphin.exe" in names
+    # Linux names should be tried before Windows ones.
+    assert names.index("dolphin-emu") < names.index("Dolphin.exe")
+
+
+def test_candidate_exe_names_windows_only_uses_exe(monkeypatch):
+    monkeypatch.setattr(emulators.os, "name", "nt")
+    names = emulators._candidate_exe_names(EMULATORS["duckstation"])
+    assert "duckstation-qt" not in names
+    assert "duckstation-qt-x64-ReleaseLTO.exe" in names
+
+
+def test_every_emulator_declares_linux_names():
+    for option in EMULATORS.values():
+        assert option.linux_exe_names, option.id
+
+
+def test_platform_search_roots_linux(monkeypatch):
+    monkeypatch.setattr(emulators.os, "name", "posix")
+    monkeypatch.setattr(emulators.sys, "platform", "linux")
+    roots = {str(p) for p in emulators._platform_search_roots()}
+    assert "/usr/bin" in roots
+    assert "/usr/local/bin" in roots
+
+
+def test_find_emulator_executable_uses_configured_path(tmp_path):
+    exe = tmp_path / "myduck"
+    exe.write_text("binary")
+    found = find_emulator_executable(
+        EMULATORS["duckstation"], {"duckstation": str(exe)}
+    )
+    assert found == exe
+
+
+def test_find_emulator_executable_returns_none_when_absent(monkeypatch, tmp_path):
+    monkeypatch.setattr(emulators.shutil, "which", lambda name: None)
+    monkeypatch.setattr(
+        emulators, "_platform_search_roots", lambda: [tmp_path / "nothing"]
+    )
+    assert find_emulator_executable(EMULATORS["retroarch"]) is None
+
+
+# --- existing platform-normalisation coverage ---------------------------------
 
 
 def test_normalize_platform_common_consoles():
