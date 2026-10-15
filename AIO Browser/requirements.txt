@@ -1,0 +1,12 @@
+# Core runtime dependencies for AIO Browser.
+#
+# Install everything needed to run the app with:
+#     pip install -r requirements.txt
+#
+# Optional, feature-specific extras live in requirements-optional.txt.
+
+PyQt6>=6.6
+requests>=2.31
+beautifulsoup4>=4.12
+Pillow>=10.0
+mutagen>=1.47

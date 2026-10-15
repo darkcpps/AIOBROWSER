@@ -51,17 +51,20 @@ def normalize_platform(raw_platform: str) -> Optional[str]:
     if s in {"nintendo ds", "nds", "ds"} or "nintendo ds" in s:
         return "ds"
 
+    # Order matters: more specific names must be tested before generic ones,
+    # otherwise "Super Nintendo" matches the "nes" substring and
+    # "Game Boy Advance"/"Game Boy Color" match the generic "game boy" one.
+    if s in {"snes", "super nintendo"} or "snes" in s or "super nintendo" in s:
+        return "snes"
     if s in {"nes", "nintendo entertainment system"} or "nes" in s:
         return "nes"
-    if s in {"snes", "super nintendo"} or "snes" in s:
-        return "snes"
 
-    if s in {"gb", "game boy"} or "game boy" in s:
-        return "gb"
     if s in {"gbc", "game boy color"} or "game boy color" in s:
         return "gbc"
     if s in {"gba", "game boy advance"} or "game boy advance" in s:
         return "gba"
+    if s in {"gb", "game boy"} or "game boy" in s:
+        return "gb"
 
     if s in {"ps1", "psx"} or "playstation 1" in s:
         return "ps1"

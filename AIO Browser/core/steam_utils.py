@@ -1,13 +1,21 @@
 # core/steam_utils.py
-import winreg
 import os
 import re
 from pathlib import Path
 
+try:
+    import winreg  # type: ignore
+except ImportError:  # pragma: no cover - non-Windows platforms
+    # ``winreg`` only exists on Windows. Keep the module importable elsewhere
+    # (e.g. for tests or future cross-platform support) by degrading gracefully.
+    winreg = None
+
 def get_steam_path():
     """Locate Steam installation path from Registry, process list, or default locations."""
-    # 1. Registry Lookup (Thorough)
-    for root in [winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE]:
+    # 1. Registry Lookup (Thorough) - Windows only
+    for root in (
+        [winreg.HKEY_CURRENT_USER, winreg.HKEY_LOCAL_MACHINE] if winreg else []
+    ):
         for subkey in [r"SOFTWARE\Valve\Steam", r"SOFTWARE\WOW6432Node\Valve\Steam"]:
             try:
                 key = winreg.OpenKey(root, subkey)

@@ -79,9 +79,14 @@ def _sanitize_filename(filename):
     if stem.upper() in reserved:
         filename = f"_{stem}{ext}"
 
-    # Keep within a reasonable limit
+    # Keep within a reasonable limit, preserving the extension so the file is
+    # still recognized by the OS (a truncated "….zip" would otherwise be lost).
     if len(filename) > 240:
-        filename = filename[:240]
+        stem, ext = os.path.splitext(filename)
+        if ext and len(ext) < 240:
+            filename = stem[: 240 - len(ext)] + ext
+        else:
+            filename = filename[:240]
 
     return filename
 

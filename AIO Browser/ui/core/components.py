@@ -6,7 +6,14 @@ import threading
 import webbrowser
 
 import requests
-from PIL import Image
+
+try:
+    from PIL import Image  # type: ignore
+except ImportError:  # pragma: no cover - optional dependency
+    # Pillow is used to render remote cover images. Without it the app still
+    # runs, it simply skips image loading.
+    Image = None
+
 from PyQt6.QtCore import *
 from PyQt6.QtGui import *
 from PyQt6.QtWidgets import *
@@ -680,6 +687,8 @@ class GameCardWidget(QFrame):
         super().leaveEvent(event)
 
     def load_image(self):
+        if Image is None:
+            return
         try:
             response = requests.get(self.game["image"], timeout=5)
             img_data = response.content

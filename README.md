@@ -17,6 +17,40 @@ An all-in-one software solution designed to handle the complicated stuff, making
 - **Software downloads:** Install apps.
 - **Torrent Search Engine**
   
+## Getting started
+
+### Requirements
+- Python 3.10 or newer.
+
+Install the runtime dependencies:
+
+```bash
+pip install -r "AIO Browser/requirements.txt"
+```
+
+Optional features (YouTube downloads, the built-in BitTorrent client and Steam
+detection) ship as separate extras and can be installed with:
+
+```bash
+pip install -r "AIO Browser/requirements-optional.txt"
+```
+
+### Run from source
+```bash
+cd "AIO Browser"
+python main_pyqt.py
+```
+
+### Running the tests
+The test-suite covers the platform-independent core logic and runs without a
+display or a Qt installation:
+
+```bash
+cd "AIO Browser"
+pip install pytest requests beautifulsoup4
+python -m pytest
+```
+
 ## Known issues
 - This project is in early access and will be unstable (crashes, failed downloads, broken UI, etc.).
 - Bugs are expected. If you find one, please report it in GitHub Issues.

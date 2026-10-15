@@ -1,0 +1,17 @@
+# Optional, feature-specific dependencies for AIO Browser.
+#
+# The app runs fine without these; install the ones you need with:
+#     pip install -r requirements-optional.txt
+#
+# Every import of these packages is guarded, so a missing extra only disables
+# the matching feature instead of crashing the whole application.
+
+# YouTube video / audio downloads (Video hub -> YouTube Downloader)
+yt-dlp>=2024.1.0
+
+# Built-in BitTorrent client (Downloads -> Add Torrent)
+# Requires a working libtorrent wheel for your Python/OS combination.
+libtorrent>=2.0.7
+
+# Detecting an already-running Steam client (Goldberg patcher helper)
+psutil>=5.9

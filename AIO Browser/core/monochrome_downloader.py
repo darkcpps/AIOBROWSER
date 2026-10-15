@@ -8,9 +8,18 @@ import json
 import base64
 from pathlib import Path
 from typing import Optional, Dict, List, Any, Literal
-from mutagen.flac import FLAC
-from mutagen.mp4 import MP4
-from mutagen.id3 import ID3, TIT2, TPE1, TALB, TPE2, TDRC, TRCK, TPOS, APIC
+try:
+    from mutagen.flac import FLAC
+    from mutagen.mp4 import MP4
+    from mutagen.id3 import ID3, TIT2, TPE1, TALB, TPE2, TDRC, TRCK, TPOS, APIC
+
+    MUTAGEN_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional dependency
+    # ``mutagen`` is only needed to write audio tags. Keep the module importable
+    # without it so the rest of the app (and the downloader) still works.
+    FLAC = MP4 = ID3 = None
+    TIT2 = TPE1 = TALB = TPE2 = TDRC = TRCK = TPOS = APIC = None
+    MUTAGEN_AVAILABLE = False
 
 
 class MonochromeAPIError(Exception):
@@ -504,6 +513,10 @@ class MonochromeDownloader:
         cover_data: Optional[bytes]
     ) -> None:
         """Embed metadata into FLAC file"""
+        if not MUTAGEN_AVAILABLE:
+            raise RuntimeError(
+                "mutagen is required to embed metadata. Install it with 'pip install mutagen'."
+            )
         audio = FLAC(file_path)
 
         # Basic metadata
@@ -562,6 +575,10 @@ class MonochromeDownloader:
         cover_data: Optional[bytes]
     ) -> None:
         """Embed metadata into M4A file"""
+        if not MUTAGEN_AVAILABLE:
+            raise RuntimeError(
+                "mutagen is required to embed metadata. Install it with 'pip install mutagen'."
+            )
         audio = MP4(file_path)
 
         # Basic metadata
