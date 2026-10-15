@@ -373,12 +373,18 @@ class SettingsTab(QWidget):
         down_layout.addWidget(path_label)
 
         self.path_box = QFrame()
+        self.path_box.setObjectName("PathBox")
+        # NOTE: the selector is scoped to #PathBox on purpose. A selector-less
+        # stylesheet would leak this dark background/border onto the child
+        # "Browse" button, overriding the app's themed button style.
         self.path_box.setStyleSheet(f"""
-            background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
-                stop:0 {COLORS["bg_card"]},
-                stop:1 {COLORS["bg_secondary"]});
-            border: 1px solid {COLORS["border"]};
-            border-radius: 12px;
+            QFrame#PathBox {{
+                background: qlineargradient(x1:0, y1:0, x2:0, y2:1,
+                    stop:0 {COLORS["bg_card"]},
+                    stop:1 {COLORS["bg_secondary"]});
+                border: 1px solid {COLORS["border"]};
+                border-radius: 12px;
+            }}
         """)
         path_box_layout = QHBoxLayout(self.path_box)
         path_box_layout.setContentsMargins(15, 10, 15, 10)
