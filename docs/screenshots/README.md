@@ -24,5 +24,6 @@ Rendered from the running application (headless, 1300×840).
 | Information | ![Information](default__info.png) |
 | Settings | ![Settings](default__settings.png) |
 
-> These PNGs were generated with `tools/render_ui.py`; regenerate them any time
-> the UI changes.
+> The individual tab PNGs are generated with `tools/render_ui.py`; the two
+> contact sheets are composed from those renders. Regenerate them any time the
+> UI changes.

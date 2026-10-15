@@ -188,6 +188,8 @@ cython_debug/
 /qt_env.sh
 /smoke_test.py
 /shots.py
+/render_ui.py
+/contact_sheet.py
 /fonts.conf
 /apt.log
 /pipinstall.log
