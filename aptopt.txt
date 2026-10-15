@@ -1,1 +1,0 @@
--o Dir::Etc::sourcelist=/workspace/aptroot/sources.list -o Dir::Etc::sourceparts=/dev/null -o Dir::State::lists=/workspace/aptroot/lists -o Dir::Cache::archives=/workspace/aptroot/archives -o Dir::State::status=/workspace/aptroot/status -o APT::Sandbox::User=root -o Acquire::AllowInsecureRepositories=true -o APT::Get::AllowUnauthenticated=true
