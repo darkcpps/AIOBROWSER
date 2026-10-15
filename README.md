@@ -4,6 +4,16 @@
 
 An all-in-one software solution designed to handle the complicated stuff, making it easier for first-time users.
 
+## Screenshots
+
+![All sections](docs/screenshots/contact_default.png)
+
+Three built-in themes (Midnight Purple, Aurora Borealis, Black Gold):
+
+![Themes](docs/screenshots/contact_themes.png)
+
+More in [`docs/screenshots`](docs/screenshots).
+
 ## Features
 - **Game Finder:** Search for games using both **Direct Download** links and **Torrents**.
 - **Built-in Patching:** Easily apply the **Goldberg** emulator directly through the app (beginner-friendly).
